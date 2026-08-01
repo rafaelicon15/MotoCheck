@@ -295,6 +295,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
   late final TextEditingController yearCtrl;
   late final TextEditingController kmCtrl;
   late final TextEditingController plateCtrl;
+  late final TextEditingController displacementCtrl;
 
   late String engineType;
   late String fuelSystem;
@@ -321,6 +322,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
     yearCtrl = TextEditingController(text: m?.year.toString() ?? '');
     kmCtrl = TextEditingController(text: m?.currentKm.toString() ?? '');
     plateCtrl = TextEditingController(text: m?.plate ?? '');
+    displacementCtrl = TextEditingController(text: m?.displacement?.toString() ?? '');
     engineType = m?.engineType ?? '4T';
     fuelSystem = m?.fuelSystem ?? 'carb';
     coolingType = m?.coolingType ?? 'air';
@@ -346,6 +348,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
     yearCtrl.dispose();
     kmCtrl.dispose();
     plateCtrl.dispose();
+    displacementCtrl.dispose();
     tankCapacityCtrl.dispose();
     super.dispose();
   }
@@ -391,9 +394,9 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
             // Cilindrada + Capacidad del tanque
             Row(children: [
               Expanded(child: TextField(
+                controller: displacementCtrl,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Cilindrada', suffixText: 'cc'),
-                controller: TextEditingController(text: displacement?.toString() ?? ''),
                 onChanged: (v) => displacement = int.tryParse(v),
               )),
               const SizedBox(width: 12),
@@ -905,19 +908,31 @@ class _LastKmL extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
-      future: db.getLastTwoFuelRecords(motoId),
+    return StreamBuilder<List<FuelRecord>>(
+      stream: db.watchFuelRecords(motoId),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.length < 2) {
+        final records = [...(snap.data ?? <FuelRecord>[])]
+          ..sort((a, b) => a.odometerKm.compareTo(b.odometerKm));
+
+        double? latestKml;
+        for (int i = records.length - 1; i > 0; i--) {
+          final prev = records[i - 1];
+          final curr = records[i];
+          if (!prev.isFull || !curr.isFull) continue;
+          final kmDiff = curr.odometerKm - prev.odometerKm;
+          if (kmDiff <= 0 || curr.liters <= 0) continue;
+          final kml = kmDiff / curr.liters;
+          if (kml < 3 || kml > 60) continue;
+          latestKml = kml;
+          break;
+        }
+
+        if (latestKml == null) {
           return const Text('—',
               style: TextStyle(
                   fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white));
         }
-        final records = snap.data!;
-        final kmDiff = records[0].odometerKm - records[1].odometerKm;
-        final liters = records[1].liters;
-        final kml = kmDiff / liters;
-        return Text('${kml.toStringAsFixed(1)} km/L',
+        return Text('${latestKml.toStringAsFixed(1)} km/L',
             style: const TextStyle(
                 fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white));
       },

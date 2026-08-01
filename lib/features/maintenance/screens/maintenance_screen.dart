@@ -94,6 +94,17 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
       _selectedItems.contains('Cambio de aceite') && widget.engineType == '4T';
   bool get _isEmpty => _selectedItems.isEmpty;
 
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    _kmCtrl.dispose();
+    _costCtrl.dispose();
+    _workshopCtrl.dispose();
+    _notesCtrl.dispose();
+    _nextKmCtrl.dispose();
+    super.dispose();
+  }
+
   void _toggle(String item) {
     setState(() {
       if (_selectedItems.contains(item)) {
@@ -398,6 +409,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
 
   Future<void> _save() async {
     if (_selectedItems.isEmpty) return;
+    final odometerKm = int.tryParse(_kmCtrl.text) ?? 0;
     final primaryType =
         _selectedItems.length == 1 ? _selectedItems.first : 'Mantenimiento general';
     final itemsStr = _selectedItems.join(',');
@@ -408,7 +420,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
     await widget.db.insertMaintenance(MaintenanceRecordsCompanion.insert(
       motoId: drift.Value(widget.motoId),
       date: _date,
-      odometerKm: int.tryParse(_kmCtrl.text) ?? 0,
+      odometerKm: odometerKm,
       type: primaryType,
       description: desc,
       cost: drift.Value(double.tryParse(_costCtrl.text)),
@@ -421,6 +433,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
       oilViscosity: drift.Value(_hasOilChange ? _oilViscosity : null),
       maintenanceItems: drift.Value(itemsStr),
     ));
+    await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, odometerKm);
     if (mounted) Navigator.pop(context);
   }
 }

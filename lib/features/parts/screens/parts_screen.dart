@@ -79,6 +79,16 @@ class PartsScreen extends ConsumerWidget {
     final oilFilterType = moto?.oilFilterType ?? 'replaceable';
     final twoStrokeMethod = moto?.twoStrokeOilMethod;
     final transmissionType = moto?.transmissionType ?? 'chain';
+    final existingNames = (await db.watchParts(moto?.id).first)
+        .map((p) => p.name.trim().toLowerCase())
+        .toSet();
+
+    Future<void> insertIfMissing(PartRecordsCompanion part) async {
+      final name = part.name.value.trim().toLowerCase();
+      if (existingNames.contains(name)) return;
+      await db.insertPart(part);
+      existingNames.add(name);
+    }
 
     // Partes base según tipo de motor
     final baseParts = engineType == '2T'
@@ -90,7 +100,7 @@ class PartsScreen extends ConsumerWidget {
       String? filterType = part['filterType'] as String?;
       if (category == 'oil_filter') filterType = oilFilterType;
 
-      await db.insertPart(PartRecordsCompanion.insert(
+      await insertIfMissing(PartRecordsCompanion.insert(
         motoId: drift.Value(moto?.id),
         name: part['name'] as String,
         intervalKm: part['intervalKm'] as int,
@@ -114,7 +124,7 @@ class PartsScreen extends ConsumerWidget {
 
     for (final part in transmParts) {
       final category = part['category'] as String;
-      await db.insertPart(PartRecordsCompanion.insert(
+      await insertIfMissing(PartRecordsCompanion.insert(
         motoId: drift.Value(moto?.id),
         name: part['name'] as String,
         intervalKm: part['intervalKm'] as int,
@@ -131,7 +141,7 @@ class PartsScreen extends ConsumerWidget {
 
     // 2T autolube: agregar seguimiento del depósito de aceite
     if (engineType == '2T' && twoStrokeMethod == 'autolube') {
-      await db.insertPart(PartRecordsCompanion.insert(
+      await insertIfMissing(PartRecordsCompanion.insert(
         motoId: drift.Value(moto?.id),
         name: 'Aceite 2T (depósito autolube)',
         intervalKm: 3000,
@@ -148,7 +158,7 @@ class PartsScreen extends ConsumerWidget {
 
     // 2T premix: agregar nota de mezcla
     if (engineType == '2T' && twoStrokeMethod == 'premix') {
-      await db.insertPart(PartRecordsCompanion.insert(
+      await insertIfMissing(PartRecordsCompanion.insert(
         motoId: drift.Value(moto?.id),
         name: 'Aceite 2T premezclado (cada carga de gasolina)',
         intervalKm: 500,
@@ -165,7 +175,7 @@ class PartsScreen extends ConsumerWidget {
 
     // Refrigeración líquida: agregar líquido refrigerante
     if (coolingType == 'liquid') {
-      await db.insertPart(PartRecordsCompanion.insert(
+      await insertIfMissing(PartRecordsCompanion.insert(
         motoId: drift.Value(moto?.id),
         name: 'Líquido refrigerante',
         intervalKm: 25000,
@@ -206,7 +216,9 @@ class _PartCard extends StatelessWidget {
 
   bool get _isPermanent => part.filterType == 'permanent';
   int get _remaining => (part.lastChangedKm + part.intervalKm) - currentKm;
-  double get _progress => ((currentKm - part.lastChangedKm) / part.intervalKm).clamp(0.0, 1.0);
+  double get _progress => part.intervalKm <= 0
+      ? 0.0
+      : ((currentKm - part.lastChangedKm) / part.intervalKm).clamp(0.0, 1.0);
 
   Color get _statusColor {
     if (_isPermanent) return AppTheme.textSecondary;
@@ -403,6 +415,7 @@ class _PartCard extends StatelessWidget {
                 changedAt: DateTime.now(),
                 cost: drift.Value(cost),
               ));
+              await db.updateMotoCurrentKmIfGreater(motoId, km);
               if (ctx.mounted) {
                 Navigator.pop(ctx);
                 // Si es cadena, ofrecer cambio de piñón/corona
@@ -415,7 +428,10 @@ class _PartCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      kmCtrl.dispose();
+      costCtrl.dispose();
+    });
   }
 
   void _showComboChangeDialog(BuildContext context, int km) {
@@ -434,9 +450,13 @@ class _PartCard extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              // Buscar y actualizar piñón y corona
-              final sprockets = await db.getPartsByCategory(motoId, 'sprocket');
-              for (final s in sprockets) {
+              // Buscar y actualizar piñón, corona y gomas del porta corona.
+              final parts = await db.watchParts(motoId).first;
+              final comboParts = parts.where((p) {
+                final name = p.name.toLowerCase();
+                return p.partCategory == 'sprocket' || name.contains('porta corona');
+              });
+              for (final s in comboParts) {
                 await db.updatePart(s.copyWith(
                   lastChangedKm: km,
                   lastChangedDate: DateTime.now(),
@@ -451,7 +471,7 @@ class _PartCard extends StatelessWidget {
               }
               if (ctx.mounted) {
                 ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Piñón y corona actualizados')),
+                  const SnackBar(content: Text('Transmisión actualizada')),
                 );
               }
             },
@@ -492,6 +512,14 @@ class _AddPartSheetState extends State<_AddPartSheet> {
     super.initState();
     final compatible = AppConstants.compatibleTireTypes(widget.rimType);
     _tireType = compatible.contains('standard') ? 'standard' : compatible.first;
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _intervalCtrl.dispose();
+    _lastKmCtrl.dispose();
+    super.dispose();
   }
 
   @override

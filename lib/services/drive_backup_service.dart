@@ -22,7 +22,8 @@ class DriveBackupService {
       q: "name='$_fileName'",
       $fields: 'files(id)',
     );
-    return list.files?.firstOrNull?.id;
+    final files = list.files;
+    return files == null || files.isEmpty ? null : files.first.id;
   }
 
   /// Devuelve la fecha de modificación del respaldo en Drive, o null si no existe.
@@ -37,7 +38,8 @@ class DriveBackupService {
         q: "name='$_fileName'",
         $fields: 'files(id,modifiedTime)',
       );
-      return list.files?.firstOrNull?.modifiedTime;
+      final files = list.files;
+      return files == null || files.isEmpty ? null : files.first.modifiedTime;
     } catch (_) {
       return null;
     } finally {

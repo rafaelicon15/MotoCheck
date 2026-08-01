@@ -102,7 +102,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Tu historial de mantenimiento,\nsempre contigo.',
+                'Tu historial de mantenimiento,\nsiempre contigo.',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 15,

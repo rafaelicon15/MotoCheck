@@ -159,8 +159,42 @@ class AppDatabase extends _$AppDatabase {
   Future<bool> updateMoto(MotoProfileData m) =>
       update(motoProfile).replace(m);
 
-  Future<int> deleteMoto(int id) =>
-      (delete(motoProfile)..where((t) => t.id.equals(id))).go();
+  Future<void> updateMotoCurrentKmIfGreater(int? motoId, int currentKm) async {
+    if (motoId == null) return;
+    final moto = await (select(motoProfile)..where((t) => t.id.equals(motoId)))
+        .getSingleOrNull();
+    if (moto == null || currentKm <= moto.currentKm) return;
+
+    await updateMoto(moto.copyWith(
+      currentKm: currentKm,
+      updatedAt: DateTime.now(),
+    ));
+  }
+
+  Future<int> deleteMoto(int id) async {
+    return transaction(() async {
+      final moto = await (select(motoProfile)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+      final deleted = await (delete(motoProfile)..where((t) => t.id.equals(id))).go();
+
+      await (delete(partHistory)..where((t) => t.motoId.equals(id))).go();
+      await (delete(partRecords)..where((t) => t.motoId.equals(id))).go();
+      await (delete(maintenanceRecords)..where((t) => t.motoId.equals(id))).go();
+      await (delete(fuelRecords)..where((t) => t.motoId.equals(id))).go();
+
+      if (moto?.isActive == true) {
+        final nextMoto = await (select(motoProfile)
+              ..orderBy([(t) => OrderingTerm.asc(t.id)])
+              ..limit(1))
+            .getSingleOrNull();
+        if (nextMoto != null) {
+          await setActiveMoto(nextMoto.id);
+        }
+      }
+
+      return deleted;
+    });
+  }
 
   // ─── Fuel ──────────────────────────────────────────────────────────────────
 
@@ -381,6 +415,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(maintenanceRecords).go();
       await delete(fuelRecords).go();
       await delete(motoProfile).go();
+      await delete(appSettings).go();
 
       for (final raw in (data['motos'] as List<dynamic>)) {
         final m = raw as Map<String, dynamic>;

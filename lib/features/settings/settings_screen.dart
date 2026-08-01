@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/database/app_database.dart';
 import '../../services/drive_backup_service.dart';
 import '../../services/google_auth_service.dart';
 import '../../shared/providers/database_provider.dart';
@@ -51,7 +53,7 @@ class SettingsScreen extends ConsumerWidget {
 // ─── Google Drive Backup Card ─────────────────────────────────────────────────
 
 class _DriveBackupCard extends ConsumerStatefulWidget {
-  final dynamic db;
+  final AppDatabase db;
   const _DriveBackupCard({required this.db});
 
   @override
@@ -65,6 +67,7 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
   Future<void> _signIn() async {
     setState(() => _loading = true);
     final ok = await ref.read(googleAccountProvider.notifier).signIn();
+    if (!mounted) return;
     setState(() {
       _loading = false;
       _status = ok ? null : 'No se pudo conectar con Google';
@@ -220,7 +223,7 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
     );
   }
 
-  Widget _buildConnected(dynamic account) {
+  Widget _buildConnected(GoogleSignInAccount account) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

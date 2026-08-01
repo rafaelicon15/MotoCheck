@@ -311,6 +311,16 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
   DateTime _date = DateTime.now();
 
   @override
+  void dispose() {
+    _litersCtrl.dispose();
+    _kmCtrl.dispose();
+    _priceCtrl.dispose();
+    _notesCtrl.dispose();
+    _octaneBrandCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 16),
@@ -506,6 +516,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
       notes: drift.Value(_notesCtrl.text.isEmpty ? null : _notesCtrl.text),
       isFull: drift.Value(_isFull),
     ));
+    await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, km);
 
     if (mounted) Navigator.pop(context);
   }
@@ -526,8 +537,8 @@ class _OctaneComparisonCard extends StatelessWidget {
       final curr = sorted[i];
       if (!prev.isFull || !curr.isFull) continue; // solo llenados completos
       final kmDiff = curr.odometerKm - prev.odometerKm;
-      if (kmDiff <= 0 || prev.liters <= 0) continue;
-      final kml = kmDiff / prev.liters;
+      if (kmDiff <= 0 || curr.liters <= 0) continue;
+      final kml = kmDiff / curr.liters;
       if (!_isKmlValid(kml)) continue; // excluir anomalías
       final key = prev.usedOctaneBooster && prev.octaneBrand != null
           ? '+ ${prev.octaneBrand}'
@@ -615,8 +626,8 @@ class _EfficiencyChart extends StatelessWidget {
       final curr = sorted[i];
       if (!prev.isFull || !curr.isFull) continue;
       final kmDiff = curr.odometerKm - prev.odometerKm;
-      if (kmDiff <= 0 || prev.liters <= 0) continue;
-      final kml = kmDiff / prev.liters;
+      if (kmDiff <= 0 || curr.liters <= 0) continue;
+      final kml = kmDiff / curr.liters;
       if (!_isKmlValid(kml)) continue;
       result.add({'index': i.toDouble(), 'kml': kml});
     }
@@ -706,8 +717,8 @@ class _SummaryRow extends StatelessWidget {
       final curr = sorted[i];
       if (!prev.isFull || !curr.isFull) continue;
       final kmDiff = curr.odometerKm - prev.odometerKm;
-      if (kmDiff > 0 && prev.liters > 0) {
-        final kml = kmDiff / prev.liters;
+      if (kmDiff > 0 && curr.liters > 0) {
+        final kml = kmDiff / curr.liters;
         if (_isKmlValid(kml)) {
           totalKml += kml;
           count++;
@@ -785,7 +796,7 @@ class _FuelCard extends StatelessWidget {
       final prev = sorted[idx - 1];
       prevIsFull = prev.isFull;
       final d = record.odometerKm - prev.odometerKm;
-      if (d > 0 && prev.liters > 0) rawKml = d / prev.liters;
+      if (d > 0 && record.liters > 0) rawKml = d / record.liters;
     }
 
     final isPartial = !record.isFull;
