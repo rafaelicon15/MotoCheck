@@ -575,6 +575,10 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                 DropdownMenuItem(value: 'chain', child: Text('Cadena')),
                 DropdownMenuItem(value: 'sprocket', child: Text('Piñón / Corona')),
                 DropdownMenuItem(value: 'clutch', child: Text('Clutch / Crochera')),
+                DropdownMenuItem(value: 'engine_timing', child: Text('Distribución / tiempo')),
+                DropdownMenuItem(value: 'valvetrain', child: Text('Tren de válvulas')),
+                DropdownMenuItem(value: 'engine_internal', child: Text('Motor interno')),
+                DropdownMenuItem(value: 'gasket', child: Text('Empaques / retenes')),
                 DropdownMenuItem(value: 'fork', child: Text('Barras / Suspensión delantera')),
                 DropdownMenuItem(value: 'bearing', child: Text('Rodamiento')),
                 DropdownMenuItem(value: 'electrical', child: Text('Eléctrico / Encendido')),
@@ -595,6 +599,14 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   _intervalCtrl.text = '25000';
                 } else if (_category == 'electrical' && _intervalCtrl.text.isEmpty) {
                   _intervalCtrl.text = '40000';
+                } else if (_category == 'engine_timing' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '40000';
+                } else if (_category == 'valvetrain' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '40000';
+                } else if (_category == 'engine_internal' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '50000';
+                } else if (_category == 'gasket' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '30000';
                 }
               }),
             ),
@@ -738,6 +750,8 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   DropdownMenuItem(value: 'Dirección', child: Text('Dirección')),
                   DropdownMenuItem(value: 'Tijera / basculante', child: Text('Tijera / basculante')),
                   DropdownMenuItem(value: 'Motor', child: Text('Motor')),
+                  DropdownMenuItem(value: 'Culata / cámara', child: Text('Culata / cámara')),
+                  DropdownMenuItem(value: 'Distribución / tiempo', child: Text('Distribución / tiempo')),
                   DropdownMenuItem(value: 'Crochera / clutch', child: Text('Crochera / clutch')),
                   DropdownMenuItem(value: 'Sistema eléctrico', child: Text('Sistema eléctrico')),
                   DropdownMenuItem(value: 'Suspensión delantera', child: Text('Suspensión delantera')),

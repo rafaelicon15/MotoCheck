@@ -36,6 +36,9 @@ Fecha: 2026-08-01
 - Registrar un mantenimiento ahora actualiza automaticamente las refacciones relacionadas cuando existen para esa moto.
 - El alta, baja o cambio de registros intenta respaldar automaticamente en Google Drive si hay cuenta conectada.
 - Nueva refaccion permite clasificar rodamientos y otras partes por ubicacion, y barras por tipo convencional/invertida.
+- Se agregaron piezas y servicios de distribucion/tren de valvulas: arbol de levas, cadena de tiempo, tensor, guias/patines, balancines, pastillas/shims, valvulas, retenes y empaque de tapa de valvulas.
+- Los servicios de distribucion/tren de valvulas actualizan automaticamente las refacciones asociadas cuando se registra mantenimiento.
+- Se agregaron piezas de motor interno para 2T/4T: piston, anillos/segmentos, cilindro/camisa, biela, ciguenal, retenes de ciguenal, bomba de aceite y bomba de agua/refrigerante.
 
 ## Riesgos pendientes
 

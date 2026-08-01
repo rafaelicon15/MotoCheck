@@ -349,6 +349,9 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
             i != 'Cambio de aceite' &&
             i != 'Cambio de filtro de aceite' &&
             !i.startsWith('Calibración de válvulas')).toList();
+        if (cat.key == 'Distribución / tren de válvulas') {
+          items = const [];
+        }
       }
 
       // Para transmisión no-cadena: quitar lubricación y limpieza de cadena

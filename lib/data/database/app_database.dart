@@ -308,15 +308,28 @@ class AppDatabase extends _$AppDatabase {
         if (lower.contains('buj')) return hasAny(name, ['buj']);
         if (lower.contains('filtro de aire')) return hasAny(name, ['filtro de aire']);
         if (lower.contains('filtro de gasolina')) return category == 'fuel_filter';
+        if (lower.contains('empaque tapa de válvulas') ||
+            lower.contains('empaque tapa de valvulas')) {
+          return category == 'gasket' && hasAny(name, ['tapa de válvulas', 'tapa de valvulas']);
+        }
         if (lower.contains('líquido de frenos') || lower.contains('liquido de frenos')) {
           return hasAny(name, ['líquido de frenos', 'liquido de frenos']);
         }
-        if (lower.contains('pastillas')) return part.brakeType == 'pads';
+        if (lower.contains('pastillas') &&
+            !lower.contains('válvula') &&
+            !lower.contains('valvula') &&
+            !lower.contains('shims')) {
+          return part.brakeType == 'pads';
+        }
         if (lower.contains('bandas')) return part.brakeType == 'bands';
         if (lower.contains('piñón') || lower.contains('pinon') || lower.contains('corona')) {
           return category == 'sprocket' || hasAny(name, ['piñón', 'pinon', 'corona']);
         }
-        if (lower.contains('cadena') && lower.contains('cambio')) return category == 'chain';
+        if (lower.contains('cadena') &&
+            lower.contains('cambio') &&
+            !lower.contains('cadena de tiempo')) {
+          return category == 'chain';
+        }
 
         if (lower.contains('discos de clutch') || lower.contains('discos de crochet')) {
           return category == 'clutch' && hasAny(name, ['discos']);
@@ -335,6 +348,72 @@ class AppDatabase extends _$AppDatabase {
         }
         if (lower.contains('resortes de clutch')) {
           return category == 'clutch' && hasAny(name, ['resortes']);
+        }
+
+        if (lower.contains('árbol de levas') || lower.contains('arbol de levas')) {
+          return category == 'engine_timing' && hasAny(name, ['árbol de levas', 'arbol de levas']);
+        }
+        if (lower.contains('tensor de cadena de tiempo')) {
+          return category == 'engine_timing' && hasAny(name, ['tensor']);
+        }
+        if (lower.contains('guías') ||
+            lower.contains('guias') ||
+            lower.contains('patines')) {
+          return category == 'engine_timing' && hasAny(name, ['guías', 'guias', 'patines']);
+        }
+        if (lower.contains('cadena de tiempo')) {
+          return category == 'engine_timing' && name == 'cadena de tiempo';
+        }
+        if (lower.contains('balancines') || lower.contains('seguidores')) {
+          return category == 'valvetrain' && hasAny(name, ['balancines', 'seguidores']);
+        }
+        if (lower.contains('pastillas') || lower.contains('shims')) {
+          return category == 'valvetrain' && hasAny(name, ['pastillas', 'shims']);
+        }
+        if (lower.contains('válvulas de admisión') ||
+            lower.contains('valvulas de admision')) {
+          return category == 'valvetrain' && hasAny(name, ['admisión', 'admision']);
+        }
+        if (lower.contains('válvulas de escape') ||
+            lower.contains('valvulas de escape')) {
+          return category == 'valvetrain' && hasAny(name, ['escape']);
+        }
+        if (lower.contains('retenes de válvula') ||
+            lower.contains('retenes de valvula')) {
+          return category == 'valvetrain' && hasAny(name, ['retenes']);
+        }
+        if (lower.contains('calibración de válvulas') ||
+            lower.contains('calibracion de valvulas') ||
+            lower.contains('puntería') ||
+            lower.contains('punteria')) {
+          return category == 'valvetrain' &&
+              hasAny(name, ['pastillas', 'shims', 'balancines', 'seguidores']);
+        }
+
+        if (lower.contains('pistón') || lower.contains('piston')) {
+          return category == 'engine_internal' && hasAny(name, ['pistón', 'piston']);
+        }
+        if (lower.contains('anillos') || lower.contains('segmentos')) {
+          return category == 'engine_internal' && hasAny(name, ['anillos', 'segmentos']);
+        }
+        if (lower.contains('cilindro') || lower.contains('camisa')) {
+          return category == 'engine_internal' && hasAny(name, ['cilindro', 'camisa']);
+        }
+        if (lower.contains('biela')) {
+          return category == 'engine_internal' && hasAny(name, ['biela']);
+        }
+        if (lower.contains('retenes de cigüeñal') ||
+            lower.contains('retenes de ciguenal')) {
+          return category == 'engine_internal' && hasAny(name, ['retenes']);
+        }
+        if (lower.contains('cigüeñal') || lower.contains('ciguenal')) {
+          return category == 'engine_internal' && name == 'cigüeñal';
+        }
+        if (lower.contains('bomba de aceite')) {
+          return category == 'engine_internal' && hasAny(name, ['bomba de aceite']);
+        }
+        if (lower.contains('bomba de agua') || lower.contains('refrigerante')) {
+          return category == 'engine_internal' && hasAny(name, ['bomba de agua', 'refrigerante']);
         }
 
         if (lower.contains('retenes de barras')) return category == 'fork' && hasAny(name, ['reten']);
