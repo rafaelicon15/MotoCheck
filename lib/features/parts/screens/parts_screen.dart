@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/database/app_database.dart';
+import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
@@ -189,6 +190,7 @@ class PartsScreen extends ConsumerWidget {
         requiresComboChange: drift.Value(false),
       ));
     }
+    await DriveBackupService.backupIfSignedIn(db);
   }
 
   void _showAddPart(BuildContext context, AppDatabase db, int? motoId, String rimType) {
@@ -234,11 +236,16 @@ class _PartCard extends StatelessWidget {
       case 'fuel_filter': return '⛽';
       case 'chain': return '⛓️';
       case 'sprocket': return '⚙️';
+      case 'clutch': return '🧩';
+      case 'fork': return '🔱';
+      case 'bearing': return '◎';
+      case 'electrical': return '⚡';
       case 'brake_front':
       case 'brake_rear': return '🛑';
       case 'tire': return '🛞';
       case 'sealant': return '💧';
       case 'coolant': return '🌡';
+      case 'other': return '🔧';
       default: return '🔩';
     }
   }
@@ -366,7 +373,10 @@ class _PartCard extends StatelessWidget {
           const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
-            onPressed: () => db.deletePart(part.id),
+            onPressed: () async {
+              await db.deletePart(part.id);
+              await DriveBackupService.backupIfSignedIn(db);
+            },
           ),
         ]),
       ]),
@@ -416,6 +426,7 @@ class _PartCard extends StatelessWidget {
                 cost: drift.Value(cost),
               ));
               await db.updateMotoCurrentKmIfGreater(motoId, km);
+              await DriveBackupService.backupIfSignedIn(db);
               if (ctx.mounted) {
                 Navigator.pop(ctx);
                 // Si es cadena, ofrecer cambio de piñón/corona
@@ -469,6 +480,7 @@ class _PartCard extends StatelessWidget {
                   changedAt: DateTime.now(),
                 ));
               }
+              await DriveBackupService.backupIfSignedIn(db);
               if (ctx.mounted) {
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   const SnackBar(content: Text('Transmisión actualizada')),
@@ -505,6 +517,8 @@ class _AddPartSheetState extends State<_AddPartSheet> {
   String _brakeType = 'pads';
   late String _tireType;
   String _chainType = 'standard';
+  String _partLocation = 'General';
+  String _forkType = 'Convencionales';
   bool _isPermanentFilter = false;
 
   @override
@@ -520,6 +534,16 @@ class _AddPartSheetState extends State<_AddPartSheet> {
     _intervalCtrl.dispose();
     _lastKmCtrl.dispose();
     super.dispose();
+  }
+
+  String _displayName() {
+    final base = _nameCtrl.text.trim();
+    if (_category == 'fork') return '$base ($_forkType)';
+    if ((_category == 'bearing' || _category == 'other') &&
+        _partLocation != 'General') {
+      return '$base - $_partLocation';
+    }
+    return base;
   }
 
   @override
@@ -550,13 +574,29 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                 DropdownMenuItem(value: 'fuel_filter', child: Text('Filtro de gasolina')),
                 DropdownMenuItem(value: 'chain', child: Text('Cadena')),
                 DropdownMenuItem(value: 'sprocket', child: Text('Piñón / Corona')),
+                DropdownMenuItem(value: 'clutch', child: Text('Clutch / Crochera')),
+                DropdownMenuItem(value: 'fork', child: Text('Barras / Suspensión delantera')),
+                DropdownMenuItem(value: 'bearing', child: Text('Rodamiento')),
+                DropdownMenuItem(value: 'electrical', child: Text('Eléctrico / Encendido')),
                 DropdownMenuItem(value: 'brake_front', child: Text('Freno delantero')),
                 DropdownMenuItem(value: 'brake_rear', child: Text('Freno trasero')),
                 DropdownMenuItem(value: 'tire', child: Text('Llanta')),
                 DropdownMenuItem(value: 'sealant', child: Text('Antipinchazo / Slime')),
                 DropdownMenuItem(value: 'coolant', child: Text('Líquido refrigerante')),
+                DropdownMenuItem(value: 'other', child: Text('Otras partes')),
               ],
-              onChanged: (v) => setState(() => _category = v!),
+              onChanged: (v) => setState(() {
+                _category = v!;
+                if (_category == 'clutch' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '30000';
+                } else if (_category == 'fork' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '15000';
+                } else if (_category == 'bearing' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '25000';
+                } else if (_category == 'electrical' && _intervalCtrl.text.isEmpty) {
+                  _intervalCtrl.text = '40000';
+                }
+              }),
             ),
             const SizedBox(height: 12),
 
@@ -665,6 +705,49 @@ class _AddPartSheetState extends State<_AddPartSheet> {
               const SizedBox(height: 12),
             ],
 
+            if (_category == 'fork') ...[
+              const Text('Tipo de barras',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(child: _OptionButton(
+                  label: 'Convencionales',
+                  selected: _forkType == 'Convencionales',
+                  onTap: () => setState(() => _forkType = 'Convencionales'),
+                )),
+                const SizedBox(width: 10),
+                Expanded(child: _OptionButton(
+                  label: 'Invertidas',
+                  selected: _forkType == 'Invertidas',
+                  onTap: () => setState(() => _forkType = 'Invertidas'),
+                )),
+              ]),
+              const SizedBox(height: 12),
+            ],
+
+            if (_category == 'bearing' || _category == 'other') ...[
+              DropdownButtonFormField<String>(
+                initialValue: _partLocation,
+                decoration: const InputDecoration(labelText: 'Dónde va'),
+                dropdownColor: AppTheme.surface,
+                style: const TextStyle(color: AppTheme.textPrimary),
+                items: const [
+                  DropdownMenuItem(value: 'General', child: Text('General')),
+                  DropdownMenuItem(value: 'Rueda delantera', child: Text('Rueda delantera')),
+                  DropdownMenuItem(value: 'Rueda trasera', child: Text('Rueda trasera')),
+                  DropdownMenuItem(value: 'Dirección', child: Text('Dirección')),
+                  DropdownMenuItem(value: 'Tijera / basculante', child: Text('Tijera / basculante')),
+                  DropdownMenuItem(value: 'Motor', child: Text('Motor')),
+                  DropdownMenuItem(value: 'Crochera / clutch', child: Text('Crochera / clutch')),
+                  DropdownMenuItem(value: 'Sistema eléctrico', child: Text('Sistema eléctrico')),
+                  DropdownMenuItem(value: 'Suspensión delantera', child: Text('Suspensión delantera')),
+                  DropdownMenuItem(value: 'Suspensión trasera', child: Text('Suspensión trasera')),
+                ],
+                onChanged: (v) => setState(() => _partLocation = v!),
+              ),
+              const SizedBox(height: 12),
+            ],
+
             // Tipo de llanta
             if (_category == 'tire') ...[
               const Text('Configuración de la llanta',
@@ -767,9 +850,10 @@ class _AddPartSheetState extends State<_AddPartSheet> {
               onPressed: () async {
                 if (_nameCtrl.text.isEmpty) return;
                 final navigator = Navigator.of(context);
+                final partName = _displayName();
                 await widget.db.insertPart(PartRecordsCompanion.insert(
                   motoId: drift.Value(widget.motoId),
-                  name: _nameCtrl.text,
+                  name: partName,
                   intervalKm: int.tryParse(_intervalCtrl.text) ?? 5000,
                   lastChangedKm: int.tryParse(_lastKmCtrl.text) ?? 0,
                   lastChangedDate: DateTime.now(),
@@ -781,6 +865,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   chainType: drift.Value(_category == 'chain' ? _chainType : null),
                   requiresComboChange: drift.Value(_category == 'chain'),
                 ));
+                await DriveBackupService.backupIfSignedIn(widget.db);
                 if (mounted) navigator.pop();
               },
               child: const Text('Guardar'),
@@ -797,6 +882,18 @@ class _BrakeTypeBtn extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   const _BrakeTypeBtn({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return _OptionButton(label: label, selected: selected, onTap: onTap);
+  }
+}
+
+class _OptionButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _OptionButton({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -951,7 +1048,10 @@ class _HistoryEntry extends StatelessWidget {
             ),
           const SizedBox(height: 2),
           GestureDetector(
-            onTap: () => db.deletePartHistory(entry.id),
+            onTap: () async {
+              await db.deletePartHistory(entry.id);
+              await DriveBackupService.backupIfSignedIn(db);
+            },
             child: const Icon(Icons.close,
                 color: AppTheme.textSecondary, size: 14),
           ),

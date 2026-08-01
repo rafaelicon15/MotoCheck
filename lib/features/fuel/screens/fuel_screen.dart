@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/database/app_database.dart';
+import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
@@ -517,6 +518,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
       isFull: drift.Value(_isFull),
     ));
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, km);
+    await DriveBackupService.backupIfSignedIn(widget.db);
 
     if (mounted) Navigator.pop(context);
   }
@@ -896,7 +898,10 @@ class _FuelCard extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.delete_outline,
               color: AppTheme.danger, size: 20),
-          onPressed: () => db.deleteFuelRecord(record.id),
+          onPressed: () async {
+            await db.deleteFuelRecord(record.id);
+            await DriveBackupService.backupIfSignedIn(db);
+          },
         ),
       ]),
     );

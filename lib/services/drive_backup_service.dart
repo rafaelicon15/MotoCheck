@@ -3,9 +3,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import '../data/database/app_database.dart';
+import 'google_auth_service.dart';
 
 class DriveBackupService {
   static const _fileName = 'motocheck_backup.json';
+  static const lastBackupSettingKey = 'last_backup_time';
 
   // ── Cliente HTTP autenticado con las credenciales de la cuenta Google ──────
 
@@ -78,8 +80,20 @@ class DriveBackupService {
           uploadMedia: media,
         );
       }
+      await db.setSetting(lastBackupSettingKey, DateTime.now().toIso8601String());
     } finally {
       client.close();
+    }
+  }
+
+  static Future<void> backupIfSignedIn(AppDatabase db) async {
+    final account = googleSignInInstance.currentUser;
+    if (account == null) return;
+
+    try {
+      await backup(db: db, account: account);
+    } catch (_) {
+      // Auto-backup must never block local data changes.
     }
   }
 

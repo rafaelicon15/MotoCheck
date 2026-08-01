@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/database/app_database.dart';
+import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
@@ -433,7 +434,15 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
       oilViscosity: drift.Value(_hasOilChange ? _oilViscosity : null),
       maintenanceItems: drift.Value(itemsStr),
     ));
+    await widget.db.markPartsServicedFromMaintenance(
+      motoId: widget.motoId,
+      maintenanceItems: _selectedItems,
+      odometerKm: odometerKm,
+      changedAt: _date,
+      cost: double.tryParse(_costCtrl.text),
+    );
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, odometerKm);
+    await DriveBackupService.backupIfSignedIn(widget.db);
     if (mounted) Navigator.pop(context);
   }
 }
@@ -610,7 +619,10 @@ class _MaintenanceCard extends StatelessWidget {
           ])),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
-            onPressed: () => db.deleteMaintenance(record.id),
+            onPressed: () async {
+              await db.deleteMaintenance(record.id);
+              await DriveBackupService.backupIfSignedIn(db);
+            },
           ),
         ]),
 

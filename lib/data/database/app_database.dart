@@ -274,6 +274,132 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  Future<int> markPartsServicedFromMaintenance({
+    required int? motoId,
+    required Iterable<String> maintenanceItems,
+    required int odometerKm,
+    required DateTime changedAt,
+    double? cost,
+  }) async {
+    if (motoId == null || odometerKm <= 0) return 0;
+
+    final parts = await (select(partRecords)
+          ..where((t) => t.isActive.equals(true) & t.motoId.equals(motoId)))
+        .get();
+    final matched = <int, PartRecord>{};
+
+    bool hasAny(String text, List<String> needles) {
+      final lower = text.toLowerCase();
+      return needles.any(lower.contains);
+    }
+
+    for (final item in maintenanceItems) {
+      final lower = item.toLowerCase();
+      bool matches(PartRecord part) {
+        final name = part.name.toLowerCase();
+        final category = part.partCategory;
+
+        if (lower == 'cambio de aceite') {
+          return category == 'oil' && hasAny(name, ['aceite del motor', 'aceite 2t']);
+        }
+        if (lower == 'cambio de filtro de aceite') {
+          return category == 'oil_filter' && part.filterType != 'permanent';
+        }
+        if (lower.contains('buj')) return hasAny(name, ['buj']);
+        if (lower.contains('filtro de aire')) return hasAny(name, ['filtro de aire']);
+        if (lower.contains('filtro de gasolina')) return category == 'fuel_filter';
+        if (lower.contains('líquido de frenos') || lower.contains('liquido de frenos')) {
+          return hasAny(name, ['líquido de frenos', 'liquido de frenos']);
+        }
+        if (lower.contains('pastillas')) return part.brakeType == 'pads';
+        if (lower.contains('bandas')) return part.brakeType == 'bands';
+        if (lower.contains('piñón') || lower.contains('pinon') || lower.contains('corona')) {
+          return category == 'sprocket' || hasAny(name, ['piñón', 'pinon', 'corona']);
+        }
+        if (lower.contains('cadena') && lower.contains('cambio')) return category == 'chain';
+
+        if (lower.contains('discos de clutch') || lower.contains('discos de crochet')) {
+          return category == 'clutch' && hasAny(name, ['discos']);
+        }
+        if (lower.contains('separadores')) {
+          return category == 'clutch' && hasAny(name, ['separadores']);
+        }
+        if (lower.contains('estrella') || lower.contains('plato prensador')) {
+          return category == 'clutch' && hasAny(name, ['estrella', 'plato prensador']);
+        }
+        if (lower.contains('campana') || lower.contains('canasta')) {
+          return category == 'clutch' && hasAny(name, ['campana', 'canasta']);
+        }
+        if (lower.contains('maza') || lower.contains('cubo')) {
+          return category == 'clutch' && hasAny(name, ['maza', 'cubo']);
+        }
+        if (lower.contains('resortes de clutch')) {
+          return category == 'clutch' && hasAny(name, ['resortes']);
+        }
+
+        if (lower.contains('retenes de barras')) return category == 'fork' && hasAny(name, ['reten']);
+        if (lower.contains('guardapolvos')) return category == 'fork' && hasAny(name, ['guardapolvo']);
+        if (lower.contains('aceite de barras')) return category == 'fork' && hasAny(name, ['aceite']);
+        if (lower.contains('bujes de barras')) return category == 'fork' && hasAny(name, ['bujes']);
+        if (lower.contains('mantenimiento de barras')) return category == 'fork';
+
+        if (lower.contains('rodamiento rueda delantera')) {
+          return category == 'bearing' && hasAny(name, ['delantera']);
+        }
+        if (lower.contains('rodamiento rueda trasera')) {
+          return category == 'bearing' && hasAny(name, ['trasera']);
+        }
+        if (lower.contains('rodamiento de dirección') || lower.contains('rodamiento de direccion')) {
+          return category == 'bearing' && hasAny(name, ['dirección', 'direccion']);
+        }
+        if (lower.contains('rodamiento tijera') || lower.contains('basculante')) {
+          return category == 'bearing' && hasAny(name, ['tijera', 'basculante']);
+        }
+
+        if (lower.contains('magneto') || lower.contains('estator')) {
+          return category == 'electrical' && hasAny(name, ['magneto', 'estator']);
+        }
+        if (lower.contains('cdi') || lower.contains('ecu')) {
+          return category == 'electrical' && hasAny(name, ['cdi', 'ecu']);
+        }
+        if (lower.contains('regulador') || lower.contains('rectificador')) {
+          return category == 'electrical' && hasAny(name, ['regulador', 'rectificador']);
+        }
+        if (lower.contains('bobina')) {
+          return category == 'electrical' && hasAny(name, ['bobina']);
+        }
+        if (lower.contains('capuchón') || lower.contains('capuchon')) {
+          return category == 'electrical' && hasAny(name, ['capuch']);
+        }
+
+        return false;
+      }
+
+      for (final part in parts.where(matches)) {
+        matched[part.id] = part;
+      }
+    }
+
+    for (final part in matched.values) {
+      await updatePart(part.copyWith(
+        lastChangedKm: odometerKm,
+        lastChangedDate: changedAt,
+        cost: Value(cost),
+      ));
+      await insertPartHistory(PartHistoryCompanion.insert(
+        partId: part.id,
+        motoId: Value(motoId),
+        partName: part.name,
+        km: odometerKm,
+        changedAt: changedAt,
+        cost: Value(cost),
+        notes: const Value('Actualizado desde mantenimiento'),
+      ));
+    }
+
+    return matched.length;
+  }
+
   Future<int> insertPart(PartRecordsCompanion part) =>
       into(partRecords).insert(part);
 

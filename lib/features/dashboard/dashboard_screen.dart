@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/database/app_database.dart';
+import '../../services/drive_backup_service.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/active_moto_provider.dart';
 
@@ -246,7 +247,10 @@ class _MotoSelectorCard extends ConsumerWidget {
                         ],
                       ),
                     );
-                    if (confirm == true) await db.deleteMoto(m.id);
+                    if (confirm == true) {
+                      await db.deleteMoto(m.id);
+                      await DriveBackupService.backupIfSignedIn(db);
+                    }
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
                 )),
@@ -588,6 +592,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
         updatedAt: DateTime.now(),
       ));
       if (existing == null) await db.setActiveMoto(newId);
+      await DriveBackupService.backupIfSignedIn(db);
     } else {
       await db.updateMoto(moto.copyWith(
         brand: brandCtrl.text,
@@ -608,6 +613,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
         rimType: rimType,
         updatedAt: DateTime.now(),
       ));
+      await DriveBackupService.backupIfSignedIn(db);
     }
     if (mounted) Navigator.pop(context);
   }

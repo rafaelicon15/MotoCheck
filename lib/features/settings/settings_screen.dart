@@ -9,8 +9,6 @@ import '../../services/google_auth_service.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/settings_provider.dart';
 
-const kLastBackupKey = 'last_backup_time';
-
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -37,6 +35,7 @@ class SettingsScreen extends ConsumerWidget {
               current: current,
               onSelect: (code) async {
                 await db.setSetting(kCurrencyKey, code);
+                await DriveBackupService.backupIfSignedIn(db);
               },
             ),
           ),
@@ -88,7 +87,6 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
     });
     try {
       await DriveBackupService.backup(db: widget.db, account: account);
-      await widget.db.setSetting(kLastBackupKey, DateTime.now().toIso8601String());
       if (mounted) {
         setState(() {
           _loading = false;
@@ -256,7 +254,9 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
         ]),
         const SizedBox(height: 16),
         FutureBuilder<String?>(
-          future: ref.read(databaseProvider).getSetting(kLastBackupKey),
+          future: ref
+              .read(databaseProvider)
+              .getSetting(DriveBackupService.lastBackupSettingKey),
           builder: (context, snap) {
             return Text(
               'Último respaldo: ${_formatDate(snap.data)}',

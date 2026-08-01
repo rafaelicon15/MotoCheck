@@ -31,6 +31,11 @@ Fecha: 2026-08-01
 - El cambio de cadena ahora puede actualizar piñon, corona y gomas porta corona, alineado con el texto del dialogo.
 - Se evito division por cero en el progreso de refacciones.
 - Se normalizo el nombre visible de la app como `MotoCheck` en Android e iOS.
+- Se agregaron categorias de mantenimiento para clutch/crochera, barras delanteras, rodamientos y sistema electrico/encendido.
+- Se agregaron refacciones base para discos/separadores/estrella de clutch, barras, rodamientos, magneto/estator, CDI/ECU y regulador/rectificador.
+- Registrar un mantenimiento ahora actualiza automaticamente las refacciones relacionadas cuando existen para esa moto.
+- El alta, baja o cambio de registros intenta respaldar automaticamente en Google Drive si hay cuenta conectada.
+- Nueva refaccion permite clasificar rodamientos y otras partes por ubicacion, y barras por tipo convencional/invertida.
 
 ## Riesgos pendientes
 
