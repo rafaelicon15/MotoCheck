@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+const _googleWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+
 final googleSignInInstance = GoogleSignIn(
+  clientId: _googleWebClientId.isEmpty ? null : _googleWebClientId,
   scopes: ['https://www.googleapis.com/auth/drive.appdata'],
 );
 

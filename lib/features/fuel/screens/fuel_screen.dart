@@ -293,7 +293,13 @@ class _AddFuelSheet extends StatefulWidget {
   final AppDatabase db;
   final int? motoId;
   final String currency;
-  const _AddFuelSheet({required this.db, required this.motoId, required this.currency});
+  final FuelRecord? record;
+  const _AddFuelSheet({
+    required this.db,
+    required this.motoId,
+    required this.currency,
+    this.record,
+  });
 
   @override
   State<_AddFuelSheet> createState() => _AddFuelSheetState();
@@ -310,6 +316,22 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
   bool _usedOctaneBooster = false;
   bool _isFull = true;
   DateTime _date = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    final record = widget.record;
+    if (record == null) return;
+    _litersCtrl.text = record.liters.toString();
+    _kmCtrl.text = record.odometerKm.toString();
+    _priceCtrl.text = record.pricePerLiter?.toString() ?? '';
+    _notesCtrl.text = record.notes ?? '';
+    _octaneBrandCtrl.text = record.octaneBrand ?? '';
+    _fuelType = record.fuelType;
+    _usedOctaneBooster = record.usedOctaneBooster;
+    _isFull = record.isFull;
+    _date = record.date;
+  }
 
   @override
   void dispose() {
@@ -333,7 +355,10 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
             Row(children: [
               const Icon(Icons.local_gas_station, color: AppTheme.fuel),
               const SizedBox(width: 8),
-              const Text('Nueva carga', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                widget.record == null ? 'Nueva carga' : 'Editar carga',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
             ]),
             const SizedBox(height: 20),
 
@@ -503,20 +528,39 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
     final km = int.tryParse(_kmCtrl.text);
     if (liters == null || km == null) return;
 
-    await widget.db.insertFuelRecord(FuelRecordsCompanion.insert(
-      motoId: drift.Value(widget.motoId),
-      date: _date,
-      liters: liters,
-      odometerKm: km,
-      fuelType: _fuelType,
-      pricePerLiter: drift.Value(double.tryParse(_priceCtrl.text)),
-      usedOctaneBooster: drift.Value(_usedOctaneBooster),
-      octaneBrand: drift.Value(_usedOctaneBooster && _octaneBrandCtrl.text.isNotEmpty
-          ? _octaneBrandCtrl.text.trim()
-          : null),
-      notes: drift.Value(_notesCtrl.text.isEmpty ? null : _notesCtrl.text),
-      isFull: drift.Value(_isFull),
-    ));
+    final record = widget.record;
+    final price = double.tryParse(_priceCtrl.text);
+    final octaneBrand = _usedOctaneBooster && _octaneBrandCtrl.text.isNotEmpty
+        ? _octaneBrandCtrl.text.trim()
+        : null;
+    final notes = _notesCtrl.text.isEmpty ? null : _notesCtrl.text;
+
+    if (record == null) {
+      await widget.db.insertFuelRecord(FuelRecordsCompanion.insert(
+        motoId: drift.Value(widget.motoId),
+        date: _date,
+        liters: liters,
+        odometerKm: km,
+        fuelType: _fuelType,
+        pricePerLiter: drift.Value(price),
+        usedOctaneBooster: drift.Value(_usedOctaneBooster),
+        octaneBrand: drift.Value(octaneBrand),
+        notes: drift.Value(notes),
+        isFull: drift.Value(_isFull),
+      ));
+    } else {
+      await widget.db.updateFuelRecord(record.copyWith(
+        date: _date,
+        liters: liters,
+        odometerKm: km,
+        fuelType: _fuelType,
+        pricePerLiter: drift.Value(price),
+        usedOctaneBooster: _usedOctaneBooster,
+        octaneBrand: drift.Value(octaneBrand),
+        notes: drift.Value(notes),
+        isFull: _isFull,
+      ));
+    }
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, km);
     await DriveBackupService.backupIfSignedIn(widget.db);
 
@@ -895,14 +939,33 @@ class _FuelCard extends StatelessWidget {
                       color: AppTheme.textSecondary, fontSize: 12)),
           ]),
         ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline,
-              color: AppTheme.danger, size: 20),
-          onPressed: () async {
-            await db.deleteFuelRecord(record.id);
-            await DriveBackupService.backupIfSignedIn(db);
-          },
-        ),
+        Column(children: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined,
+                color: AppTheme.fuel, size: 20),
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppTheme.surface,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+              builder: (_) => _AddFuelSheet(
+                db: db,
+                motoId: record.motoId,
+                currency: currency,
+                record: record,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline,
+                color: AppTheme.danger, size: 20),
+            onPressed: () async {
+              await db.deleteFuelRecord(record.id);
+              await DriveBackupService.backupIfSignedIn(db);
+            },
+          ),
+        ]),
       ]),
     );
   }

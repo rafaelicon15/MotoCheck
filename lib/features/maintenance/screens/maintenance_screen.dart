@@ -21,6 +21,7 @@ class MaintenanceScreen extends ConsumerWidget {
     final engineType = moto?.engineType ?? '4T';
     final fuelSystem = moto?.fuelSystem ?? 'carb';
     final transmissionType = moto?.transmissionType ?? 'chain';
+    final currentKm = moto?.currentKm ?? 0;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mantenimientos')),
@@ -33,7 +34,15 @@ class MaintenanceScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: records.length,
             itemBuilder: (_, i) =>
-                _MaintenanceCard(record: records[i], db: db, currency: currency),
+                _MaintenanceCard(
+                  record: records[i],
+                  db: db,
+                  currency: currency,
+                  engineType: engineType,
+                  fuelSystem: fuelSystem,
+                  transmissionType: transmissionType,
+                  currentKm: currentKm,
+                ),
           );
         },
       ),
@@ -47,7 +56,7 @@ class MaintenanceScreen extends ConsumerWidget {
           builder: (_) => _AddMaintenanceSheet(
               db: db, motoId: moto?.id, currency: currency,
               engineType: engineType, fuelSystem: fuelSystem,
-              transmissionType: transmissionType),
+              transmissionType: transmissionType, currentKm: currentKm),
         ),
         icon: const Icon(Icons.add),
         label: const Text('Agregar servicio'),
@@ -65,13 +74,17 @@ class _AddMaintenanceSheet extends StatefulWidget {
   final String engineType;
   final String fuelSystem;
   final String transmissionType;
+  final int currentKm;
+  final MaintenanceRecord? record;
   const _AddMaintenanceSheet(
       {required this.db,
       required this.motoId,
       required this.currency,
       required this.engineType,
       required this.fuelSystem,
-      required this.transmissionType});
+      required this.transmissionType,
+      required this.currentKm,
+      this.record});
 
   @override
   State<_AddMaintenanceSheet> createState() => _AddMaintenanceSheetState();
@@ -94,6 +107,32 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
   bool get _hasOilChange =>
       _selectedItems.contains('Cambio de aceite') && widget.engineType == '4T';
   bool get _isEmpty => _selectedItems.isEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    final record = widget.record;
+    if (record == null) {
+      if (widget.currentKm > 0) {
+        _kmCtrl.text = widget.currentKm.toString();
+      }
+      return;
+    }
+    _descCtrl.text = record.description;
+    _kmCtrl.text = record.odometerKm.toString();
+    _costCtrl.text = record.cost?.toString() ?? '';
+    _workshopCtrl.text = record.workshop ?? '';
+    _notesCtrl.text = record.notes ?? '';
+    _nextKmCtrl.text = record.nextServiceKm?.toString() ?? '';
+    _selectedItems.addAll(record.maintenanceItems != null &&
+            record.maintenanceItems!.isNotEmpty
+        ? record.maintenanceItems!.split(',')
+        : [record.type]);
+    _date = record.date;
+    _nextDate = record.nextServiceDate;
+    _oilType = record.oilType;
+    _oilViscosity = record.oilViscosity;
+  }
 
   @override
   void dispose() {
@@ -128,8 +167,10 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
             Row(children: [
               const Icon(Icons.build, color: AppTheme.maintenance),
               const SizedBox(width: 8),
-              const Text('Nuevo servicio',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                widget.record == null ? 'Nuevo servicio' : 'Editar servicio',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
             ]),
             const SizedBox(height: 16),
 
@@ -413,7 +454,13 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
 
   Future<void> _save() async {
     if (_selectedItems.isEmpty) return;
-    final odometerKm = int.tryParse(_kmCtrl.text) ?? 0;
+    final odometerKm = int.tryParse(_kmCtrl.text) ?? widget.currentKm;
+    if (odometerKm <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Indica el kilometraje del servicio')),
+      );
+      return;
+    }
     final primaryType =
         _selectedItems.length == 1 ? _selectedItems.first : 'Mantenimiento general';
     final itemsStr = _selectedItems.join(',');
@@ -421,28 +468,51 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
         ? _selectedItems.join(' · ')
         : _descCtrl.text;
 
-    await widget.db.insertMaintenance(MaintenanceRecordsCompanion.insert(
-      motoId: drift.Value(widget.motoId),
-      date: _date,
-      odometerKm: odometerKm,
-      type: primaryType,
-      description: desc,
-      cost: drift.Value(double.tryParse(_costCtrl.text)),
-      workshop:
-          drift.Value(_workshopCtrl.text.isEmpty ? null : _workshopCtrl.text),
-      nextServiceDate: drift.Value(_nextDate),
-      nextServiceKm: drift.Value(int.tryParse(_nextKmCtrl.text)),
-      notes: drift.Value(_notesCtrl.text.isEmpty ? null : _notesCtrl.text),
-      oilType: drift.Value(_hasOilChange ? _oilType : null),
-      oilViscosity: drift.Value(_hasOilChange ? _oilViscosity : null),
-      maintenanceItems: drift.Value(itemsStr),
-    ));
+    final cost = double.tryParse(_costCtrl.text);
+    final workshop = _workshopCtrl.text.isEmpty ? null : _workshopCtrl.text;
+    final nextServiceKm = int.tryParse(_nextKmCtrl.text);
+    final notes = _notesCtrl.text.isEmpty ? null : _notesCtrl.text;
+    final oilType = _hasOilChange ? _oilType : null;
+    final oilViscosity = _hasOilChange ? _oilViscosity : null;
+    final record = widget.record;
+    if (record == null) {
+      await widget.db.insertMaintenance(MaintenanceRecordsCompanion.insert(
+        motoId: drift.Value(widget.motoId),
+        date: _date,
+        odometerKm: odometerKm,
+        type: primaryType,
+        description: desc,
+        cost: drift.Value(cost),
+        workshop: drift.Value(workshop),
+        nextServiceDate: drift.Value(_nextDate),
+        nextServiceKm: drift.Value(nextServiceKm),
+        notes: drift.Value(notes),
+        oilType: drift.Value(oilType),
+        oilViscosity: drift.Value(oilViscosity),
+        maintenanceItems: drift.Value(itemsStr),
+      ));
+    } else {
+      await widget.db.updateMaintenance(record.copyWith(
+        date: _date,
+        odometerKm: odometerKm,
+        type: primaryType,
+        description: desc,
+        cost: drift.Value(cost),
+        workshop: drift.Value(workshop),
+        nextServiceDate: drift.Value(_nextDate),
+        nextServiceKm: drift.Value(nextServiceKm),
+        notes: drift.Value(notes),
+        oilType: drift.Value(oilType),
+        oilViscosity: drift.Value(oilViscosity),
+        maintenanceItems: drift.Value(itemsStr),
+      ));
+    }
     await widget.db.markPartsServicedFromMaintenance(
       motoId: widget.motoId,
       maintenanceItems: _selectedItems,
       odometerKm: odometerKm,
       changedAt: _date,
-      cost: double.tryParse(_costCtrl.text),
+      cost: cost,
     );
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, odometerKm);
     await DriveBackupService.backupIfSignedIn(widget.db);
@@ -570,8 +640,19 @@ class _MaintenanceCard extends StatelessWidget {
   final MaintenanceRecord record;
   final AppDatabase db;
   final String currency;
-  const _MaintenanceCard(
-      {required this.record, required this.db, required this.currency});
+  final String engineType;
+  final String fuelSystem;
+  final String transmissionType;
+  final int currentKm;
+  const _MaintenanceCard({
+    required this.record,
+    required this.db,
+    required this.currency,
+    required this.engineType,
+    required this.fuelSystem,
+    required this.transmissionType,
+    required this.currentKm,
+  });
 
   List<String> get _items {
     if (record.maintenanceItems != null && record.maintenanceItems!.isNotEmpty) {
@@ -620,13 +701,37 @@ class _MaintenanceCard extends StatelessWidget {
                   style: const TextStyle(
                       color: AppTheme.textSecondary, fontSize: 11)),
           ])),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
-            onPressed: () async {
-              await db.deleteMaintenance(record.id);
-              await DriveBackupService.backupIfSignedIn(db);
-            },
-          ),
+          Column(children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined,
+                  color: AppTheme.maintenance, size: 20),
+              onPressed: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: AppTheme.surface,
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                builder: (_) => _AddMaintenanceSheet(
+                  db: db,
+                  motoId: record.motoId,
+                  currency: currency,
+                  engineType: engineType,
+                  fuelSystem: fuelSystem,
+                  transmissionType: transmissionType,
+                  currentKm: currentKm,
+                  record: record,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline,
+                  color: AppTheme.danger, size: 20),
+              onPressed: () async {
+                await db.deleteMaintenance(record.id);
+                await DriveBackupService.backupIfSignedIn(db);
+              },
+            ),
+          ]),
         ]),
 
         // Items como chips (si hay más de uno)

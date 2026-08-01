@@ -211,6 +211,9 @@ class AppDatabase extends _$AppDatabase {
   Future<int> insertFuelRecord(FuelRecordsCompanion record) =>
       into(fuelRecords).insert(record);
 
+  Future<bool> updateFuelRecord(FuelRecord record) =>
+      update(fuelRecords).replace(record);
+
   Future<int> deleteFuelRecord(int id) =>
       (delete(fuelRecords)..where((t) => t.id.equals(id))).go();
 
@@ -300,7 +303,7 @@ class AppDatabase extends _$AppDatabase {
         final category = part.partCategory;
 
         if (lower == 'cambio de aceite') {
-          return category == 'oil' && hasAny(name, ['aceite del motor', 'aceite 2t']);
+          return category == 'oil' || hasAny(name, ['aceite del motor', 'aceite 2t']);
         }
         if (lower == 'cambio de filtro de aceite') {
           return category == 'oil_filter' && part.filterType != 'permanent';
@@ -492,6 +495,9 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> insertPartHistory(PartHistoryCompanion entry) =>
       into(partHistory).insert(entry);
+
+  Future<bool> updatePartHistory(PartHistoryData entry) =>
+      update(partHistory).replace(entry);
 
   Stream<List<PartHistoryData>> watchPartHistory(int? motoId) {
     if (motoId == null) {

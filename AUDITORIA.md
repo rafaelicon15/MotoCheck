@@ -39,6 +39,10 @@ Fecha: 2026-08-01
 - Se agregaron piezas y servicios de distribucion/tren de valvulas: arbol de levas, cadena de tiempo, tensor, guias/patines, balancines, pastillas/shims, valvulas, retenes y empaque de tapa de valvulas.
 - Los servicios de distribucion/tren de valvulas actualizan automaticamente las refacciones asociadas cuando se registra mantenimiento.
 - Se agregaron piezas de motor interno para 2T/4T: piston, anillos/segmentos, cilindro/camisa, biela, ciguenal, retenes de ciguenal, bomba de aceite y bomba de agua/refrigerante.
+- El formulario de mantenimiento precarga el kilometraje actual para que los cambios de aceite y servicios actualicen las alertas de refacciones.
+- Se agrego edicion de cargas de combustible, mantenimientos, refacciones, historial de cambios y motos existentes.
+- Se agregaron assets web de Drift/SQLite para habilitar la base local en navegador.
+- Google Sign-In web queda preparado para recibir el client ID con `--dart-define=GOOGLE_WEB_CLIENT_ID=...`.
 
 ## Riesgos pendientes
 

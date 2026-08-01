@@ -221,15 +221,29 @@ class _MotoSelectorCard extends ConsumerWidget {
                     '${m.coolingType == 'liquid' ? ' · Radiador' : ''}',
                     style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                   ),
-                  trailing: m.isActive
-                      ? const Icon(Icons.check_circle, color: AppTheme.primary)
-                      : TextButton(
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined,
+                            color: AppTheme.primary, size: 20),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _showMotoForm(context, db, m);
+                        },
+                      ),
+                      if (m.isActive)
+                        const Icon(Icons.check_circle, color: AppTheme.primary)
+                      else
+                        TextButton(
                           onPressed: () async {
                             await db.setActiveMoto(m.id);
                             if (ctx.mounted) Navigator.pop(ctx);
                           },
                           child: const Text('Activar'),
                         ),
+                    ],
+                  ),
                   onLongPress: () async {
                     final confirm = await showDialog<bool>(
                       context: ctx,

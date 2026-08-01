@@ -372,6 +372,22 @@ class _PartCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppTheme.parts, size: 20),
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppTheme.surface,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+              builder: (_) => _AddPartSheet(
+                db: db,
+                motoId: motoId,
+                rimType: 'alloy',
+                part: part,
+              ),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
             onPressed: () async {
               await db.deletePart(part.id);
@@ -501,7 +517,13 @@ class _AddPartSheet extends StatefulWidget {
   final AppDatabase db;
   final int? motoId;
   final String rimType;
-  const _AddPartSheet({required this.db, required this.motoId, required this.rimType});
+  final PartRecord? part;
+  const _AddPartSheet({
+    required this.db,
+    required this.motoId,
+    required this.rimType,
+    this.part,
+  });
 
   @override
   State<_AddPartSheet> createState() => _AddPartSheetState();
@@ -526,6 +548,17 @@ class _AddPartSheetState extends State<_AddPartSheet> {
     super.initState();
     final compatible = AppConstants.compatibleTireTypes(widget.rimType);
     _tireType = compatible.contains('standard') ? 'standard' : compatible.first;
+    final part = widget.part;
+    if (part == null) return;
+    _nameCtrl.text = part.name;
+    _intervalCtrl.text = part.intervalKm.toString();
+    _lastKmCtrl.text = part.lastChangedKm.toString();
+    _category = part.partCategory ?? 'general';
+    _filterType = part.filterType ?? 'replaceable';
+    _brakeType = part.brakeType ?? 'pads';
+    _tireType = part.tireType ?? _tireType;
+    _chainType = part.chainType ?? 'standard';
+    _isPermanentFilter = _filterType == 'permanent';
   }
 
   @override
@@ -555,8 +588,10 @@ class _AddPartSheetState extends State<_AddPartSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Nueva refacción',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            Text(
+              widget.part == null ? 'Nueva refacción' : 'Editar refacción',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 16),
 
             TextField(controller: _nameCtrl,
@@ -865,20 +900,43 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                 if (_nameCtrl.text.isEmpty) return;
                 final navigator = Navigator.of(context);
                 final partName = _displayName();
-                await widget.db.insertPart(PartRecordsCompanion.insert(
-                  motoId: drift.Value(widget.motoId),
-                  name: partName,
-                  intervalKm: int.tryParse(_intervalCtrl.text) ?? 5000,
-                  lastChangedKm: int.tryParse(_lastKmCtrl.text) ?? 0,
-                  lastChangedDate: DateTime.now(),
-                  partCategory: drift.Value(_category),
-                  filterType: drift.Value(_category == 'oil_filter' ? _filterType : null),
-                  brakeType: drift.Value(
-                      (_category == 'brake_front' || _category == 'brake_rear') ? _brakeType : null),
-                  tireType: drift.Value(_category == 'tire' ? _tireType : null),
-                  chainType: drift.Value(_category == 'chain' ? _chainType : null),
-                  requiresComboChange: drift.Value(_category == 'chain'),
-                ));
+                final intervalKm = int.tryParse(_intervalCtrl.text) ?? 5000;
+                final lastChangedKm = int.tryParse(_lastKmCtrl.text) ?? 0;
+                final filterType = _category == 'oil_filter' ? _filterType : null;
+                final brakeType =
+                    (_category == 'brake_front' || _category == 'brake_rear')
+                        ? _brakeType
+                        : null;
+                final tireType = _category == 'tire' ? _tireType : null;
+                final chainType = _category == 'chain' ? _chainType : null;
+                final existing = widget.part;
+                if (existing == null) {
+                  await widget.db.insertPart(PartRecordsCompanion.insert(
+                    motoId: drift.Value(widget.motoId),
+                    name: partName,
+                    intervalKm: intervalKm,
+                    lastChangedKm: lastChangedKm,
+                    lastChangedDate: DateTime.now(),
+                    partCategory: drift.Value(_category),
+                    filterType: drift.Value(filterType),
+                    brakeType: drift.Value(brakeType),
+                    tireType: drift.Value(tireType),
+                    chainType: drift.Value(chainType),
+                    requiresComboChange: drift.Value(_category == 'chain'),
+                  ));
+                } else {
+                  await widget.db.updatePart(existing.copyWith(
+                    name: partName,
+                    intervalKm: intervalKm,
+                    lastChangedKm: lastChangedKm,
+                    partCategory: drift.Value(_category),
+                    filterType: drift.Value(filterType),
+                    brakeType: drift.Value(brakeType),
+                    tireType: drift.Value(tireType),
+                    chainType: drift.Value(chainType),
+                    requiresComboChange: _category == 'chain',
+                  ));
+                }
                 await DriveBackupService.backupIfSignedIn(widget.db);
                 if (mounted) navigator.pop();
               },
@@ -1061,16 +1119,125 @@ class _HistoryEntry extends StatelessWidget {
                   fontSize: 13),
             ),
           const SizedBox(height: 2),
-          GestureDetector(
-            onTap: () async {
-              await db.deletePartHistory(entry.id);
-              await DriveBackupService.backupIfSignedIn(db);
-            },
-            child: const Icon(Icons.close,
-                color: AppTheme.textSecondary, size: 14),
-          ),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.edit_outlined,
+                  color: AppTheme.parts, size: 16),
+              onPressed: () => _editHistory(context),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.close,
+                  color: AppTheme.textSecondary, size: 16),
+              onPressed: () async {
+                await db.deletePartHistory(entry.id);
+                await DriveBackupService.backupIfSignedIn(db);
+              },
+            ),
+          ]),
         ]),
       ]),
     );
+  }
+
+  void _editHistory(BuildContext context) {
+    final kmCtrl = TextEditingController(text: entry.km.toString());
+    final costCtrl = TextEditingController(text: entry.cost?.toString() ?? '');
+    final notesCtrl = TextEditingController(text: entry.notes ?? '');
+    var changedAt = entry.changedAt;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          backgroundColor: AppTheme.surface,
+          title: const Text('Editar cambio', style: TextStyle(fontSize: 16)),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            GestureDetector(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: ctx,
+                  initialDate: changedAt,
+                  firstDate: DateTime(2015),
+                  lastDate: DateTime.now(),
+                );
+                if (picked != null) setState(() => changedAt = picked);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.card,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.calendar_today,
+                      color: AppTheme.textSecondary, size: 18),
+                  const SizedBox(width: 10),
+                  Text(DateFormat('dd/MM/yyyy').format(changedAt),
+                      style: const TextStyle(color: AppTheme.textPrimary)),
+                ]),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: kmCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Km del cambio'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: costCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Costo (opcional)',
+                prefixText: '${currencySymbol(currency)} ',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: notesCtrl,
+              decoration: const InputDecoration(labelText: 'Notas (opcional)'),
+            ),
+          ]),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final km = int.tryParse(kmCtrl.text);
+                if (km == null) return;
+                final cost = double.tryParse(costCtrl.text);
+                final notes = notesCtrl.text.isEmpty ? null : notesCtrl.text;
+                await db.updatePartHistory(entry.copyWith(
+                  km: km,
+                  changedAt: changedAt,
+                  cost: drift.Value(cost),
+                  notes: drift.Value(notes),
+                ));
+                final parts = await db.watchParts(entry.motoId).first;
+                for (final part in parts.where((p) => p.id == entry.partId)) {
+                  await db.updatePart(part.copyWith(
+                    lastChangedKm: km,
+                    lastChangedDate: changedAt,
+                    cost: drift.Value(cost),
+                  ));
+                }
+                await db.updateMotoCurrentKmIfGreater(entry.motoId, km);
+                await DriveBackupService.backupIfSignedIn(db);
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    ).whenComplete(() {
+      kmCtrl.dispose();
+      costCtrl.dispose();
+      notesCtrl.dispose();
+    });
   }
 }
