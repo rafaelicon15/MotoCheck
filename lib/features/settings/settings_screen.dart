@@ -229,7 +229,7 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
       children: [
         Row(children: [
           CircleAvatar(
-            backgroundColor: AppTheme.primary.withOpacity(0.2),
+            backgroundColor: AppTheme.primary.withValues(alpha: 0.2),
             child:
                 const Icon(Icons.person, color: AppTheme.primary, size: 20),
           ),
@@ -298,7 +298,7 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
                 label: const Text('Restaurar'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -351,11 +351,11 @@ class _CurrencySelector extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.primary.withOpacity(0.1)
+                    ? AppTheme.primary.withValues(alpha: 0.1)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(14),
                 border: isSelected
-                    ? Border.all(color: AppTheme.primary.withOpacity(0.4))
+                    ? Border.all(color: AppTheme.primary.withValues(alpha: 0.4))
                     : null,
               ),
               child: Row(children: [

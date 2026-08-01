@@ -86,7 +86,7 @@ class _MotoSelectorCard extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primary.withOpacity(0.85), AppTheme.primaryDark],
+          colors: [AppTheme.primary.withValues(alpha: 0.85), AppTheme.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -110,7 +110,7 @@ class _MotoSelectorCard extends ConsumerWidget {
                 activeMoto != null
                     ? '${activeMoto!.year}  ·  ${activeMoto!.currentKm} km'
                     : 'Agrega tu moto para comenzar',
-                style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
               ),
               if (activeMoto != null) ...[
                 const SizedBox(height: 6),
@@ -500,7 +500,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
               const SizedBox(height: 10),
               Row(children: [
                 Expanded(child: DropdownButtonFormField<String>(
-                  value: oilType,
+                  initialValue: oilType,
                   hint: const Text('Tipo de aceite'),
                   decoration: const InputDecoration(),
                   dropdownColor: AppTheme.surface,
@@ -512,7 +512,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
                 )),
                 const SizedBox(width: 12),
                 Expanded(child: DropdownButtonFormField<String>(
-                  value: oilViscosity,
+                  initialValue: oilViscosity,
                   hint: const Text('Viscosidad'),
                   decoration: const InputDecoration(),
                   dropdownColor: AppTheme.surface,
@@ -533,9 +533,9 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.08),
+                  color: Colors.amber.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
                   'Los motores 2T no tienen cárter de aceite. La lubricación se hace mezclando aceite con la gasolina (premezclado) o mediante un sistema de inyección automática (autolube).',
@@ -634,7 +634,7 @@ class _TransmissionSelector extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primary.withOpacity(0.12) : AppTheme.card,
+              color: isSelected ? AppTheme.primary.withValues(alpha: 0.12) : AppTheme.card,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
@@ -688,7 +688,7 @@ class _RimTypeSelector extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primary.withOpacity(0.12) : AppTheme.card,
+              color: isSelected ? AppTheme.primary.withValues(alpha: 0.12) : AppTheme.card,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
@@ -748,7 +748,7 @@ class _TwoStrokeMethodSelector extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primary.withOpacity(0.12) : AppTheme.card,
+              color: isSelected ? AppTheme.primary.withValues(alpha: 0.12) : AppTheme.card,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isSelected ? AppTheme.primary : Colors.transparent,
@@ -828,7 +828,7 @@ class _ToggleRow extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary.withOpacity(0.15) : AppTheme.card,
+                color: isSelected ? AppTheme.primary.withValues(alpha: 0.15) : AppTheme.card,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
@@ -862,9 +862,9 @@ class _MotoBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         label,
@@ -886,7 +886,7 @@ class _NoMotoPrompt extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(children: [
-          Icon(Icons.motorcycle, size: 72, color: AppTheme.textSecondary.withOpacity(0.3)),
+          Icon(Icons.motorcycle, size: 72, color: AppTheme.textSecondary.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           const Text('Agrega tu primera moto',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
@@ -992,9 +992,9 @@ class _PartsAlertCard extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppTheme.success.withOpacity(0.1),
+              color: AppTheme.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.success.withOpacity(0.3)),
+              border: Border.all(color: AppTheme.success.withValues(alpha: 0.3)),
             ),
             child: Row(children: [
               Icon(Icons.check_circle, color: AppTheme.success),
@@ -1017,10 +1017,10 @@ class _PartsAlertCard extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: (isOverdue ? AppTheme.danger : AppTheme.warning).withOpacity(0.1),
+                  color: (isOverdue ? AppTheme.danger : AppTheme.warning).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: (isOverdue ? AppTheme.danger : AppTheme.warning).withOpacity(0.4),
+                    color: (isOverdue ? AppTheme.danger : AppTheme.warning).withValues(alpha: 0.4),
                   ),
                 ),
                 child: Row(children: [
@@ -1081,7 +1081,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(icon, color: color, size: 15),

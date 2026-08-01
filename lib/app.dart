@@ -45,7 +45,7 @@ class AuthGate extends ConsumerWidget {
 
     return accountAsync.when(
       loading: () => const _SplashScreen(),
-      error: (_, __) => const AuthScreen(),
+      error: (_, _) => const AuthScreen(),
       data: (account) =>
           account == null ? const AuthScreen() : const MainShell(),
     );
@@ -69,7 +69,7 @@ class _SplashScreen extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.15),
+                color: AppTheme.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(22),
               ),
               child: const Center(

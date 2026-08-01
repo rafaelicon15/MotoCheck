@@ -248,7 +248,7 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isActive ? color.withOpacity(0.2) : AppTheme.card,
+          color: isActive ? color.withValues(alpha: 0.2) : AppTheme.card,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isActive ? color : Colors.white10,
@@ -279,7 +279,7 @@ class _FilterEmptyState extends StatelessWidget {
       child: Center(
         child: Text(
           'Sin registros de este tipo',
-          style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.7)),
+          style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.7)),
         ),
       ),
     );
@@ -395,7 +395,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: selected ? AppTheme.fuel.withOpacity(0.2) : AppTheme.card,
+                        color: selected ? AppTheme.fuel.withValues(alpha: 0.2) : AppTheme.card,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                             color: selected ? AppTheme.fuel : Colors.transparent, width: 1.5),
@@ -431,7 +431,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
                 Switch(
                   value: _isFull,
                   onChanged: (v) => setState(() => _isFull = v),
-                  activeColor: AppTheme.fuel,
+                  activeThumbColor: AppTheme.fuel,
                 ),
               ]),
             ),
@@ -440,9 +440,9 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.warning.withOpacity(0.08),
+                  color: AppTheme.warning.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.warning.withOpacity(0.25)),
+                  border: Border.all(color: AppTheme.warning.withValues(alpha: 0.25)),
                 ),
                 child: const Row(children: [
                   Icon(Icons.info_outline, color: AppTheme.warning, size: 14),
@@ -469,7 +469,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
                 Switch(
                   value: _usedOctaneBooster,
                   onChanged: (v) => setState(() => _usedOctaneBooster = v),
-                  activeColor: AppTheme.fuel,
+                  activeThumbColor: AppTheme.fuel,
                 ),
               ]),
             ),
@@ -558,7 +558,7 @@ class _OctaneComparisonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.parts.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.parts.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,14 +683,14 @@ class _EfficiencyChart extends StatelessWidget {
                 color: AppTheme.fuel,
                 barWidth: 2.5,
                 dotData: FlDotData(
-                  getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+                  getDotPainter: (_, _, _, _) => FlDotCirclePainter(
                     radius: 4,
                     color: AppTheme.fuel,
                     strokeWidth: 2,
                     strokeColor: AppTheme.card,
                   ),
                 ),
-                belowBarData: BarAreaData(show: true, color: AppTheme.fuel.withOpacity(0.1)),
+                belowBarData: BarAreaData(show: true, color: AppTheme.fuel.withValues(alpha: 0.1)),
               ),
             ],
           )),
@@ -757,9 +757,9 @@ class _MiniStat extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(children: [
           Text(value,
@@ -824,7 +824,7 @@ class _FuelCard extends StatelessWidget {
                       : isAnomaly
                           ? AppTheme.warning
                           : AppTheme.fuel)
-                  .withOpacity(0.15),
+                  .withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10)),
           child: Icon(Icons.local_gas_station,
               color: isPartial
@@ -868,7 +868,7 @@ class _FuelCard extends StatelessWidget {
                         color: AppTheme.fuel,
                         fontWeight: FontWeight.w700,
                         fontSize: 13)),
-              ] else if (isAnomaly && rawKml != null) ...[
+              ] else if (isAnomaly) ...[
                 const Spacer(),
                 _AnomalyBadge(kml: rawKml),
               ],
@@ -911,7 +911,7 @@ class _PartialBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-          color: AppTheme.textSecondary.withOpacity(0.12),
+          color: AppTheme.textSecondary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20)),
       child: const Text('Parcial',
           style: TextStyle(
@@ -931,7 +931,7 @@ class _AnomalyBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-          color: AppTheme.warning.withOpacity(0.15),
+          color: AppTheme.warning.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         const Icon(Icons.warning_amber_rounded,
@@ -957,7 +957,7 @@ class _FuelTypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: _color.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: _color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
       child: Text(type, style: TextStyle(color: _color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
@@ -971,7 +971,7 @@ class _OctaneBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-          color: AppTheme.parts.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+          color: AppTheme.parts.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.science, color: AppTheme.parts, size: 10),
         const SizedBox(width: 2),
@@ -988,7 +988,7 @@ class _EmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(40),
         child: Column(children: [
-          Icon(Icons.local_gas_station_outlined, size: 60, color: AppTheme.textSecondary.withOpacity(0.4)),
+          Icon(Icons.local_gas_station_outlined, size: 60, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
           const SizedBox(height: 12),
           const Text('Sin registros aún', style: TextStyle(color: AppTheme.textSecondary)),
           const SizedBox(height: 4),

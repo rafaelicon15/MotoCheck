@@ -174,8 +174,8 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
                 children: _selectedItems.map((item) => Chip(
                   label: Text(item,
                       style: const TextStyle(fontSize: 11, color: AppTheme.primary)),
-                  backgroundColor: AppTheme.primary.withOpacity(0.12),
-                  side: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+                  backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
+                  side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
                   deleteIconColor: AppTheme.primary,
                   onDeleted: () => _toggle(item),
                   padding: EdgeInsets.zero,
@@ -229,9 +229,9 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.fuel.withOpacity(0.08),
+                  color: AppTheme.fuel.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.fuel.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.fuel.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +247,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
                     ]),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _oilType,
+                      initialValue: _oilType,
                       hint: const Text('Tipo de aceite'),
                       decoration: const InputDecoration(),
                       dropdownColor: AppTheme.surface,
@@ -259,7 +259,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value: _oilViscosity,
+                      initialValue: _oilViscosity,
                       hint: const Text('Viscosidad'),
                       decoration: const InputDecoration(),
                       dropdownColor: AppTheme.surface,
@@ -469,7 +469,7 @@ class _CategorySectionState extends State<_CategorySection> {
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(10),
         border: _selectedCount > 0
-            ? Border.all(color: AppTheme.maintenance.withOpacity(0.4))
+            ? Border.all(color: AppTheme.maintenance.withValues(alpha: 0.4))
             : null,
       ),
       child: Column(
@@ -497,7 +497,7 @@ class _CategorySectionState extends State<_CategorySection> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppTheme.maintenance.withOpacity(0.15),
+                      color: AppTheme.maintenance.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text('$_selectedCount',
@@ -533,7 +533,7 @@ class _CategorySectionState extends State<_CategorySection> {
                         )),
                     selected: selected,
                     onSelected: (_) => widget.onToggle(item),
-                    selectedColor: AppTheme.maintenance.withOpacity(0.15),
+                    selectedColor: AppTheme.maintenance.withValues(alpha: 0.15),
                     checkmarkColor: AppTheme.maintenance,
                     backgroundColor: AppTheme.surface,
                     side: BorderSide(
@@ -582,7 +582,7 @@ class _MaintenanceCard extends StatelessWidget {
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
         border: hasUpcoming && daysLeft! <= 7
-            ? Border.all(color: AppTheme.warning.withOpacity(0.5))
+            ? Border.all(color: AppTheme.warning.withValues(alpha: 0.5))
             : Border.all(color: AppTheme.cardBorder),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -591,7 +591,7 @@ class _MaintenanceCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: AppTheme.maintenance.withOpacity(0.15),
+                color: AppTheme.maintenance.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.build, color: AppTheme.maintenance, size: 18),
           ),
@@ -624,7 +624,7 @@ class _MaintenanceCard extends StatelessWidget {
                 .map((item) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppTheme.maintenance.withOpacity(0.1),
+                        color: AppTheme.maintenance.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(item,
@@ -643,7 +643,7 @@ class _MaintenanceCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppTheme.fuel.withOpacity(0.1),
+              color: AppTheme.fuel.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(children: [
@@ -696,7 +696,7 @@ class _MaintenanceCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: (daysLeft! <= 7 ? AppTheme.warning : AppTheme.maintenance)
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(children: [
@@ -727,7 +727,7 @@ class _EmptyState extends StatelessWidget {
         padding: const EdgeInsets.all(40),
         child: Column(children: [
           Icon(Icons.build_outlined,
-              size: 64, color: AppTheme.textSecondary.withOpacity(0.3)),
+              size: 64, color: AppTheme.textSecondary.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           const Text('Sin servicios registrados',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),

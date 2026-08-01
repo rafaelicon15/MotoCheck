@@ -81,10 +81,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 width: 90,
                 height: 90,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.15),
+                  color: AppTheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                      color: AppTheme.primary.withOpacity(0.4), width: 1.5),
+                      color: AppTheme.primary.withValues(alpha: 0.4), width: 1.5),
                 ),
                 child: const Center(
                   child: Text('🏍', style: TextStyle(fontSize: 46)),
@@ -190,7 +190,7 @@ class _FeatureRow extends StatelessWidget {
       Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: color, size: 20),
       ),

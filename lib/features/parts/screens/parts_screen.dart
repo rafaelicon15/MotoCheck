@@ -252,7 +252,7 @@ class _PartCard extends StatelessWidget {
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
         border: !_isPermanent && _remaining <= 500
-            ? Border.all(color: _statusColor.withOpacity(0.5))
+            ? Border.all(color: _statusColor.withValues(alpha: 0.5))
             : Border.all(color: AppTheme.cardBorder),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -291,7 +291,7 @@ class _PartCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                  color: AppTheme.textSecondary.withOpacity(0.15),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20)),
               child: const Text('METÁLICO',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w700)),
@@ -300,7 +300,7 @@ class _PartCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                  color: _statusColor.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                  color: _statusColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
               child: Text(
                 _remaining <= 0 ? 'VENCIDA' : _remaining <= 500 ? 'PRÓXIMA' : 'OK',
                 style: TextStyle(color: _statusColor, fontSize: 10, fontWeight: FontWeight.w700),
@@ -358,7 +358,7 @@ class _PartCard extends StatelessWidget {
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.parts,
-                side: BorderSide(color: AppTheme.parts.withOpacity(0.5)),
+                side: BorderSide(color: AppTheme.parts.withValues(alpha: 0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
             ),
@@ -540,7 +540,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
             const SizedBox(height: 12),
 
             DropdownButtonFormField<String>(
-              value: _category,
+              initialValue: _category,
               decoration: const InputDecoration(labelText: 'Categoría'),
               dropdownColor: AppTheme.surface,
               style: const TextStyle(color: AppTheme.textPrimary),
@@ -578,7 +578,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                       _isPermanentFilter = v;
                       _filterType = v ? 'permanent' : 'replaceable';
                     }),
-                    activeColor: AppTheme.primary,
+                    activeThumbColor: AppTheme.primary,
                   ),
                 ]),
               ),
@@ -605,7 +605,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                     margin: const EdgeInsets.only(bottom: 6),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.parts.withOpacity(0.12) : AppTheme.card,
+                      color: isSelected ? AppTheme.parts.withValues(alpha: 0.12) : AppTheme.card,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                           color: isSelected ? AppTheme.parts : Colors.transparent,
@@ -675,9 +675,9 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.08),
+                    color: Colors.amber.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                   ),
                   child: const Text(
                     '🔩 Rin de rayos estándar: los nipples de los rayos impiden el sello tubeless. Solo se puede usar cámara / tripa.',
@@ -699,7 +699,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                     margin: const EdgeInsets.only(bottom: 6),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.parts.withOpacity(0.12) : AppTheme.card,
+                      color: isSelected ? AppTheme.parts.withValues(alpha: 0.12) : AppTheme.card,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                           color: isSelected ? AppTheme.parts : Colors.transparent,
@@ -723,7 +723,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   margin: const EdgeInsets.only(top: 4, bottom: 8),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.08),
+                    color: Colors.blue.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -736,7 +736,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   margin: const EdgeInsets.only(top: 4, bottom: 8),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.08),
+                    color: Colors.blue.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -766,6 +766,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
             ElevatedButton(
               onPressed: () async {
                 if (_nameCtrl.text.isEmpty) return;
+                final navigator = Navigator.of(context);
                 await widget.db.insertPart(PartRecordsCompanion.insert(
                   motoId: drift.Value(widget.motoId),
                   name: _nameCtrl.text,
@@ -780,7 +781,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   chainType: drift.Value(_category == 'chain' ? _chainType : null),
                   requiresComboChange: drift.Value(_category == 'chain'),
                 ));
-                if (mounted) Navigator.pop(context);
+                if (mounted) navigator.pop();
               },
               child: const Text('Guardar'),
             ),
@@ -804,7 +805,7 @@ class _BrakeTypeBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.parts.withOpacity(0.15) : AppTheme.card,
+          color: selected ? AppTheme.parts.withValues(alpha: 0.15) : AppTheme.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: selected ? AppTheme.parts : Colors.transparent, width: 1.5),
         ),
@@ -829,7 +830,7 @@ class _EmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(40),
         child: Column(children: [
-          Icon(Icons.settings_outlined, size: 64, color: AppTheme.textSecondary.withOpacity(0.3)),
+          Icon(Icons.settings_outlined, size: 64, color: AppTheme.textSecondary.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           const Text('Sin refacciones configuradas',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
@@ -918,7 +919,7 @@ class _HistoryEntry extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-              color: AppTheme.parts.withOpacity(0.12),
+              color: AppTheme.parts.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8)),
           child: const Icon(Icons.check_circle_outline,
               color: AppTheme.parts, size: 16),
