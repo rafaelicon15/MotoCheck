@@ -1,0 +1,535 @@
+import 'package:drift/drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
+
+part 'app_database.g.dart';
+
+// ─── Tablas ───────────────────────────────────────────────────────────────────
+
+class AppSettings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}
+
+class FuelRecords extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get motoId => integer().nullable()();
+  DateTimeColumn get date => dateTime()();
+  RealColumn get liters => real()();
+  RealColumn get pricePerLiter => real().nullable()();
+  IntColumn get odometerKm => integer()();
+  TextColumn get fuelType => text()(); // Regular / Premium
+  BoolColumn get usedOctaneBooster => boolean().withDefault(const Constant(false))();
+  TextColumn get octaneBrand => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  BoolColumn get isFull => boolean().withDefault(const Constant(true))();
+}
+
+class MaintenanceRecords extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get motoId => integer().nullable()();
+  DateTimeColumn get date => dateTime()();
+  IntColumn get odometerKm => integer()();
+  TextColumn get type => text()();
+  TextColumn get description => text()();
+  RealColumn get cost => real().nullable()();
+  TextColumn get workshop => text().nullable()();
+  DateTimeColumn get nextServiceDate => dateTime().nullable()();
+  IntColumn get nextServiceKm => integer().nullable()();
+  TextColumn get notes => text().nullable()();
+  TextColumn get oilType => text().nullable()();
+  TextColumn get oilViscosity => text().nullable()();
+  TextColumn get maintenanceItems => text().nullable()(); // comma-separated selected items
+}
+
+class PartRecords extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get motoId => integer().nullable()();
+  TextColumn get name => text()();
+  IntColumn get intervalKm => integer()();
+  IntColumn get lastChangedKm => integer()();
+  DateTimeColumn get lastChangedDate => dateTime()();
+  RealColumn get cost => real().nullable()();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  TextColumn get partCategory => text().nullable()();
+  TextColumn get filterType => text().nullable()(); // 'replaceable' | 'permanent'
+  TextColumn get brakeType => text().nullable()();  // 'pads' | 'bands'
+  TextColumn get tireType => text().nullable()();    // 'standard' | 'sealant' | 'tube' | 'tubeless'
+  TextColumn get chainType => text().nullable()();   // 'standard' | 'o_ring' | 'x_ring' | 'w_ring'
+  BoolColumn get requiresComboChange => boolean().withDefault(const Constant(false))();
+}
+
+class PartHistory extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get partId => integer()();
+  IntColumn get motoId => integer().nullable()();
+  TextColumn get partName => text()();
+  IntColumn get km => integer()();
+  DateTimeColumn get changedAt => dateTime()();
+  RealColumn get cost => real().nullable()();
+  TextColumn get notes => text().nullable()();
+}
+
+class MotoProfile extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get brand => text()();
+  TextColumn get model => text()();
+  IntColumn get year => integer()();
+  IntColumn get currentKm => integer()();
+  TextColumn get plate => text().nullable()();
+  // Motor
+  TextColumn get engineType => text().withDefault(const Constant('4T'))(); // '4T' | '2T'
+  TextColumn get twoStrokeOilMethod => text().nullable()(); // 'autolube' | 'premix' | null
+  IntColumn get displacement => integer().nullable()(); // cilindrada en cc
+  TextColumn get fuelSystem => text().withDefault(const Constant('carb'))(); // 'carb' | 'injection'
+  // Refrigeración
+  TextColumn get coolingType => text().withDefault(const Constant('air'))(); // 'air' | 'liquid'
+  // Aceite (4T)
+  TextColumn get oilType => text().nullable()();
+  TextColumn get oilViscosity => text().nullable()();
+  TextColumn get oilFilterType => text().withDefault(const Constant('replaceable'))(); // 'replaceable' | 'permanent'
+  // Transmisión
+  TextColumn get transmissionType => text().withDefault(const Constant('chain'))(); // 'chain' | 'shaft' | 'belt'
+  // Rines
+  TextColumn get rimType => text().withDefault(const Constant('alloy'))(); // 'alloy' | 'spoke' | 'spoke_double_wall'
+  // Tanque
+  RealColumn get tankCapacity => real().nullable()(); // capacidad en litros
+  // Estado
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+// ─── Base de datos ────────────────────────────────────────────────────────────
+
+@DriftDatabase(tables: [FuelRecords, MaintenanceRecords, PartRecords, MotoProfile, AppSettings, PartHistory])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 10;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async {
+      await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      // Dev: drop all and recreate
+      try { await m.drop(partHistory); } catch (_) {}
+      try { await m.drop(fuelRecords); } catch (_) {}
+      try { await m.drop(maintenanceRecords); } catch (_) {}
+      try { await m.drop(partRecords); } catch (_) {}
+      try { await m.drop(motoProfile); } catch (_) {}
+      try { await m.drop(appSettings); } catch (_) {}
+      await m.createAll();
+    },
+  );
+
+  static QueryExecutor _openConnection() {
+    return driftDatabase(name: 'motocheck_db');
+  }
+
+  // ─── Moto Profile ──────────────────────────────────────────────────────────
+
+  Stream<List<MotoProfileData>> watchAllMotos() =>
+      (select(motoProfile)..orderBy([(t) => OrderingTerm.asc(t.id)])).watch();
+
+  Stream<MotoProfileData?> watchActiveMoto() =>
+      (select(motoProfile)
+            ..where((t) => t.isActive.equals(true))
+            ..limit(1))
+          .watchSingleOrNull();
+
+  Future<MotoProfileData?> getActiveMoto() =>
+      (select(motoProfile)..where((t) => t.isActive.equals(true))..limit(1))
+          .getSingleOrNull();
+
+  Future<void> setActiveMoto(int id) async {
+    await (update(motoProfile)).write(const MotoProfileCompanion(isActive: Value(false)));
+    await (update(motoProfile)..where((t) => t.id.equals(id))).write(
+      MotoProfileCompanion(isActive: const Value(true), updatedAt: Value(DateTime.now())),
+    );
+  }
+
+  Future<int> insertMoto(MotoProfileCompanion m) =>
+      into(motoProfile).insert(m);
+
+  Future<bool> updateMoto(MotoProfileData m) =>
+      update(motoProfile).replace(m);
+
+  Future<int> deleteMoto(int id) =>
+      (delete(motoProfile)..where((t) => t.id.equals(id))).go();
+
+  // ─── Fuel ──────────────────────────────────────────────────────────────────
+
+  Stream<List<FuelRecord>> watchFuelRecords(int? motoId) {
+    if (motoId == null) {
+      return (select(fuelRecords)..orderBy([(t) => OrderingTerm.desc(t.date)])).watch();
+    }
+    return (select(fuelRecords)
+          ..where((t) => t.motoId.equals(motoId))
+          ..orderBy([(t) => OrderingTerm.desc(t.date)]))
+        .watch();
+  }
+
+  Future<int> insertFuelRecord(FuelRecordsCompanion record) =>
+      into(fuelRecords).insert(record);
+
+  Future<int> deleteFuelRecord(int id) =>
+      (delete(fuelRecords)..where((t) => t.id.equals(id))).go();
+
+  Future<List<FuelRecord>> getLastTwoFuelRecords(int? motoId) {
+    if (motoId == null) {
+      return (select(fuelRecords)
+            ..orderBy([(t) => OrderingTerm.desc(t.odometerKm)])
+            ..limit(2))
+          .get();
+    }
+    return (select(fuelRecords)
+          ..where((t) => t.motoId.equals(motoId))
+          ..orderBy([(t) => OrderingTerm.desc(t.odometerKm)])
+          ..limit(2))
+        .get();
+  }
+
+  // ─── Maintenance ───────────────────────────────────────────────────────────
+
+  Stream<List<MaintenanceRecord>> watchMaintenanceRecords(int? motoId) {
+    if (motoId == null) {
+      return (select(maintenanceRecords)..orderBy([(t) => OrderingTerm.desc(t.date)])).watch();
+    }
+    return (select(maintenanceRecords)
+          ..where((t) => t.motoId.equals(motoId))
+          ..orderBy([(t) => OrderingTerm.desc(t.date)]))
+        .watch();
+  }
+
+  Future<int> insertMaintenance(MaintenanceRecordsCompanion record) =>
+      into(maintenanceRecords).insert(record);
+
+  Future<bool> updateMaintenance(MaintenanceRecord record) =>
+      update(maintenanceRecords).replace(record);
+
+  Future<int> deleteMaintenance(int id) =>
+      (delete(maintenanceRecords)..where((t) => t.id.equals(id))).go();
+
+  // ─── Parts ─────────────────────────────────────────────────────────────────
+
+  Stream<List<PartRecord>> watchParts(int? motoId) {
+    if (motoId == null) {
+      return (select(partRecords)..where((t) => t.isActive.equals(true))).watch();
+    }
+    return (select(partRecords)
+          ..where((t) => t.isActive.equals(true) & t.motoId.equals(motoId)))
+        .watch();
+  }
+
+  Future<List<PartRecord>> getPartsByCategory(int? motoId, String category) {
+    if (motoId == null) {
+      return (select(partRecords)
+            ..where((t) => t.isActive.equals(true) & t.partCategory.equals(category)))
+          .get();
+    }
+    return (select(partRecords)
+          ..where((t) =>
+              t.isActive.equals(true) &
+              t.motoId.equals(motoId) &
+              t.partCategory.equals(category)))
+        .get();
+  }
+
+  Future<int> insertPart(PartRecordsCompanion part) =>
+      into(partRecords).insert(part);
+
+  Future<bool> updatePart(PartRecord part) =>
+      update(partRecords).replace(part);
+
+  Future<int> deletePart(int id) =>
+      (delete(partRecords)..where((t) => t.id.equals(id))).go();
+
+  // ─── Part History ──────────────────────────────────────────────────────────
+
+  Future<int> insertPartHistory(PartHistoryCompanion entry) =>
+      into(partHistory).insert(entry);
+
+  Stream<List<PartHistoryData>> watchPartHistory(int? motoId) {
+    if (motoId == null) {
+      return (select(partHistory)
+            ..orderBy([(t) => OrderingTerm.desc(t.changedAt)]))
+          .watch();
+    }
+    return (select(partHistory)
+          ..where((t) => t.motoId.equals(motoId))
+          ..orderBy([(t) => OrderingTerm.desc(t.changedAt)]))
+        .watch();
+  }
+
+  Future<int> deletePartHistory(int id) =>
+      (delete(partHistory)..where((t) => t.id.equals(id))).go();
+
+  // ─── Backup / Restore ──────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> exportToJson() async {
+    final motos = await select(motoProfile).get();
+    final fuel = await select(fuelRecords).get();
+    final maint = await select(maintenanceRecords).get();
+    final parts = await select(partRecords).get();
+    final history = await select(partHistory).get();
+    final settings = await select(appSettings).get();
+
+    return {
+      'schemaVersion': schemaVersion,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'motos': motos
+          .map((m) => {
+                'id': m.id,
+                'brand': m.brand,
+                'model': m.model,
+                'year': m.year,
+                'currentKm': m.currentKm,
+                'plate': m.plate,
+                'engineType': m.engineType,
+                'twoStrokeOilMethod': m.twoStrokeOilMethod,
+                'displacement': m.displacement,
+                'fuelSystem': m.fuelSystem,
+                'coolingType': m.coolingType,
+                'oilType': m.oilType,
+                'oilViscosity': m.oilViscosity,
+                'oilFilterType': m.oilFilterType,
+                'transmissionType': m.transmissionType,
+                'rimType': m.rimType,
+                'tankCapacity': m.tankCapacity,
+                'isActive': m.isActive,
+                'updatedAt': m.updatedAt.toIso8601String(),
+              })
+          .toList(),
+      'fuelRecords': fuel
+          .map((f) => {
+                'id': f.id,
+                'motoId': f.motoId,
+                'date': f.date.toIso8601String(),
+                'liters': f.liters,
+                'pricePerLiter': f.pricePerLiter,
+                'odometerKm': f.odometerKm,
+                'fuelType': f.fuelType,
+                'usedOctaneBooster': f.usedOctaneBooster,
+                'octaneBrand': f.octaneBrand,
+                'notes': f.notes,
+                'isFull': f.isFull,
+              })
+          .toList(),
+      'maintenanceRecords': maint
+          .map((m) => {
+                'id': m.id,
+                'motoId': m.motoId,
+                'date': m.date.toIso8601String(),
+                'odometerKm': m.odometerKm,
+                'type': m.type,
+                'description': m.description,
+                'cost': m.cost,
+                'workshop': m.workshop,
+                'nextServiceDate': m.nextServiceDate?.toIso8601String(),
+                'nextServiceKm': m.nextServiceKm,
+                'notes': m.notes,
+                'oilType': m.oilType,
+                'oilViscosity': m.oilViscosity,
+                'maintenanceItems': m.maintenanceItems,
+              })
+          .toList(),
+      'partRecords': parts
+          .map((p) => {
+                'id': p.id,
+                'motoId': p.motoId,
+                'name': p.name,
+                'intervalKm': p.intervalKm,
+                'lastChangedKm': p.lastChangedKm,
+                'lastChangedDate': p.lastChangedDate.toIso8601String(),
+                'cost': p.cost,
+                'isActive': p.isActive,
+                'partCategory': p.partCategory,
+                'filterType': p.filterType,
+                'brakeType': p.brakeType,
+                'tireType': p.tireType,
+                'chainType': p.chainType,
+                'requiresComboChange': p.requiresComboChange,
+              })
+          .toList(),
+      'partHistory': history
+          .map((h) => {
+                'id': h.id,
+                'partId': h.partId,
+                'motoId': h.motoId,
+                'partName': h.partName,
+                'km': h.km,
+                'changedAt': h.changedAt.toIso8601String(),
+                'cost': h.cost,
+                'notes': h.notes,
+              })
+          .toList(),
+      'settings': settings
+          .map((s) => {'key': s.key, 'value': s.value})
+          .toList(),
+    };
+  }
+
+  Future<void> importFromJson(Map<String, dynamic> data) async {
+    await transaction(() async {
+      await delete(partHistory).go();
+      await delete(partRecords).go();
+      await delete(maintenanceRecords).go();
+      await delete(fuelRecords).go();
+      await delete(motoProfile).go();
+
+      for (final raw in (data['motos'] as List<dynamic>)) {
+        final m = raw as Map<String, dynamic>;
+        await into(motoProfile).insert(
+          MotoProfileCompanion(
+            id: Value(m['id'] as int),
+            brand: Value(m['brand'] as String),
+            model: Value(m['model'] as String),
+            year: Value(m['year'] as int),
+            currentKm: Value(m['currentKm'] as int),
+            updatedAt: Value(DateTime.parse(m['updatedAt'] as String)),
+            plate: Value(m['plate'] as String?),
+            engineType: Value(m['engineType'] as String? ?? '4T'),
+            twoStrokeOilMethod: Value(m['twoStrokeOilMethod'] as String?),
+            displacement: Value(m['displacement'] as int?),
+            fuelSystem: Value(m['fuelSystem'] as String? ?? 'carb'),
+            coolingType: Value(m['coolingType'] as String? ?? 'air'),
+            oilType: Value(m['oilType'] as String?),
+            oilViscosity: Value(m['oilViscosity'] as String?),
+            oilFilterType: Value(m['oilFilterType'] as String? ?? 'replaceable'),
+            transmissionType: Value(m['transmissionType'] as String? ?? 'chain'),
+            rimType: Value(m['rimType'] as String? ?? 'alloy'),
+            tankCapacity: Value((m['tankCapacity'] as num?)?.toDouble()),
+            isActive: Value(m['isActive'] as bool? ?? false),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+
+      for (final raw in (data['fuelRecords'] as List<dynamic>)) {
+        final f = raw as Map<String, dynamic>;
+        await into(fuelRecords).insert(
+          FuelRecordsCompanion(
+            id: Value(f['id'] as int),
+            motoId: Value(f['motoId'] as int?),
+            date: Value(DateTime.parse(f['date'] as String)),
+            liters: Value((f['liters'] as num).toDouble()),
+            pricePerLiter: Value((f['pricePerLiter'] as num?)?.toDouble()),
+            odometerKm: Value(f['odometerKm'] as int),
+            fuelType: Value(f['fuelType'] as String),
+            usedOctaneBooster: Value(f['usedOctaneBooster'] as bool? ?? false),
+            octaneBrand: Value(f['octaneBrand'] as String?),
+            notes: Value(f['notes'] as String?),
+            isFull: Value(f['isFull'] as bool? ?? true),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+
+      for (final raw in (data['maintenanceRecords'] as List<dynamic>)) {
+        final m = raw as Map<String, dynamic>;
+        await into(maintenanceRecords).insert(
+          MaintenanceRecordsCompanion(
+            id: Value(m['id'] as int),
+            motoId: Value(m['motoId'] as int?),
+            date: Value(DateTime.parse(m['date'] as String)),
+            odometerKm: Value(m['odometerKm'] as int),
+            type: Value(m['type'] as String),
+            description: Value(m['description'] as String),
+            cost: Value((m['cost'] as num?)?.toDouble()),
+            workshop: Value(m['workshop'] as String?),
+            nextServiceDate: Value(m['nextServiceDate'] != null
+                ? DateTime.parse(m['nextServiceDate'] as String)
+                : null),
+            nextServiceKm: Value(m['nextServiceKm'] as int?),
+            notes: Value(m['notes'] as String?),
+            oilType: Value(m['oilType'] as String?),
+            oilViscosity: Value(m['oilViscosity'] as String?),
+            maintenanceItems: Value(m['maintenanceItems'] as String?),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+
+      for (final raw in (data['partRecords'] as List<dynamic>)) {
+        final p = raw as Map<String, dynamic>;
+        await into(partRecords).insert(
+          PartRecordsCompanion(
+            id: Value(p['id'] as int),
+            motoId: Value(p['motoId'] as int?),
+            name: Value(p['name'] as String),
+            intervalKm: Value(p['intervalKm'] as int),
+            lastChangedKm: Value(p['lastChangedKm'] as int),
+            lastChangedDate:
+                Value(DateTime.parse(p['lastChangedDate'] as String)),
+            cost: Value((p['cost'] as num?)?.toDouble()),
+            isActive: Value(p['isActive'] as bool? ?? true),
+            partCategory: Value(p['partCategory'] as String?),
+            filterType: Value(p['filterType'] as String?),
+            brakeType: Value(p['brakeType'] as String?),
+            tireType: Value(p['tireType'] as String?),
+            chainType: Value(p['chainType'] as String?),
+            requiresComboChange:
+                Value(p['requiresComboChange'] as bool? ?? false),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+
+      if (data['partHistory'] != null) {
+        for (final raw in (data['partHistory'] as List<dynamic>)) {
+          final h = raw as Map<String, dynamic>;
+          await into(partHistory).insert(
+            PartHistoryCompanion(
+              id: Value(h['id'] as int),
+              partId: Value(h['partId'] as int),
+              motoId: Value(h['motoId'] as int?),
+              partName: Value(h['partName'] as String),
+              km: Value(h['km'] as int),
+              changedAt: Value(DateTime.parse(h['changedAt'] as String)),
+              cost: Value((h['cost'] as num?)?.toDouble()),
+              notes: Value(h['notes'] as String?),
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
+        }
+      }
+
+      if (data['settings'] != null) {
+        for (final raw in (data['settings'] as List<dynamic>)) {
+          final s = raw as Map<String, dynamic>;
+          await into(appSettings).insertOnConflictUpdate(
+            AppSettingsCompanion.insert(
+              key: s['key'] as String,
+              value: s['value'] as String,
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  // ─── Settings ──────────────────────────────────────────────────────────────
+
+  Future<String?> getSetting(String key) async {
+    final row = await (select(appSettings)..where((t) => t.key.equals(key)))
+        .getSingleOrNull();
+    return row?.value;
+  }
+
+  Future<void> setSetting(String key, String value) async {
+    await into(appSettings).insertOnConflictUpdate(
+      AppSettingsCompanion.insert(key: key, value: value),
+    );
+  }
+
+  Stream<String?> watchSetting(String key) {
+    return (select(appSettings)..where((t) => t.key.equals(key)))
+        .watchSingleOrNull()
+        .map((r) => r?.value);
+  }
+}

@@ -1,0 +1,47 @@
+name: motocheck
+description: "MotoCheck - Gestiona el mantenimiento y combustible de tu moto."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Estado
+  flutter_riverpod: ^2.6.1
+
+  # Base de datos local
+  drift: ^2.23.1
+  drift_flutter: ^0.2.4
+
+  # Notificaciones locales
+  flutter_local_notifications: ^18.0.1
+
+  # Gráficas
+  fl_chart: ^0.70.2
+
+  # Google Drive backup
+  google_sign_in: ^6.2.1
+  googleapis: ^13.2.0
+  http: ^1.2.2
+
+  # Utilidades
+  intl: ^0.20.2
+  uuid: ^4.5.1
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.23.1
+  build_runner: ^2.4.15
+
+flutter:
+  uses-material-design: true
