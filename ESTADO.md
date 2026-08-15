@@ -1,12 +1,14 @@
 # MotoCheck — Estado del Proyecto
 
-> Última actualización: 2026-07-31
+> Última actualización: 2026-08-14
+
+**Marca confirmada:** MotoCheck. Se mantienen los identificadores técnicos actuales: Android/iOS `com.motocheck.motocheck` y Google Cloud `motocheck-500004`.
 
 ---
 
 ## Descripción
 
-App móvil de mantenimiento de motocicletas. Registra combustible, servicios, refacciones y alertas de vida útil. Respaldo opcional en Google Drive. Login con Google.
+App local-first de mantenimiento de motocicletas. Registra combustible, servicios, refacciones y alertas de vida útil sin requerir cuenta. El respaldo opcional en Google Drive se conecta desde Configuración.
 
 ---
 
@@ -42,11 +44,12 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 
 ## Funcionalidades implementadas
 
-### Auth / Sesión
-- [x] Login con Google Sign-In
-- [x] `AuthGate` — splash → login → app (via `AsyncValue`)
-- [x] Detección de respaldo en Drive al primer login
-- [x] Restaurar o empezar de cero al detectar respaldo
+### Respaldo / Google Drive
+- [x] MotoCheck abre en modo local sin requerir cuenta Google
+- [x] Conexión opcional a Google Drive desde Configuración
+- [ ] Configuración OAuth real y validación por plataforma
+- [x] Respaldo manual y automático cuando existe cuenta conectada
+- [x] Restauración manual con confirmación explícita
 
 ### Dashboard
 - [x] Tarjeta activa de moto (marca, modelo, año, km, badges)
@@ -141,11 +144,37 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ---
 
+## Estado de auditoría — 2026-08-14
+
+- [x] Proyecto local comparado con el repositorio remoto público.
+- [x] Arquitectura, dependencias y plataformas inspeccionadas.
+- [x] Requisitos OAuth documentados sin almacenar secretos.
+- [x] Inventario seguro de credenciales creado.
+- [x] Registro de ingeniería y riesgos creado.
+- [x] Requisitos de publicación y estrategia de tamaño documentados.
+- [x] Roadmap de lanzamiento hasta noviembre de 2026 creado.
+- [x] Skill compuesta `motocheck-engineering` creada y validada.
+- [x] Marca MotoCheck confirmada; no se renombrará en esta etapa.
+- [ ] Revocar token de GitHub expuesto en material compartido.
+- [ ] Crear client IDs OAuth y validar Android, iOS y Web.
+- [ ] Instalar/verificar toolchain Flutter y Android SDK en entorno del propietario.
+- [ ] Ejecutar `flutter analyze`, `flutter test` y builds release sobre el checkout definitivo.
+- [ ] Reemplazar migración destructiva de Drift antes de beta pública.
+- [ ] Configurar firma release, Play App Signing, Apple Developer y CI/CD.
+
+## Bloqueadores actuales
+
+- [ ] Revocar el token de GitHub expuesto en material compartido.
+- [ ] Crear y restringir client IDs OAuth para Android, iOS y Web.
+- [ ] Ejecutar `flutter pub get`, `flutter analyze`, `flutter test` y builds release en un equipo con Flutter; iOS requiere macOS/Xcode.
+- [ ] Crear keystore release y completar Play App Signing.
+- [ ] Publicar política de privacidad y definir dominio/correo corporativo.
+
 ## Pendientes / Ideas futuras
 
-- [ ] Subir a repositorio remoto (GitHub)
-- [ ] Configurar Google Cloud Console para release (SHA-1 de keystore)
-- [ ] Build release (APK firmado o bundle para Play Store)
+- [ ] Configurar Google Cloud Console para Android, iOS y Web
+- [ ] Validar conexión opcional de Google Drive y respaldo/restauración en todas las plataformas
+- [ ] Build release firmado (AAB, IPA/TestFlight y Web)
 - [ ] Notificaciones push para alertas de mantenimiento
 - [ ] Widget de pantalla de inicio (km restantes refacción crítica)
 - [ ] Soporte multi-idioma (ES / EN)
