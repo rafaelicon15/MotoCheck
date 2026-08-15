@@ -1,0 +1,8 @@
+{
+  "googleWebClientId": "REPLACE_WITH_WEB_CLIENT_ID.apps.googleusercontent.com",
+  "authorizedOrigins": [
+    "http://localhost:REPLACE_WITH_FLUTTER_PORT",
+    "https://REPLACE_WITH_PRODUCTION_DOMAIN"
+  ],
+  "notes": "Do not commit real secrets or use this file as production configuration. The client ID must be restricted in Google Cloud Console."
+}

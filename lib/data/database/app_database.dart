@@ -116,14 +116,18 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      // Dev: drop all and recreate
-      try { await m.drop(partHistory); } catch (_) {}
-      try { await m.drop(fuelRecords); } catch (_) {}
-      try { await m.drop(maintenanceRecords); } catch (_) {}
-      try { await m.drop(partRecords); } catch (_) {}
-      try { await m.drop(motoProfile); } catch (_) {}
-      try { await m.drop(appSettings); } catch (_) {}
-      await m.createAll();
+      // Historial documentado: v8 agregó PartHistory, v9 agregó isFull
+      // a FuelRecords y v10 agregó rimType a MotoProfile. Estas
+      // migraciones son aditivas para preservar el historial local.
+      if (from < 8) {
+        await m.createTable(partHistory);
+      }
+      if (from < 9) {
+        await m.addColumn(fuelRecords, fuelRecords.isFull);
+      }
+      if (from < 10) {
+        await m.addColumn(motoProfile, motoProfile.rimType);
+      }
     },
   );
 

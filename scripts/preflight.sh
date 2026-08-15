@@ -52,6 +52,11 @@ if ! grep -q 'home: const MainShell()' lib/app.dart; then
   fail 'MotoCheck no inicia directamente en MainShell.'
 fi
 
+printf '%s\n' '== Drift migrations =='
+if grep -q 'm\.drop(' lib/data/database/app_database.dart; then
+  fail 'La migración de Drift contiene drop; usar una migración incremental o documentar una excepción revisada.'
+fi
+
 printf '%s\n' '== OAuth variable routing =='
 if ! grep -q 'GOOGLE_WEB_CLIENT_ID' lib/services/google_auth_service.dart; then
   fail 'No se encontró la variable GOOGLE_WEB_CLIENT_ID.'
