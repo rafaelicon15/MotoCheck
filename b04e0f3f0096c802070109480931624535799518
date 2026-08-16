@@ -1,0 +1,6 @@
+Registro de ingeniería
+Fecha: 2026-08-01T17:12:16-04:00
+Alcance: Expand motorcycle maintenance catalog
+Validación: revisar el workflow CI asociado y el preflight/documentación del commit.
+Reversión: git revert b04e0f3f0096c802070109480931624535799518; no borrar migraciones Drift ya aplicadas.
+Referencia: docs/PROJECT_MASTER_LOG.md y docs/ENGINEERING_LOG.md.
