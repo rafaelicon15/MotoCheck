@@ -1,0 +1,6 @@
+Registro de ingeniería
+Fecha: 2026-08-01T17:44:06-04:00
+Alcance: Enable editing records and prepare web storage
+Validación: revisar el workflow CI asociado y el preflight/documentación del commit.
+Reversión: git revert 2769102bb55bc0ba3f99025ec8fef007903ddbb9; no borrar migraciones Drift ya aplicadas.
+Referencia: docs/PROJECT_MASTER_LOG.md y docs/ENGINEERING_LOG.md.
