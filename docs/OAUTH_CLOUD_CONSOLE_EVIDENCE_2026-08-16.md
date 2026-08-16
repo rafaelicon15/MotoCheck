@@ -51,3 +51,19 @@ En la ventana Agregar usuarios, `motocheck.mail@gmail.com` quedó convertido cor
 En Información de la marca, el correo de asistencia al usuario ya está seleccionado como `motocheck.mail@gmail.com`. La ficha aún no se ha guardado; el correo de contacto del desarrollador sigue mostrando `rafaelicon15@gmail.com` y requiere revisión.
 
 La ficha de marca quedó preparada para guardar con `motocheck.mail@gmail.com` como correo de asistencia y también como contacto del desarrollador. Google conserva además el contacto original `rafaelicon15@gmail.com`; no se eliminará para no perder notificaciones existentes.
+
+## 2026-08-16 — AUTH-003: corrección de `origin_mismatch`
+
+El primer intento de autorización desde el deployment `https://motocheck-web-preview-cvd8qodzf-rafael-s-projects-4c5bba13.vercel.app` devolvió en Google el error **400: `origin_mismatch`**. La captura del usuario confirmó que el Client ID sí fue reconocido y que el rechazo ocurrió porque el origen exacto del deployment no estaba autorizado.
+
+En Google Auth Platform → Clientes → `MotoCheck Web`, se comprobó que los orígenes existentes eran:
+
+| URI | Estado |
+|---|---|
+| `https://motocheck-web-preview-dy3ukb57k-rafael-s-projects-4c5bba13.vercel.app` | Existente |
+| `http://localhost:7357` | Existente |
+| `https://motocheck-web-preview-cvd8qodzf-rafael-s-projects-4c5bba13.vercel.app` | Añadido y guardado el 2026-08-16 |
+
+La consola confirmó **“Se guardó el cliente OAuth”**. Google advierte que la propagación puede tardar desde unos minutos hasta algunas horas; se repetirá la autorización desde el preview después de la actualización.
+
+No se modificó el Client ID, no se rotó el secreto y no se copió ningún secreto de cliente.

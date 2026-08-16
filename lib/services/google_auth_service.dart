@@ -35,9 +35,10 @@ GoogleSignIn? _googleSignInInstance;
 
 /// Se crea de forma diferida para que Drive siga siendo opcional.
 GoogleSignIn get googleSignInInstance => _googleSignInInstance ??= GoogleSignIn(
-  // Android usa el client ID Web como serverClientId para validar el ID token.
-  // Web usa ese mismo ID como clientId; iOS recibe su client ID nativo.
-  serverClientId: _googleWebClientId.isEmpty ? null : _googleWebClientId,
+  // `serverClientId` es para Android; google_sign_in_web no lo soporta.
+  serverClientId: kIsWeb || _googleWebClientId.isEmpty
+      ? null
+      : _googleWebClientId,
   clientId: _platformClientId,
   scopes: _driveScopes,
 );
@@ -51,6 +52,7 @@ final googleAccountProvider =
 class GoogleAccountNotifier
     extends StateNotifier<AsyncValue<GoogleSignInAccount?>> {
   GoogleAccountNotifier() : super(const AsyncValue.data(null)) {
+    lastError = null;
     if (!isGoogleAuthConfigured) {
       _userSubscription = const Stream<GoogleSignInAccount?>.empty().listen(
         (_) {},
@@ -69,6 +71,9 @@ class GoogleAccountNotifier
   }
 
   late final StreamSubscription<GoogleSignInAccount?> _userSubscription;
+
+  /// Último error técnico de autenticación, visible solo para diagnóstico UI.
+  String? lastError;
 
   Future<void> _handleCurrentUserChanged(GoogleSignInAccount? account) async {
     if (mounted) state = AsyncValue.data(account);
@@ -100,23 +105,51 @@ class GoogleAccountNotifier
   }
 
   Future<bool> signIn() async {
+    lastError = null;
     if (!isGoogleAuthConfigured) {
+      lastError = googleAuthConfigurationError;
       if (mounted) state = const AsyncValue.data(null);
       return false;
     }
 
     try {
       final account = await googleSignInInstance.signIn();
+      if (account == null) {
+        lastError = 'El selector de Google fue cancelado o cerrado.';
+        if (mounted) state = const AsyncValue.data(null);
+        return false;
+      }
+
+      // En Web, el login y el permiso de Drive son operaciones separadas.
+      // El segundo paso debe ocurrir dentro de la acción explícita del usuario.
+      if (kIsWeb) {
+        final hasDriveScope = await googleSignInInstance.canAccessScopes(
+          _driveScopes,
+        );
+        if (!hasDriveScope) {
+          final granted = await googleSignInInstance.requestScopes(
+            _driveScopes,
+          );
+          if (!granted) {
+            throw StateError(
+              'La cuenta no concedió el permiso de Google Drive (drive.appdata).',
+            );
+          }
+        }
+      }
+
       if (mounted) state = AsyncValue.data(account);
-      return account != null;
+      return true;
     } catch (e, st) {
-      debugPrint('Google sign-in failed: $e\n$st');
+      lastError = e.toString();
+      debugPrint('Google sign-in/Drive scope failed: $e\n$st');
       if (mounted) state = const AsyncValue.data(null);
       return false;
     }
   }
 
   Future<void> signOut() async {
+    lastError = null;
     if (!isGoogleAuthConfigured) return;
     await googleSignInInstance.signOut();
     if (mounted) state = const AsyncValue.data(null);

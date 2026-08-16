@@ -106,7 +106,7 @@ La matriz completa de recorridos, entornos, severidad y criterios de salida est�
 |---|---|---|---|---|
 | AUTH-001 | Android OAuth | Login/Drive pueden fallar por SHA o client ID | Bloqueado | Crear OAuth Android con huellas debug/release/Play |
 | AUTH-002 | iOS OAuth | Callback no regresará a la app sin URL scheme | Bloqueado | Configurar cliente iOS, plist, Mac/Xcode |
-| AUTH-003 | Web OAuth | Conexión Drive no puede autorizarse hasta probar el Client ID en el preview final | En configuración; pendiente de prueba runtime | Client ID Web creado, Drive API habilitada, consentimiento en Prueba, `motocheck.mail@gmail.com` añadido como usuario de prueba y origen HTTPS registrado; desplegar build con `GOOGLE_WEB_CLIENT_ID` y probar conexión/restauración |
+| AUTH-003 | Web OAuth | El origen ya fue corregido; la conexión todavía falla después de iniciar el flujo y requiere validar el scope Drive | Código corregido; pendiente de prueba runtime | Se añadió el origen exacto del deployment, se evita `serverClientId` en Web, se solicita explícitamente `drive.appdata` y se conserva el error técnico; publicar el nuevo build y repetir autorización |
 | DATA-001 | Migraciones Drift | Riesgo de incompatibilidad de versiones históricas | Pendiente | Probar snapshots v7/v8/v9 |
 | BUILD-001 | Toolchain sandbox | Flutter/Dart ya disponible; Android SDK y Xcode todavía no | Parcialmente resuelto | Usar CI/equipo macOS para releases Android/iOS |
 | BUILD-002 | Android release | Requiere keystore y Play App Signing | Pendiente | Crear keystore y validación AAB |
@@ -160,6 +160,8 @@ La ruta sostenible para Vercel es compilar Flutter Web en CI y desplegar únicam
 | 2026-08-16 | Se despliega preview corregido | Vercel `READY`; Chromium headless renderiza dashboard y navegación en `dpl_56JawPdiqiHfE2wiBQkJUE2Rt4Po` |
 | 2026-08-16 | CI valida la corrección Drift Web | Run `31918758896` verde en preflight, dependencias, formato, análisis, tests, build Web y artefacto; quedan advertencias de deprecación de acciones Node.js |
 | 2026-08-16 | Se diagnostica conexión Google Drive | El build no contiene `GOOGLE_WEB_CLIENT_ID`; se evita inicializar OAuth sin configuración y se añade mensaje accionable en Configuración; evidencia en `WEB_OAUTH_DIAGNOSIS_2026-08-16.md` |
+| 2026-08-16 | Se reproduce `origin_mismatch` en el nuevo preview | Google reconoce el Client ID, pero el hostname `motocheck-web-preview-cvd8qodzf...vercel.app` no estaba registrado; se añadió y guardó como origen JavaScript autorizado |
+| 2026-08-16 | Se reproduce fallo posterior a `origin_mismatch` | La app llega a la tarjeta Drive pero muestra error genérico; se corrige el flujo Web para no pasar `serverClientId`, solicitar `drive.appdata` explícitamente y conservar el diagnóstico técnico |
 
 ## 10. Dominio y presencia digital
 
@@ -232,7 +234,20 @@ Para resolverlo de forma reproducible se creó `vercel.json` con `buildCommand` 
 
 El siguiente ciclo debe publicar `vercel.json` y `preview-build`, obtener la URL de preview resultante, añadir esa URL exacta como origen autorizado adicional si cambia el hostname y probar en Chrome la secuencia **Configuración → Conectar con Google → consentimiento → listar archivos de appDataFolder → restaurar copia**. La prueba debe realizarse con `motocheck.mail@gmail.com`, que ya está registrada como usuario de prueba.
 
-## 13. Índice de evidencia relacionada
+## 13. Registro adicional — fallo posterior a `origin_mismatch` y corrección de scopes
+
+La captura del usuario posterior a la corrección del origen mostró que la app ya alcanzaba su tarjeta de Google Drive, pero devolvía el mensaje genérico **“No se pudo conectar con Google”**. La revisión del paquete `google_sign_in_web 0.12.4+4` confirmó dos responsabilidades separadas: identificación de la cuenta y autorización del scope adicional `drive.appdata`. El código anterior ejecutaba `signIn()` y ocultaba cualquier excepción bajo un mensaje genérico; tampoco solicitaba explícitamente el scope cuando el login Web devolvía una cuenta.
+
+La corrección aplicada en el siguiente commit hace lo siguiente:
+
+| Cambio | Resultado esperado |
+|---|---|
+| No pasa `serverClientId` a Web | Evita una configuración no soportada por `google_sign_in_web`; Android conserva ese parámetro |
+| Comprueba `canAccessScopes(['https://www.googleapis.com/auth/drive.appdata'])` | Distingue login de autorización de Drive |
+| Ejecuta `requestScopes` durante la acción explícita del usuario | Permite conceder el acceso adicional antes de usar Drive API |
+| Conserva `lastError` técnico sin tokens | La interfaz permite diagnosticar cancelación, scope denegado o excepción de plataforma |
+
+## 14. Índice de evidencia relacionada
 
 | ID de evidencia | Archivo | Contenido |
 |---|---|---|

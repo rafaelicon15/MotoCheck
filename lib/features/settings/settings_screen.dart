@@ -67,9 +67,13 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
     setState(() => _loading = true);
     final ok = await ref.read(googleAccountProvider.notifier).signIn();
     if (!mounted) return;
+    final diagnostic = ref.read(googleAccountProvider.notifier).lastError;
     setState(() {
       _loading = false;
-      _status = ok ? null : 'No se pudo conectar con Google';
+      _status = ok
+          ? null
+          : diagnostic ??
+                'No se pudo conectar con Google. Revisa la consola para más detalles.';
     });
   }
 
