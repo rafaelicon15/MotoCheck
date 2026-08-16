@@ -1,0 +1,7 @@
+2026-08-16 | AND-001 + PRODUCT-002
+
+Qué: se estabiliza Gradle para entorno de memoria limitada, se documenta APK debug verificado y se estructura el roadmap posterior a v1.
+Por qué: el heap anterior de 8 GB cerraba el daemon; las funciones futuras requerían gates claros antes de implementación.
+Validación: SDK/JDK, assembleDebug sin daemon, zipalign, apksigner, preflight y diff check.
+Riesgo: el APK está firmado con debug y requiere pruebas físicas; OAuth Android sigue pendiente de huellas.
+Rollback: revertir configuración/documentación; el binario se mantiene fuera de Git.
