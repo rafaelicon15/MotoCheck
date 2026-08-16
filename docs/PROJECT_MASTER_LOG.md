@@ -60,9 +60,8 @@ MotoCheck utiliza un ciclo de cinco pasos: cuestionar requisitos con dueño, eli
 |---|---|---|
 | `0e93315` | Elimina login obligatorio; la app abre en modo local y Drive se conecta desde Configuración. Encauza client IDs OAuth por plataforma. Añade preflight, requisitos y documentación inicial. | Publicado en PR #1 |
 | `14f2a84` | Reemplaza la migración Drift destructiva por migraciones incrementales para v8, v9 y v10. Añade plantillas de OAuth y firma. | Publicado en PR #1 |
-| `33387c7` | Añade plan de QA y workflow de GitHub Actions para preflight, formato, análisis, tests y build Web. | Local; pendiente de publicar por sesión GitHub inválida |
-| Pendiente de commit | Inyecta pantallas ligeras al `MainShell` y un executor opcional a Drift para pruebas deterministas. Corrige estilo de condiciones. | Validado localmente; pendiente de commit/push |
-| Pendiente de commit | Añade `DOMAIN_PRICE_SNAPSHOT_2026-08-16.md`. | Validado; pendiente de commit/push |
+| `33387c7` | Añade plan de QA y workflow de GitHub Actions para preflight, formato, análisis, tests y build Web. | Publicado en PR #1 |
+| `ec83725` | Estabiliza el test local-first, normaliza formato/lints, documenta precios de dominios y evidencia del preview Web. | Publicado en PR #1; CI verde |
 
 ### Decisiones de código vigentes
 
@@ -81,7 +80,7 @@ La base Drift tiene versión 10. La migración ya no borra tablas: para versione
 | Android firma | `android/key.properties` | Pendiente | Equipo/CI seguro | `key.properties`, `.jks`, `.keystore` |
 | Apple | Certificados, perfiles y App Store Connect | Pendiente | Cuenta Apple / CI seguro | `.p12`, perfiles, API keys |
 | Vercel | Equipo `Rafael 's projects` | Conectado | Consola Vercel | Tokens de integración |
-| GitHub | Cuenta conectada | Sesión inválida desde 2026-08-15 | Reautenticación de conector | Tokens en chat o repositorio |
+| GitHub | Cuenta conectada | Reconectado; push y CI verificados el 2026-08-16 | Conector GitHub | Tokens en chat o repositorio |
 
 ## 6. Pruebas y calidad
 
@@ -97,6 +96,7 @@ La primera puerta automática es `scripts/preflight.sh`. Revisa archivos sensibl
 | Build Android AAB | Pendiente | Requiere Android SDK y firma release |
 | Build iOS | Pendiente | Requiere Mac, Xcode, certificados y dispositivo |
 | OAuth/Drive | Pendiente | Requiere credenciales y dispositivos/navegadores reales |
+| GitHub Actions | Aprobado | Run `31917725566`, jobs de preflight, formato, análisis, tests y build Web verdes |
 
 La matriz completa de recorridos, entornos, severidad y criterios de salida está en `docs/QA_TEST_PLAN.md`. Cada fallo debe crear un issue con entorno, versión, pasos, resultado esperado, resultado real, evidencia, severidad, responsable y commit de corrección.
 
@@ -112,7 +112,7 @@ La matriz completa de recorridos, entornos, severidad y criterios de salida est�
 | BUILD-002 | Android release | Requiere keystore y Play App Signing | Pendiente | Crear keystore y validación AAB |
 | TEST-001 | Cobertura | La suite todavía es insuficiente para beta | Pendiente | Añadir tests de datos, migraciones, backup y errores |
 | WEB-001 | Preview Vercel | El preview estático actual entrega HTTP 200 e `index.html` de Flutter | Resuelto para preview | Ejecutar CORE-01 a CORE-09 y automatizar despliegue desde CI |
-| GH-001 | GitHub push | El conector GitHub quedó inválido tras el commit `33387c7` | Bloqueado | Reautenticar conector y publicar commit |
+| GH-001 | GitHub push | La sesión inválida impedía publicar commits | Resuelto | Push de `33387c7` y `ec83725` completado; CI verde |
 
 ## 8. Despliegue Web de prueba
 
@@ -150,6 +150,8 @@ La ruta sostenible para Vercel es compilar Flutter Web en CI y desplegar únicam
 | 2026-08-16 | Se evalúan dominios disponibles | Recomendación preliminar: `.lat` como principal si se mantiene foco LATAM; compra pendiente de decisión |
 | 2026-08-16 | Se publica y verifica preview Web final | HTTP 200; raíz, JS, worker, SQLite WASM y manifest entregan recursos válidos |
 | 2026-08-16 | Se ejecuta widget test contra Chromium | Aprobado: 1 prueba Web valida arranque de shell local-first |
+| 2026-08-16 | Se reconecta GitHub y se publica la rama | `33387c7` y `ec83725` publicados; PR #1 conserva la rama de trabajo |
+| 2026-08-16 | GitHub Actions termina la validación | Run `31917725566` verde: preflight, formato, análisis, tests, build Web y artefacto |
 
 ## 10. Dominio y presencia digital
 
@@ -161,13 +163,12 @@ No se ha comprado ningún dominio. Antes de una compra: verificar precio final e
 
 | Orden | Acción | Criterio de cierre |
 |---|---|---|
-| 1 | Reautenticar GitHub y publicar `33387c7` y el siguiente commit local | GitHub Actions inicia en la PR |
-| 2 | Ejecutar CORE-02 a CORE-09 manualmente en Chrome visible | Casos aprobados o issues registrados con evidencia |
-| 3 | Configurar OAuth Web en Google Cloud | Login opcional y Drive probado con cuenta de prueba |
-| 4 | Probar snapshots Drift v7, v8 y v9 | Migración preserva datos en evidencia automatizada |
-| 5 | Automatizar build y despliegue estático desde CI | Preview reproducible desde commit remoto |
-| 6 | Preparar Android AAB y prueba iOS | Sin bloqueadores por plataforma antes de beta |
-| 7 | Corregir bloqueadores y repetir | Sin bugs bloqueadores/críticos para beta Web |
+| 1 | Ejecutar CORE-02 a CORE-09 manualmente en Chrome visible | Casos aprobados o issues registrados con evidencia |
+| 2 | Configurar OAuth Web en Google Cloud | Login opcional y Drive probado con cuenta de prueba |
+| 3 | Probar snapshots Drift v7, v8 y v9 | Migración preserva datos en evidencia automatizada |
+| 4 | Automatizar build y despliegue estático desde CI | Preview reproducible desde commit remoto |
+| 5 | Preparar Android AAB y prueba iOS | Sin bloqueadores por plataforma antes de beta |
+| 6 | Corregir bloqueadores y repetir | Sin bugs bloqueadores/críticos para beta Web |
 
 ## 12. Referencias internas
 
