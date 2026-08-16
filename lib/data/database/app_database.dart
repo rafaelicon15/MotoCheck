@@ -158,7 +158,13 @@ class AppDatabase extends _$AppDatabase {
   );
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'motocheck_db');
+    return driftDatabase(
+      name: 'motocheck_db',
+      web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.js'),
+      ),
+    );
   }
 
   // ─── Moto Profile ──────────────────────────────────────────────────────────

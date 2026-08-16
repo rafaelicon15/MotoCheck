@@ -112,6 +112,7 @@ La matriz completa de recorridos, entornos, severidad y criterios de salida est�
 | BUILD-002 | Android release | Requiere keystore y Play App Signing | Pendiente | Crear keystore y validación AAB |
 | TEST-001 | Cobertura | La suite todavía es insuficiente para beta | Pendiente | Añadir tests de datos, migraciones, backup y errores |
 | WEB-001 | Preview Vercel | El preview estático actual entrega HTTP 200 e `index.html` de Flutter | Resuelto para preview | Ejecutar CORE-01 a CORE-09 y automatizar despliegue desde CI |
+| WEB-002 | Pantalla blanca Web | `driftDatabase` Web se construía sin `DriftWebOptions`, lanzando `ArgumentError` durante el arranque | Corregido localmente y verificado en preview | Mantener `sqlite3.wasm` y `drift_worker.js` en el artefacto; repetir CORE-01 a CORE-09 |
 | GH-001 | GitHub push | La sesión inválida impedía publicar commits | Resuelto | Push de `33387c7` y `ec83725` completado; CI verde |
 
 ## 8. Despliegue Web de prueba
@@ -124,11 +125,13 @@ La matriz completa de recorridos, entornos, severidad y criterios de salida est�
 | Repositorio enlazado | `rafaelicon15/MotoCheck` |
 | Rama desplegada inicialmente | `main` (`2769102`) |
 | URL inicial | `https://motocheck-web-preview-5ln7va39w-rafael-s-projects-4c5bba13.vercel.app` — HTTP 404 histórico |
-| Preview anterior | `https://motocheck-web-preview-mxka2gh5s-rafael-s-projects-4c5bba13.vercel.app` |
-| Preview actual | `https://motocheck-web-preview-e0ohsmt2m-rafael-s-projects-4c5bba13.vercel.app` |
-| Deployment ID actual | `dpl_GMnq2nbS7Tis3sdRMSbS3TAK6cDz` |
+| Preview histórico | `https://motocheck-web-preview-mxka2gh5s-rafael-s-projects-4c5bba13.vercel.app` |
+| Preview anterior | `https://motocheck-web-preview-e0ohsmt2m-rafael-s-projects-4c5bba13.vercel.app` |
+| Preview actual corregido | `https://motocheck-web-preview-lr35gybfc-rafael-s-projects-4c5bba13.vercel.app` |
+| Deployment ID actual | `dpl_56JawPdiqiHfE2wiBQkJUE2Rt4Po` |
 | Estado infraestructura | `READY`; HTTP 200 y entrega `index.html` de Flutter |
-| Método temporal | Compilación local release, empaquetada por límite de 3 MB por archivo y expandida en Vercel a `dist` |
+| Verificación de runtime | Chromium headless renderiza `flt-glass-pane`, dashboard, tarjeta “Sin moto activa” y barra de navegación |
+| Método temporal | Compilación local release, con `canvaskit` local excluido porque Flutter lo carga desde CDN; paquete expandido en Vercel a `dist` |
 | Producción | No desplegada; no usar dominio propio todavía |
 
 La ruta sostenible para Vercel es compilar Flutter Web en CI y desplegar únicamente la salida estática `build/web`. El método comprimido actual es válido para preview, pero debe reemplazarse por un flujo reproducible una vez publicada la CI de GitHub.
@@ -152,6 +155,9 @@ La ruta sostenible para Vercel es compilar Flutter Web en CI y desplegar únicam
 | 2026-08-16 | Se ejecuta widget test contra Chromium | Aprobado: 1 prueba Web valida arranque de shell local-first |
 | 2026-08-16 | Se reconecta GitHub y se publica la rama | `33387c7` y `ec83725` publicados; PR #1 conserva la rama de trabajo |
 | 2026-08-16 | GitHub Actions termina la validación | Run `31917725566` verde: preflight, formato, análisis, tests, build Web y artefacto |
+| 2026-08-16 | Se reproduce pantalla blanca en preview anterior | Chrome conectado expone título `MotoCheck` pero no controles; se crea `WEB_BLANK_SCREEN_EVIDENCE_2026-08-16.md` |
+| 2026-08-16 | Se corrige conexión Drift Web | `AppDatabase` recibe `DriftWebOptions` con `sqlite3.wasm` y `drift_worker.js`; analyze, tests y build Web pasan |
+| 2026-08-16 | Se despliega preview corregido | Vercel `READY`; Chromium headless renderiza dashboard y navegación en `dpl_56JawPdiqiHfE2wiBQkJUE2Rt4Po` |
 
 ## 10. Dominio y presencia digital
 
@@ -184,5 +190,6 @@ No se ha comprado ningún dominio. Antes de una compra: verificar precio final e
 | `docs/ENGINEERING_LOG.md` | Bitácora histórica detallada |
 | `docs/DOMAIN_PRICE_SNAPSHOT_2026-08-16.md` | Snapshot de precios, renovaciones y disponibilidad de dominios |
 | `docs/WEB_PREVIEW_VERIFICATION_2026-08-16.md` | Evidencia HTTP, recursos críticos y límites de observabilidad del preview |
+| `docs/WEB_BLANK_SCREEN_EVIDENCE_2026-08-16.md` | Reproducción, diagnóstico y verificación de la pantalla blanca Web |
 
 A partir de esta actualización, el presente documento es la fuente de verdad legible. Los documentos especializados se mantienen como anexos técnicos y no deben contradecirlo.
