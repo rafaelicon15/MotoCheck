@@ -1,0 +1,7 @@
+2026-08-16 | ICON-001
+
+Qué: se añade MotoIcon/AnimatedMotoIcon, dos SVG Lucide con licencia y la primera sustitución expandir/contraer en Mantenimiento.
+Por qué: Morphicons no tiene driver Flutter/Dart; se necesita una base SVG accesible y multiplataforma antes de morphing real.
+Validación: dart format, flutter analyze, flutter test (3), flutter build web --release --no-wasm-dry-run, preflight y revisión de tamaño del preview (6.6 MB).
+Riesgo: dependencia flutter_svg y dos activos de 474 bytes; no toca Drift, OAuth, permisos ni datos.
+Rollback: revertir 29ecf33.
