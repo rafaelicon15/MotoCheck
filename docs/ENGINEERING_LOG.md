@@ -89,3 +89,22 @@ El registro compartido contiene un token de GitHub en texto plano. El valor no s
 **Riesgos y reversión.** `device_calendar` requiere permisos Android `READ_CALENDAR`/`WRITE_CALENDAR`, claves iOS `NSCalendarsUsageDescription`/`NSCalendarsFullAccessUsageDescription`, pruebas de zona horaria y atención a R8/ProGuard en release. El rollback de calendario consiste en revertir el commit de servicio y la migración v11; no se debe borrar la columna en una instalación existente. El rollback visual consiste en revertir el commit de tarjeta, sin afectar datos.
 
 **Referencia.** Commit GIS/contraste/informe: `57d28dd`; dependencia GIS Web: `00ad426`; calendario: `b17ffaf`; CI verde en `31926435388` y `31926433445`; preview `motocheck-web-preview-5sb5rbmoh-rafael-s-projects-4c5bba13.vercel.app`. No se almacenan tokens, claves privadas ni credenciales.
+
+
+## 2026-08-16 — WEB-003: actualización del preview y referencia Morphicons
+
+**Objetivo.** Resolver la discrepancia reportada entre el rediseño publicado y una interfaz anterior todavía visible en Chrome, sin borrar el almacenamiento local-first del rider. Definir además una adopción de Morphicons que no cree una experiencia distinta entre Web, Android e iOS.
+
+**Diagnóstico reproducible.** El 2026-08-16 se comparó el SHA-256 de `preview-build/main.dart.js`, el deployment inmutable `motocheck-web-preview-5sb5rbmoh-rafael-s-projects-4c5bba13.vercel.app` y el alias estable de la rama: los tres producen `5489963f82f21b8adf466a8bd5272ee72ef6504d68f95aef5cc49eb90ad5614e`. Vercel ya respondía con `public, max-age=0, must-revalidate`; por ello no existe evidencia de que el servidor entregue un JavaScript antiguo. El artefacto generado contiene un Service Worker de Flutter que intenta activarse, desregistrarse y navegar clientes, pero una pestaña ya controlada puede seguir presentando recursos en caché hasta actualizar el registro del worker.
+
+**Decisión de despliegue.** `vercel.json` pasa a marcar `index.html`, `flutter_bootstrap.js`, `flutter_service_worker.js` y `version.json` como `Cache-Control: no-store, max-age=0`. Los binarios, fuentes, WASM y `main.dart.js` no se forzan a `no-store`, preservando rendimiento y la estrategia de caché normal del navegador. La recuperación manual segura consiste en desregistrar únicamente el Service Worker del sitio y recargar fuerte; no se debe usar “Clear site data”, porque eliminaría IndexedDB y puede borrar los registros locales del usuario.
+
+**Decisión de iconografía.** La investigación oficial confirma que Morphicons tiene licencia MIT y ofrece motor SVG para DOM, React, Vue, Svelte, React Native, Astro y canvas, pero no un driver Flutter/Dart. Se adopta como referencia de movimiento y pares de estado, no como dependencia JavaScript global. La capa propuesta es `MotoIcon` con SVG de trazo versionados y `flutter_svg`, con `AnimatedSwitcher` como fallback accesible común. Un morph real queda bloqueado hasta que exista un adaptador Flutter que mantenga paridad de plataforma. El detalle está en `docs/MORPHICONS_ADOPTION_2026-08-16.md`.
+
+**Archivos afectados.** `vercel.json`, `docs/MORPHICONS_ADOPTION_2026-08-16.md`, `docs/PROJECT_MASTER_LOG.md`, `docs/ENGINEERING_LOG.md`.
+
+**Validación.** Cabeceras previas y hash remoto comparados con `curl` y `sha256sum`; el preview Web se capturó de forma independiente y muestra la superficie grafito, acento naranja lateral y estado vacío. La visualización de una moto activa continúa pendiente porque depende de la base local del navegador del usuario.
+
+**Riesgos y reversión.** Las cabeceras `no-store` aumentan validaciones de archivos de arranque, no el peso del bundle. Se revierten eliminando el bloque `headers` de `vercel.json` si producen un comportamiento inesperado. No se eliminan datos ni se cambian migraciones. La decisión de Morphicons se revierte sin impacto funcional porque todavía no modifica widgets de producción.
+
+**Referencia.** Commit pendiente de publicación desde la rama `feat/local-first-oauth-simplification`.

@@ -326,3 +326,31 @@ Se inició calendario como una proyección del mantenimiento: Drift schema v11 a
 Validaciones actuales: `flutter pub get`, `dart format lib`, `dart run build_runner build --delete-conflicting-outputs`, `flutter analyze` sin issues y `flutter test` exitoso. La prueba manual Android/iOS de permisos, zona horaria, evento y actualización sigue pendiente; Web ya compila con el fallback `.ics`, pero falta validar su descarga e importación en calendarios reales.
 
 Commits recientes con alcance explícito: `57d28dd` (botón GIS Web, contraste visual e informe de competidores), `00ad426` (dependencia directa GIS Web) y `b17ffaf` (calendario nativo, fallback `.ics`, Drift v11, permisos y artefacto Web). CI de `b17ffaf` terminó verde en runs `31926435388` y `31926433445`. Preview: `https://motocheck-web-preview-5sb5rbmoh-rafael-s-projects-4c5bba13.vercel.app`. Las notas Git de ingeniería se publicaron en `refs/notes/commits`.
+
+### Verificación de entrega del preview — 2026-08-16
+
+Se comparó SHA-256 de `preview-build/main.dart.js` con la respuesta HTTP del deployment `dpl_9sTy4u4Sgac81rNWCdjDH4VnjBku` (`motocheck-web-preview-5sb5rbmoh-rafael-s-projects-4c5bba13.vercel.app`): ambos coinciden. Vercel responde `Cache-Control: public, max-age=0, must-revalidate`. La inspección mediante Chrome conectado no pudo capturar el canvas de Flutter; se requiere captura independiente para distinguir una caché de Service Worker de un problema perceptual de la tarjeta.
+
+
+## 2026-08-16 — WEB-003: entrega del build, caché y estrategia Morphicons
+
+El reporte **“sigo viendo todo igual”** se investigó separando entrega del servidor de estado local del navegador. El SHA-256 de `main.dart.js` del artefacto local, del deployment inmutable y del alias estable de la rama coincide exactamente: `5489963f82f21b8adf466a8bd5272ee72ef6504d68f95aef5cc49eb90ad5614e`. Esto descarta que Vercel esté sirviendo un JavaScript anterior. Una captura independiente del deployment nuevo muestra el dashboard actual con superficie grafito y acento naranja; al no disponer de la motocicleta almacenada en el navegador del propietario, todavía no permite verificar la variante activa con sus datos reales.
+
+| Evidencia | Resultado | Conclusión |
+|---|---|---|
+| `preview-build/main.dart.js` | SHA-256 `5489963f…ad5614e` | Artefacto local de `b17ffaf` |
+| Deployment inmutable | Mismo SHA-256 | Vercel entrega el build correcto |
+| Alias de la rama | Mismo SHA-256 | No hay desalineación entre URL estable e inmutable |
+| Cabeceras previas | `public, max-age=0, must-revalidate` | El navegador debe validar, pero un cliente controlado por Service Worker puede requerir actualización explícita |
+
+Se añadió una política `Cache-Control: no-store, max-age=0` a `index.html`, `flutter_bootstrap.js`, `flutter_service_worker.js` y `version.json` en `vercel.json`. Se mantienen sin esta política los recursos de aplicación de gran tamaño para no degradar el rendimiento. La medida no borra Drift ni IndexedDB.
+
+> **Instrucción segura de recuperación Web:** abrir las herramientas de desarrollador del sitio, ir a **Application → Service Workers**, pulsar **Unregister** para el worker de MotoCheck y luego recargar con `Ctrl/Cmd + Shift + R`. No usar **Clear site data**, porque MotoCheck es local-first y esa acción puede eliminar datos de la moto guardados en el navegador.
+
+Morphicons queda adoptado como referencia oficial de morphing SVG, no como paquete Flutter directo. La documentación oficial confirma una licencia MIT y drivers para DOM, React, Vue, Svelte, React Native, Astro y canvas, pero no Flutter/Dart. La implementación aprobada es un futuro `MotoIcon` basado en SVG + `flutter_svg` y un fallback de transición con `AnimatedSwitcher`, respetando reducción de movimiento; los morphs reales se difieren hasta contar con un adaptador Dart/Flutter que preserve paridad Android/iOS/Web. Se documentó el diseño, licencias, alcance y límites en `docs/MORPHICONS_ADOPTION_2026-08-16.md`.
+
+| ID | Área | Estado | Siguiente acción |
+|---|---|---|---|
+| WEB-003 | Actualización visual Web | Corrección preparada; publicación pendiente | Desplegar las cabeceras y probar recarga sin borrar datos |
+| ICON-001 | Migración Morphicons | Diseño documentado | Seleccionar SVG con licencia compatible y crear `MotoIcon` en un cambio aislado |
+| VISUAL-001 | Contraste de tarjeta activa | Código ya publicado; confirmación por usuario pendiente | Verificar con la moto existente tras actualizar el worker |
