@@ -1,0 +1,6 @@
+Registro de ingeniería
+Fecha: 2026-08-16T03:46:31+00:00
+Alcance: fix(auth): recover Drive session before backup
+Validación: revisar el workflow CI asociado y el preflight/documentación del commit.
+Reversión: git revert 814308ed51c1984c0d6b73f013d6316f26c34849; no borrar migraciones Drift ya aplicadas.
+Referencia: docs/PROJECT_MASTER_LOG.md y docs/ENGINEERING_LOG.md.
