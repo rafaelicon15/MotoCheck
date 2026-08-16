@@ -1,0 +1,6 @@
+2026-08-16 | Verificación ICON-001
+
+Qué: se registra el deployment READY, URL inmutable, SHA-256 coincidente, cabeceras no-store y SVG servido.
+Por qué: asegurar evidencia reproducible de entrega y diferenciarla de la verificación visual con datos locales.
+Validación: preflight, diff check y consultas HTTP.
+Rollback: revertir este commit solo de documentación.
