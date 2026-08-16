@@ -1,0 +1,6 @@
+Registro de ingeniería
+Fecha: 2026-08-16T04:21:10+00:00
+Alcance: feat(calendar): schedule maintenance reminders
+Validación: revisar el workflow CI asociado y el preflight/documentación del commit.
+Reversión: git revert b17ffaf3e16cacba7e8f03ab31b177cd55e35d58; no borrar migraciones Drift ya aplicadas.
+Referencia: docs/PROJECT_MASTER_LOG.md y docs/ENGINEERING_LOG.md.
