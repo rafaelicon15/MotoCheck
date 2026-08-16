@@ -1,0 +1,6 @@
+2026-08-16 | WEB-003 follow-up
+
+Qué: se añade una cabecera no-store a la ruta raíz que Vercel resuelve como documento de inicio.
+Por qué: la regla /index.html no modificaba la respuesta de /.
+Validación: jq, preflight y comprobación HTTP de bootstrap/worker/version.
+Rollback: revertir este commit; no modifica código Flutter ni datos locales.
