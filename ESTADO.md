@@ -23,6 +23,7 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 | Respaldo | Google Drive `appDataFolder` (sin Firebase) |
 | Gráficas | `fl_chart` |
 | Fechas/formatos | `intl` |
+| Iconografía SVG | `flutter_svg` + activos locales Lucide, con Morphicons como referencia de transición |
 
 ---
 
@@ -52,6 +53,13 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 - [x] Respaldo manual y automático cuando existe cuenta conectada
 - [x] Restauración manual con confirmación explícita
 - [x] Calendario: eventos nativos Android/iOS y descarga `.ics` en Web
+
+### Iconografía y accesibilidad
+- [x] Capa `MotoIcon`/`AnimatedMotoIcon` para SVG locales con etiquetas semánticas
+- [x] Primera transición expandir/contraer en Mantenimiento, con respeto a movimiento reducido
+- [x] Atribución ISC/MIT para activos Lucide incluidos
+- [ ] Migrar por pares evaluados los iconos de navegación, edición, alta y estado Drive
+- [ ] Adoptar morphing real solo si existe adaptador Flutter/Dart multiplataforma
 
 ### Dashboard
 - [x] Tarjeta activa de moto (marca, modelo, año, km, badges)
@@ -110,14 +118,14 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 
 ```
 lib/
-├── app.dart                          # AuthGate + MainShell + navegación
+├── app.dart                          # MainShell local-first + navegación
 ├── core/
 │   ├── constants/app_constants.dart  # Todos los datos: tipos de motor, cadenas, rines, etc.
-│   └── theme/app_theme.dart          # Colores, cardDecoration(), ThemeData
+│   ├── theme/app_theme.dart          # Colores, cardDecoration(), ThemeData
+│   └── widgets/moto_icon.dart        # SVG, semántica y transición de iconos
 ├── data/
-│   └── database/app_database.dart    # Schema Drift v10, migraciones, exportToJson/importFromJson
+│   └── database/app_database.dart    # Schema Drift v11, migraciones, exportToJson/importFromJson
 ├── features/
-│   ├── auth/auth_screen.dart         # Pantalla de login
 │   ├── dashboard/dashboard_screen.dart
 │   ├── fuel/screens/fuel_screen.dart
 │   ├── maintenance/screens/maintenance_screen.dart
@@ -159,16 +167,16 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 - [x] Marca MotoCheck confirmada; no se renombrará en esta etapa.
 - [ ] Revocar token de GitHub expuesto en material compartido.
 - [ ] Crear client IDs OAuth y validar Android, iOS y Web.
-- [ ] Instalar/verificar toolchain Flutter y Android SDK en entorno del propietario.
-- [ ] Ejecutar `flutter analyze`, `flutter test` y builds release sobre el checkout definitivo.
-- [ ] Reemplazar migración destructiva de Drift antes de beta pública.
+- [x] Toolchain Flutter 3.47/Dart 3.13 verificado en sandbox; Android SDK y macOS/Xcode siguen pendientes.
+- [x] `flutter analyze`, `flutter test` y build Web release ejecutados sobre el checkout actual.
+- [x] Migraciones Drift v8–v11 son aditivas; faltan snapshots históricos v7/v8/v9.
 - [ ] Configurar firma release, Play App Signing, Apple Developer y CI/CD.
 
 ## Bloqueadores actuales
 
 - [ ] Revocar el token de GitHub expuesto en material compartido.
 - [ ] Crear y restringir client IDs OAuth para Android, iOS y Web.
-- [ ] Ejecutar `flutter pub get`, `flutter analyze`, `flutter test` y builds release en un equipo con Flutter; iOS requiere macOS/Xcode.
+- [ ] Validar build release Android firmado e iOS/TestFlight; iOS requiere macOS/Xcode.
 - [ ] Crear keystore release y completar Play App Signing.
 - [ ] Publicar política de privacidad y definir dominio/correo corporativo.
 

@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-08-16
 
-**Estado:** Decisión de diseño registrada; integración Flutter pendiente de adaptador multiplataforma.
+**Estado:** Primera base SVG implementada; morphing real Flutter pendiente de adaptador multiplataforma.
 
 **Propietario del requisito:** Rafael Licón.
 
@@ -28,6 +28,8 @@ Morphicons no es un catálogo de iconos para Flutter. Es un motor MIT de morphin
 
 La primera migración se limita a iconos que cambian de estado y tienen significado estable: menú/cerrar, mostrar/ocultar contraseña, expandir/contraer, reproducir/pausar y conectar/desconectar Drive. Los iconos de navegación, mantenimiento, combustible y refacciones se migrarán después de seleccionar los SVG, validar su licencia y medir el peso del artefacto.
 
+**Hito implementado:** el par expandir/contraer ya usa `chevron-down`/`chevron-up` de Lucide mediante `MotoIcon` y `AnimatedMotoIcon` dentro del selector de categorías de Mantenimiento. La transición tiene 180 ms de fade/scale y se desactiva cuando `MediaQuery.disableAnimations` está activo. Los activos pesan 474 bytes sin comprimir y su atribución ISC/MIT se conserva junto al código.
+
 ## Reglas de rendimiento y licencia
 
 1. Cada SVG debe ser de trazo, tener `viewBox` documentado y conservar licencia/autor en el inventario de activos.
@@ -38,7 +40,7 @@ La primera migración se limita a iconos que cambian de estado y tienen signific
 
 ## Bloqueos y siguiente decisión
 
-Para implementar el primer lote se requiere decidir el set SVG de origen compatible con Morphicons, preferiblemente Lucide, Tabler o Heroicons outline. Después se crea un inventario de pares de transición y un prototipo aislado antes de sustituir iconos de producción.
+Lucide se eligió como set de origen inicial por su diseño de trazo, licencia documentada y compatibilidad conceptual con Morphicons. El siguiente lote requiere un inventario de pares de estado de alto valor —menú/cerrar, mostrar/ocultar, reproducir/pausar y Drive— antes de sustituir iconos de producción. El morphing por trayectoria permanece diferido hasta contar con un adaptador Dart/Flutter validado.
 
 ## Referencias
 

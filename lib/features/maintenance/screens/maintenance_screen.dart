@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/moto_icon.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/database/app_database.dart';
 import '../../../services/calendar_service.dart';
@@ -754,10 +755,15 @@ class _CategorySectionState extends State<_CategorySection> {
                       ),
                     ),
                   const SizedBox(width: 6),
-                  Icon(
-                    _expanded ? Icons.expand_less : Icons.expand_more,
+                  AnimatedMotoIcon(
+                    icon: _expanded
+                        ? MotoIconName.chevronUp
+                        : MotoIconName.chevronDown,
                     color: AppTheme.textSecondary,
                     size: 18,
+                    semanticLabel: _expanded
+                        ? 'Contraer opciones'
+                        : 'Expandir opciones',
                   ),
                 ],
               ),

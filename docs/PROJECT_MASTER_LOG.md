@@ -361,3 +361,19 @@ Morphicons queda adoptado como referencia oficial de morphing SVG, no como paque
 El commit `594cd35` generó el deployment Vercel `dpl_4AtvqLmfWoia9sPSWqf3sMV7ooJg`, en estado **READY**. El URL inmutable verificable es `https://motocheck-web-preview-6dselsbse-rafael-s-projects-4c5bba13.vercel.app`; el alias de rama continúa siendo `https://motocheck-web-preview-git-fea-1440ff-rafael-s-projects-4c5bba13.vercel.app`. Ambos exponen `no-store` para bootstrap, Service Worker y `version.json`; el bundle principal mantiene revalidación normal para no penalizar rendimiento.
 
 Durante la comprobación de cabeceras se detectó que la entrada de Vercel se resuelve por `/`, no por `/index.html`; la configuración se amplía con una regla exacta para `/`. Chrome conectado llegó al documento con título `MotoCheck`, aunque no transfirió la captura del canvas a la sesión de auditoría. Esta limitación no permite certificar visualmente la tarjeta de moto activa; después del despliegue final, la confirmación debe realizarse con la motocicleta persistida del usuario sin borrar datos de sitio.
+
+
+## 2026-08-16 — ICON-001: primera migración SVG y accesible
+
+Se implementó el primer hito de la estrategia Morphicons-compatible: `MotoIcon` y `AnimatedMotoIcon`. La capa usa SVG de trazo locales, no descargas runtime ni un driver JavaScript exclusivo de Web. El primer par, `chevron-down`/`chevron-up`, procede de Lucide, con licencia ISC y aviso MIT de Feather incluidos en `assets/icons/lucide/LICENSE`.
+
+| Componente | Decisión | Resultado |
+|---|---|---|
+| Renderer | `flutter_svg` `2.3.0` | SVG nativos en Android, iOS y Web |
+| Capa de UI | `MotoIcon` por nombre semántico | Rutas y color no se dispersan por pantallas |
+| Movimiento | `AnimatedSwitcher` de 180 ms | Fallback multiplataforma mientras no existe adaptador Morphicons para Flutter |
+| Accesibilidad | Semantics y `MediaQuery.disableAnimations` | Etiqueta de control y duración cero con movimiento reducido |
+| Primera integración | Selector expandible de categorías de Mantenimiento | Reemplaza el cambio Material expandir/contraer sin afectar datos |
+| Peso de los SVG | 474 bytes sin comprimir | Dentro del presupuesto de 50 KB para primer lote |
+
+La validación local aprobó `flutter analyze`, `flutter test` (3 pruebas) y `flutter build web --release --no-wasm-dry-run`. El preview se regeneró con los activos; CanvasKit local se excluyó porque Flutter lo obtiene desde CDN, manteniendo el artefacto cerca de 6.6 MB. La migración restante de navegación, edición, alta y estado Drive sigue pendiente; no se realizará de forma masiva antes de revisar cada par, licencia y efecto visual.

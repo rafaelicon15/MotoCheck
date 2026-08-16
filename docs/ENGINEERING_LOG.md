@@ -115,3 +115,22 @@ El registro compartido contiene un token de GitHub en texto plano. El valor no s
 El deployment Git de Vercel `dpl_4AtvqLmfWoia9sPSWqf3sMV7ooJg` quedó en estado **READY** para el commit `594cd35`, con URL inmutable `https://motocheck-web-preview-6dselsbse-rafael-s-projects-4c5bba13.vercel.app` y alias de rama `https://motocheck-web-preview-git-fea-1440ff-rafael-s-projects-4c5bba13.vercel.app`. Ambas URL aplican `Cache-Control: no-store, max-age=0` a `flutter_bootstrap.js`, `flutter_service_worker.js` y `version.json`; `main.dart.js` mantiene `public, max-age=0, must-revalidate`.
 
 La comprobación inicial reveló que Vercel resuelve la página de inicio como `/`, no como `/index.html`; por ello se añadió también una regla exacta de `no-store` para `/`. La navegación con Chrome conectado confirma título `MotoCheck` y carga de la URL, pero la captura de pantalla del canvas no se transfirió desde ese navegador. Este límite de observabilidad no se interpreta como fallo visual; la evidencia visual independiente del estado vacío y la confirmación con datos reales del propietario siguen siendo necesarias.
+
+
+## 2026-08-16 — ICON-001: base SVG para Morphicons-compatible UI
+
+**Objetivo.** Iniciar la migración de iconos sin bloquear Android/iOS/Web ni introducir una dependencia JavaScript solo para Web.
+
+**Implementación.** Se añadió `flutter_svg` `2.3.0`, los SVG de trazo `chevron-down` y `chevron-up` de Lucide, el aviso de licencia ISC/MIT de origen y la carpeta de activos declarada en `pubspec.yaml`. `lib/core/widgets/moto_icon.dart` centraliza nombres semánticos, rutas, tintado, tamaño y accesibilidad. `AnimatedMotoIcon` usa `AnimatedSwitcher` con fade/scale de 180 ms y cambia a duración cero cuando `MediaQuery.disableAnimations` está activo.
+
+**Integración inicial.** El selector expandible de categorías en Mantenimiento reemplaza `Icons.expand_more`/`Icons.expand_less` por el nuevo par SVG, manteniendo la interacción, color y texto semántico “Expandir opciones”/“Contraer opciones”. Es una migración acotada de un control con transición de estado, no una sustitución masiva de iconos Material.
+
+**Licencia y relación con Morphicons.** Lucide publica los iconos bajo ISC e identifica estos chevrons como derivados de Feather con aviso MIT adicional. Morphicons mantiene la referencia de movimiento, pero no se incorpora código JavaScript porque no existe driver Flutter/Dart oficial. El fallback actual mantiene paridad de plataforma y respeta reducción de movimiento.
+
+**Archivos afectados.** `pubspec.yaml`, `pubspec.lock`, `assets/icons/lucide/`, `lib/core/widgets/moto_icon.dart`, `lib/features/maintenance/screens/maintenance_screen.dart`, `test/moto_icon_test.dart`, `preview-build/`.
+
+**Validación.** `dart format`, `flutter analyze` sin incidencias y `flutter test` con 3 pruebas aprobadas. `flutter build web --release --no-wasm-dry-run` completó correctamente con los dos SVG incluidos en el manifiesto de activos. CanvasKit local se retiró del preview porque el bootstrap usa el CDN de Flutter; el preview queda en aproximadamente 6.6 MB. La primera ejecución sin `--no-wasm-dry-run` produjo una salida no cero por una advertencia conocida de `record-use`, aunque generó `build/web`; no se usó ese resultado para publicar.
+
+**Riesgos y reversión.** El paquete añade dependencias de render SVG y los nuevos activos son pequeños (474 bytes en total). Revertir el commit elimina la abstracción y devuelve el control a Material Icons, sin afectar datos, Drift, OAuth ni permisos.
+
+**Referencia.** Commit pendiente de publicación.
