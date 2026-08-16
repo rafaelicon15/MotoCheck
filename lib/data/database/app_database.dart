@@ -21,7 +21,8 @@ class FuelRecords extends Table {
   RealColumn get pricePerLiter => real().nullable()();
   IntColumn get odometerKm => integer()();
   TextColumn get fuelType => text()(); // Regular / Premium
-  BoolColumn get usedOctaneBooster => boolean().withDefault(const Constant(false))();
+  BoolColumn get usedOctaneBooster =>
+      boolean().withDefault(const Constant(false))();
   TextColumn get octaneBrand => text().nullable()();
   TextColumn get notes => text().nullable()();
   BoolColumn get isFull => boolean().withDefault(const Constant(true))();
@@ -41,7 +42,8 @@ class MaintenanceRecords extends Table {
   TextColumn get notes => text().nullable()();
   TextColumn get oilType => text().nullable()();
   TextColumn get oilViscosity => text().nullable()();
-  TextColumn get maintenanceItems => text().nullable()(); // comma-separated selected items
+  TextColumn get maintenanceItems =>
+      text().nullable()(); // comma-separated selected items
 }
 
 class PartRecords extends Table {
@@ -54,11 +56,15 @@ class PartRecords extends Table {
   RealColumn get cost => real().nullable()();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   TextColumn get partCategory => text().nullable()();
-  TextColumn get filterType => text().nullable()(); // 'replaceable' | 'permanent'
-  TextColumn get brakeType => text().nullable()();  // 'pads' | 'bands'
-  TextColumn get tireType => text().nullable()();    // 'standard' | 'sealant' | 'tube' | 'tubeless'
-  TextColumn get chainType => text().nullable()();   // 'standard' | 'o_ring' | 'x_ring' | 'w_ring'
-  BoolColumn get requiresComboChange => boolean().withDefault(const Constant(false))();
+  TextColumn get filterType =>
+      text().nullable()(); // 'replaceable' | 'permanent'
+  TextColumn get brakeType => text().nullable()(); // 'pads' | 'bands'
+  TextColumn get tireType =>
+      text().nullable()(); // 'standard' | 'sealant' | 'tube' | 'tubeless'
+  TextColumn get chainType =>
+      text().nullable()(); // 'standard' | 'o_ring' | 'x_ring' | 'w_ring'
+  BoolColumn get requiresComboChange =>
+      boolean().withDefault(const Constant(false))();
 }
 
 class PartHistory extends Table {
@@ -80,20 +86,30 @@ class MotoProfile extends Table {
   IntColumn get currentKm => integer()();
   TextColumn get plate => text().nullable()();
   // Motor
-  TextColumn get engineType => text().withDefault(const Constant('4T'))(); // '4T' | '2T'
-  TextColumn get twoStrokeOilMethod => text().nullable()(); // 'autolube' | 'premix' | null
+  TextColumn get engineType =>
+      text().withDefault(const Constant('4T'))(); // '4T' | '2T'
+  TextColumn get twoStrokeOilMethod =>
+      text().nullable()(); // 'autolube' | 'premix' | null
   IntColumn get displacement => integer().nullable()(); // cilindrada en cc
-  TextColumn get fuelSystem => text().withDefault(const Constant('carb'))(); // 'carb' | 'injection'
+  TextColumn get fuelSystem =>
+      text().withDefault(const Constant('carb'))(); // 'carb' | 'injection'
   // Refrigeración
-  TextColumn get coolingType => text().withDefault(const Constant('air'))(); // 'air' | 'liquid'
+  TextColumn get coolingType =>
+      text().withDefault(const Constant('air'))(); // 'air' | 'liquid'
   // Aceite (4T)
   TextColumn get oilType => text().nullable()();
   TextColumn get oilViscosity => text().nullable()();
-  TextColumn get oilFilterType => text().withDefault(const Constant('replaceable'))(); // 'replaceable' | 'permanent'
+  TextColumn get oilFilterType => text().withDefault(
+    const Constant('replaceable'),
+  )(); // 'replaceable' | 'permanent'
   // Transmisión
-  TextColumn get transmissionType => text().withDefault(const Constant('chain'))(); // 'chain' | 'shaft' | 'belt'
+  TextColumn get transmissionType => text().withDefault(
+    const Constant('chain'),
+  )(); // 'chain' | 'shaft' | 'belt'
   // Rines
-  TextColumn get rimType => text().withDefault(const Constant('alloy'))(); // 'alloy' | 'spoke' | 'spoke_double_wall'
+  TextColumn get rimType => text().withDefault(
+    const Constant('alloy'),
+  )(); // 'alloy' | 'spoke' | 'spoke_double_wall'
   // Tanque
   RealColumn get tankCapacity => real().nullable()(); // capacidad en litros
   // Estado
@@ -103,9 +119,19 @@ class MotoProfile extends Table {
 
 // ─── Base de datos ────────────────────────────────────────────────────────────
 
-@DriftDatabase(tables: [FuelRecords, MaintenanceRecords, PartRecords, MotoProfile, AppSettings, PartHistory])
+@DriftDatabase(
+  tables: [
+    FuelRecords,
+    MaintenanceRecords,
+    PartRecords,
+    MotoProfile,
+    AppSettings,
+    PartHistory,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  /// Permite inyectar un executor en pruebas; en producción usa Drift local.
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
   int get schemaVersion => 10;
@@ -147,50 +173,61 @@ class AppDatabase extends _$AppDatabase {
           .watchSingleOrNull();
 
   Future<MotoProfileData?> getActiveMoto() =>
-      (select(motoProfile)..where((t) => t.isActive.equals(true))..limit(1))
+      (select(motoProfile)
+            ..where((t) => t.isActive.equals(true))
+            ..limit(1))
           .getSingleOrNull();
 
   Future<void> setActiveMoto(int id) async {
-    await (update(motoProfile)).write(const MotoProfileCompanion(isActive: Value(false)));
+    await (update(
+      motoProfile,
+    )).write(const MotoProfileCompanion(isActive: Value(false)));
     await (update(motoProfile)..where((t) => t.id.equals(id))).write(
-      MotoProfileCompanion(isActive: const Value(true), updatedAt: Value(DateTime.now())),
+      MotoProfileCompanion(
+        isActive: const Value(true),
+        updatedAt: Value(DateTime.now()),
+      ),
     );
   }
 
-  Future<int> insertMoto(MotoProfileCompanion m) =>
-      into(motoProfile).insert(m);
+  Future<int> insertMoto(MotoProfileCompanion m) => into(motoProfile).insert(m);
 
-  Future<bool> updateMoto(MotoProfileData m) =>
-      update(motoProfile).replace(m);
+  Future<bool> updateMoto(MotoProfileData m) => update(motoProfile).replace(m);
 
   Future<void> updateMotoCurrentKmIfGreater(int? motoId, int currentKm) async {
     if (motoId == null) return;
-    final moto = await (select(motoProfile)..where((t) => t.id.equals(motoId)))
-        .getSingleOrNull();
+    final moto = await (select(
+      motoProfile,
+    )..where((t) => t.id.equals(motoId))).getSingleOrNull();
     if (moto == null || currentKm <= moto.currentKm) return;
 
-    await updateMoto(moto.copyWith(
-      currentKm: currentKm,
-      updatedAt: DateTime.now(),
-    ));
+    await updateMoto(
+      moto.copyWith(currentKm: currentKm, updatedAt: DateTime.now()),
+    );
   }
 
   Future<int> deleteMoto(int id) async {
     return transaction(() async {
-      final moto = await (select(motoProfile)..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
-      final deleted = await (delete(motoProfile)..where((t) => t.id.equals(id))).go();
+      final moto = await (select(
+        motoProfile,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      final deleted = await (delete(
+        motoProfile,
+      )..where((t) => t.id.equals(id))).go();
 
       await (delete(partHistory)..where((t) => t.motoId.equals(id))).go();
       await (delete(partRecords)..where((t) => t.motoId.equals(id))).go();
-      await (delete(maintenanceRecords)..where((t) => t.motoId.equals(id))).go();
+      await (delete(
+        maintenanceRecords,
+      )..where((t) => t.motoId.equals(id))).go();
       await (delete(fuelRecords)..where((t) => t.motoId.equals(id))).go();
 
       if (moto?.isActive == true) {
-        final nextMoto = await (select(motoProfile)
-              ..orderBy([(t) => OrderingTerm.asc(t.id)])
-              ..limit(1))
-            .getSingleOrNull();
+        final nextMoto =
+            await (select(motoProfile)
+                  ..orderBy([(t) => OrderingTerm.asc(t.id)])
+                  ..limit(1))
+                .getSingleOrNull();
         if (nextMoto != null) {
           await setActiveMoto(nextMoto.id);
         }
@@ -204,7 +241,9 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<FuelRecord>> watchFuelRecords(int? motoId) {
     if (motoId == null) {
-      return (select(fuelRecords)..orderBy([(t) => OrderingTerm.desc(t.date)])).watch();
+      return (select(
+        fuelRecords,
+      )..orderBy([(t) => OrderingTerm.desc(t.date)])).watch();
     }
     return (select(fuelRecords)
           ..where((t) => t.motoId.equals(motoId))
@@ -239,7 +278,9 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<MaintenanceRecord>> watchMaintenanceRecords(int? motoId) {
     if (motoId == null) {
-      return (select(maintenanceRecords)..orderBy([(t) => OrderingTerm.desc(t.date)])).watch();
+      return (select(
+        maintenanceRecords,
+      )..orderBy([(t) => OrderingTerm.desc(t.date)])).watch();
     }
     return (select(maintenanceRecords)
           ..where((t) => t.motoId.equals(motoId))
@@ -260,24 +301,28 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<PartRecord>> watchParts(int? motoId) {
     if (motoId == null) {
-      return (select(partRecords)..where((t) => t.isActive.equals(true))).watch();
+      return (select(
+        partRecords,
+      )..where((t) => t.isActive.equals(true))).watch();
     }
-    return (select(partRecords)
-          ..where((t) => t.isActive.equals(true) & t.motoId.equals(motoId)))
-        .watch();
+    return (select(
+      partRecords,
+    )..where((t) => t.isActive.equals(true) & t.motoId.equals(motoId))).watch();
   }
 
   Future<List<PartRecord>> getPartsByCategory(int? motoId, String category) {
     if (motoId == null) {
-      return (select(partRecords)
-            ..where((t) => t.isActive.equals(true) & t.partCategory.equals(category)))
+      return (select(partRecords)..where(
+            (t) => t.isActive.equals(true) & t.partCategory.equals(category),
+          ))
           .get();
     }
-    return (select(partRecords)
-          ..where((t) =>
+    return (select(partRecords)..where(
+          (t) =>
               t.isActive.equals(true) &
               t.motoId.equals(motoId) &
-              t.partCategory.equals(category)))
+              t.partCategory.equals(category),
+        ))
         .get();
   }
 
@@ -290,9 +335,9 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     if (motoId == null || odometerKm <= 0) return 0;
 
-    final parts = await (select(partRecords)
-          ..where((t) => t.isActive.equals(true) & t.motoId.equals(motoId)))
-        .get();
+    final parts = await (select(
+      partRecords,
+    )..where((t) => t.isActive.equals(true) & t.motoId.equals(motoId))).get();
     final matched = <int, PartRecord>{};
 
     bool hasAny(String text, List<String> needles) {
@@ -307,19 +352,26 @@ class AppDatabase extends _$AppDatabase {
         final category = part.partCategory;
 
         if (lower == 'cambio de aceite') {
-          return category == 'oil' || hasAny(name, ['aceite del motor', 'aceite 2t']);
+          return category == 'oil' ||
+              hasAny(name, ['aceite del motor', 'aceite 2t']);
         }
         if (lower == 'cambio de filtro de aceite') {
           return category == 'oil_filter' && part.filterType != 'permanent';
         }
         if (lower.contains('buj')) return hasAny(name, ['buj']);
-        if (lower.contains('filtro de aire')) return hasAny(name, ['filtro de aire']);
-        if (lower.contains('filtro de gasolina')) return category == 'fuel_filter';
+        if (lower.contains('filtro de aire')) {
+          return hasAny(name, ['filtro de aire']);
+        }
+        if (lower.contains('filtro de gasolina')) {
+          return category == 'fuel_filter';
+        }
         if (lower.contains('empaque tapa de válvulas') ||
             lower.contains('empaque tapa de valvulas')) {
-          return category == 'gasket' && hasAny(name, ['tapa de válvulas', 'tapa de valvulas']);
+          return category == 'gasket' &&
+              hasAny(name, ['tapa de válvulas', 'tapa de valvulas']);
         }
-        if (lower.contains('líquido de frenos') || lower.contains('liquido de frenos')) {
+        if (lower.contains('líquido de frenos') ||
+            lower.contains('liquido de frenos')) {
           return hasAny(name, ['líquido de frenos', 'liquido de frenos']);
         }
         if (lower.contains('pastillas') &&
@@ -329,8 +381,11 @@ class AppDatabase extends _$AppDatabase {
           return part.brakeType == 'pads';
         }
         if (lower.contains('bandas')) return part.brakeType == 'bands';
-        if (lower.contains('piñón') || lower.contains('pinon') || lower.contains('corona')) {
-          return category == 'sprocket' || hasAny(name, ['piñón', 'pinon', 'corona']);
+        if (lower.contains('piñón') ||
+            lower.contains('pinon') ||
+            lower.contains('corona')) {
+          return category == 'sprocket' ||
+              hasAny(name, ['piñón', 'pinon', 'corona']);
         }
         if (lower.contains('cadena') &&
             lower.contains('cambio') &&
@@ -338,14 +393,16 @@ class AppDatabase extends _$AppDatabase {
           return category == 'chain';
         }
 
-        if (lower.contains('discos de clutch') || lower.contains('discos de crochet')) {
+        if (lower.contains('discos de clutch') ||
+            lower.contains('discos de crochet')) {
           return category == 'clutch' && hasAny(name, ['discos']);
         }
         if (lower.contains('separadores')) {
           return category == 'clutch' && hasAny(name, ['separadores']);
         }
         if (lower.contains('estrella') || lower.contains('plato prensador')) {
-          return category == 'clutch' && hasAny(name, ['estrella', 'plato prensador']);
+          return category == 'clutch' &&
+              hasAny(name, ['estrella', 'plato prensador']);
         }
         if (lower.contains('campana') || lower.contains('canasta')) {
           return category == 'clutch' && hasAny(name, ['campana', 'canasta']);
@@ -357,8 +414,10 @@ class AppDatabase extends _$AppDatabase {
           return category == 'clutch' && hasAny(name, ['resortes']);
         }
 
-        if (lower.contains('árbol de levas') || lower.contains('arbol de levas')) {
-          return category == 'engine_timing' && hasAny(name, ['árbol de levas', 'arbol de levas']);
+        if (lower.contains('árbol de levas') ||
+            lower.contains('arbol de levas')) {
+          return category == 'engine_timing' &&
+              hasAny(name, ['árbol de levas', 'arbol de levas']);
         }
         if (lower.contains('tensor de cadena de tiempo')) {
           return category == 'engine_timing' && hasAny(name, ['tensor']);
@@ -366,20 +425,24 @@ class AppDatabase extends _$AppDatabase {
         if (lower.contains('guías') ||
             lower.contains('guias') ||
             lower.contains('patines')) {
-          return category == 'engine_timing' && hasAny(name, ['guías', 'guias', 'patines']);
+          return category == 'engine_timing' &&
+              hasAny(name, ['guías', 'guias', 'patines']);
         }
         if (lower.contains('cadena de tiempo')) {
           return category == 'engine_timing' && name == 'cadena de tiempo';
         }
         if (lower.contains('balancines') || lower.contains('seguidores')) {
-          return category == 'valvetrain' && hasAny(name, ['balancines', 'seguidores']);
+          return category == 'valvetrain' &&
+              hasAny(name, ['balancines', 'seguidores']);
         }
         if (lower.contains('pastillas') || lower.contains('shims')) {
-          return category == 'valvetrain' && hasAny(name, ['pastillas', 'shims']);
+          return category == 'valvetrain' &&
+              hasAny(name, ['pastillas', 'shims']);
         }
         if (lower.contains('válvulas de admisión') ||
             lower.contains('valvulas de admision')) {
-          return category == 'valvetrain' && hasAny(name, ['admisión', 'admision']);
+          return category == 'valvetrain' &&
+              hasAny(name, ['admisión', 'admision']);
         }
         if (lower.contains('válvulas de escape') ||
             lower.contains('valvulas de escape')) {
@@ -398,13 +461,16 @@ class AppDatabase extends _$AppDatabase {
         }
 
         if (lower.contains('pistón') || lower.contains('piston')) {
-          return category == 'engine_internal' && hasAny(name, ['pistón', 'piston']);
+          return category == 'engine_internal' &&
+              hasAny(name, ['pistón', 'piston']);
         }
         if (lower.contains('anillos') || lower.contains('segmentos')) {
-          return category == 'engine_internal' && hasAny(name, ['anillos', 'segmentos']);
+          return category == 'engine_internal' &&
+              hasAny(name, ['anillos', 'segmentos']);
         }
         if (lower.contains('cilindro') || lower.contains('camisa')) {
-          return category == 'engine_internal' && hasAny(name, ['cilindro', 'camisa']);
+          return category == 'engine_internal' &&
+              hasAny(name, ['cilindro', 'camisa']);
         }
         if (lower.contains('biela')) {
           return category == 'engine_internal' && hasAny(name, ['biela']);
@@ -417,17 +483,29 @@ class AppDatabase extends _$AppDatabase {
           return category == 'engine_internal' && name == 'cigüeñal';
         }
         if (lower.contains('bomba de aceite')) {
-          return category == 'engine_internal' && hasAny(name, ['bomba de aceite']);
+          return category == 'engine_internal' &&
+              hasAny(name, ['bomba de aceite']);
         }
         if (lower.contains('bomba de agua') || lower.contains('refrigerante')) {
-          return category == 'engine_internal' && hasAny(name, ['bomba de agua', 'refrigerante']);
+          return category == 'engine_internal' &&
+              hasAny(name, ['bomba de agua', 'refrigerante']);
         }
 
-        if (lower.contains('retenes de barras')) return category == 'fork' && hasAny(name, ['reten']);
-        if (lower.contains('guardapolvos')) return category == 'fork' && hasAny(name, ['guardapolvo']);
-        if (lower.contains('aceite de barras')) return category == 'fork' && hasAny(name, ['aceite']);
-        if (lower.contains('bujes de barras')) return category == 'fork' && hasAny(name, ['bujes']);
-        if (lower.contains('mantenimiento de barras')) return category == 'fork';
+        if (lower.contains('retenes de barras')) {
+          return category == 'fork' && hasAny(name, ['reten']);
+        }
+        if (lower.contains('guardapolvos')) {
+          return category == 'fork' && hasAny(name, ['guardapolvo']);
+        }
+        if (lower.contains('aceite de barras')) {
+          return category == 'fork' && hasAny(name, ['aceite']);
+        }
+        if (lower.contains('bujes de barras')) {
+          return category == 'fork' && hasAny(name, ['bujes']);
+        }
+        if (lower.contains('mantenimiento de barras')) {
+          return category == 'fork';
+        }
 
         if (lower.contains('rodamiento rueda delantera')) {
           return category == 'bearing' && hasAny(name, ['delantera']);
@@ -435,21 +513,27 @@ class AppDatabase extends _$AppDatabase {
         if (lower.contains('rodamiento rueda trasera')) {
           return category == 'bearing' && hasAny(name, ['trasera']);
         }
-        if (lower.contains('rodamiento de dirección') || lower.contains('rodamiento de direccion')) {
-          return category == 'bearing' && hasAny(name, ['dirección', 'direccion']);
+        if (lower.contains('rodamiento de dirección') ||
+            lower.contains('rodamiento de direccion')) {
+          return category == 'bearing' &&
+              hasAny(name, ['dirección', 'direccion']);
         }
-        if (lower.contains('rodamiento tijera') || lower.contains('basculante')) {
-          return category == 'bearing' && hasAny(name, ['tijera', 'basculante']);
+        if (lower.contains('rodamiento tijera') ||
+            lower.contains('basculante')) {
+          return category == 'bearing' &&
+              hasAny(name, ['tijera', 'basculante']);
         }
 
         if (lower.contains('magneto') || lower.contains('estator')) {
-          return category == 'electrical' && hasAny(name, ['magneto', 'estator']);
+          return category == 'electrical' &&
+              hasAny(name, ['magneto', 'estator']);
         }
         if (lower.contains('cdi') || lower.contains('ecu')) {
           return category == 'electrical' && hasAny(name, ['cdi', 'ecu']);
         }
         if (lower.contains('regulador') || lower.contains('rectificador')) {
-          return category == 'electrical' && hasAny(name, ['regulador', 'rectificador']);
+          return category == 'electrical' &&
+              hasAny(name, ['regulador', 'rectificador']);
         }
         if (lower.contains('bobina')) {
           return category == 'electrical' && hasAny(name, ['bobina']);
@@ -467,20 +551,24 @@ class AppDatabase extends _$AppDatabase {
     }
 
     for (final part in matched.values) {
-      await updatePart(part.copyWith(
-        lastChangedKm: odometerKm,
-        lastChangedDate: changedAt,
-        cost: Value(cost),
-      ));
-      await insertPartHistory(PartHistoryCompanion.insert(
-        partId: part.id,
-        motoId: Value(motoId),
-        partName: part.name,
-        km: odometerKm,
-        changedAt: changedAt,
-        cost: Value(cost),
-        notes: const Value('Actualizado desde mantenimiento'),
-      ));
+      await updatePart(
+        part.copyWith(
+          lastChangedKm: odometerKm,
+          lastChangedDate: changedAt,
+          cost: Value(cost),
+        ),
+      );
+      await insertPartHistory(
+        PartHistoryCompanion.insert(
+          partId: part.id,
+          motoId: Value(motoId),
+          partName: part.name,
+          km: odometerKm,
+          changedAt: changedAt,
+          cost: Value(cost),
+          notes: const Value('Actualizado desde mantenimiento'),
+        ),
+      );
     }
 
     return matched.length;
@@ -489,8 +577,7 @@ class AppDatabase extends _$AppDatabase {
   Future<int> insertPart(PartRecordsCompanion part) =>
       into(partRecords).insert(part);
 
-  Future<bool> updatePart(PartRecord part) =>
-      update(partRecords).replace(part);
+  Future<bool> updatePart(PartRecord part) => update(partRecords).replace(part);
 
   Future<int> deletePart(int id) =>
       (delete(partRecords)..where((t) => t.id.equals(id))).go();
@@ -505,9 +592,9 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<PartHistoryData>> watchPartHistory(int? motoId) {
     if (motoId == null) {
-      return (select(partHistory)
-            ..orderBy([(t) => OrderingTerm.desc(t.changedAt)]))
-          .watch();
+      return (select(
+        partHistory,
+      )..orderBy([(t) => OrderingTerm.desc(t.changedAt)])).watch();
     }
     return (select(partHistory)
           ..where((t) => t.motoId.equals(motoId))
@@ -532,90 +619,100 @@ class AppDatabase extends _$AppDatabase {
       'schemaVersion': schemaVersion,
       'exportedAt': DateTime.now().toIso8601String(),
       'motos': motos
-          .map((m) => {
-                'id': m.id,
-                'brand': m.brand,
-                'model': m.model,
-                'year': m.year,
-                'currentKm': m.currentKm,
-                'plate': m.plate,
-                'engineType': m.engineType,
-                'twoStrokeOilMethod': m.twoStrokeOilMethod,
-                'displacement': m.displacement,
-                'fuelSystem': m.fuelSystem,
-                'coolingType': m.coolingType,
-                'oilType': m.oilType,
-                'oilViscosity': m.oilViscosity,
-                'oilFilterType': m.oilFilterType,
-                'transmissionType': m.transmissionType,
-                'rimType': m.rimType,
-                'tankCapacity': m.tankCapacity,
-                'isActive': m.isActive,
-                'updatedAt': m.updatedAt.toIso8601String(),
-              })
+          .map(
+            (m) => {
+              'id': m.id,
+              'brand': m.brand,
+              'model': m.model,
+              'year': m.year,
+              'currentKm': m.currentKm,
+              'plate': m.plate,
+              'engineType': m.engineType,
+              'twoStrokeOilMethod': m.twoStrokeOilMethod,
+              'displacement': m.displacement,
+              'fuelSystem': m.fuelSystem,
+              'coolingType': m.coolingType,
+              'oilType': m.oilType,
+              'oilViscosity': m.oilViscosity,
+              'oilFilterType': m.oilFilterType,
+              'transmissionType': m.transmissionType,
+              'rimType': m.rimType,
+              'tankCapacity': m.tankCapacity,
+              'isActive': m.isActive,
+              'updatedAt': m.updatedAt.toIso8601String(),
+            },
+          )
           .toList(),
       'fuelRecords': fuel
-          .map((f) => {
-                'id': f.id,
-                'motoId': f.motoId,
-                'date': f.date.toIso8601String(),
-                'liters': f.liters,
-                'pricePerLiter': f.pricePerLiter,
-                'odometerKm': f.odometerKm,
-                'fuelType': f.fuelType,
-                'usedOctaneBooster': f.usedOctaneBooster,
-                'octaneBrand': f.octaneBrand,
-                'notes': f.notes,
-                'isFull': f.isFull,
-              })
+          .map(
+            (f) => {
+              'id': f.id,
+              'motoId': f.motoId,
+              'date': f.date.toIso8601String(),
+              'liters': f.liters,
+              'pricePerLiter': f.pricePerLiter,
+              'odometerKm': f.odometerKm,
+              'fuelType': f.fuelType,
+              'usedOctaneBooster': f.usedOctaneBooster,
+              'octaneBrand': f.octaneBrand,
+              'notes': f.notes,
+              'isFull': f.isFull,
+            },
+          )
           .toList(),
       'maintenanceRecords': maint
-          .map((m) => {
-                'id': m.id,
-                'motoId': m.motoId,
-                'date': m.date.toIso8601String(),
-                'odometerKm': m.odometerKm,
-                'type': m.type,
-                'description': m.description,
-                'cost': m.cost,
-                'workshop': m.workshop,
-                'nextServiceDate': m.nextServiceDate?.toIso8601String(),
-                'nextServiceKm': m.nextServiceKm,
-                'notes': m.notes,
-                'oilType': m.oilType,
-                'oilViscosity': m.oilViscosity,
-                'maintenanceItems': m.maintenanceItems,
-              })
+          .map(
+            (m) => {
+              'id': m.id,
+              'motoId': m.motoId,
+              'date': m.date.toIso8601String(),
+              'odometerKm': m.odometerKm,
+              'type': m.type,
+              'description': m.description,
+              'cost': m.cost,
+              'workshop': m.workshop,
+              'nextServiceDate': m.nextServiceDate?.toIso8601String(),
+              'nextServiceKm': m.nextServiceKm,
+              'notes': m.notes,
+              'oilType': m.oilType,
+              'oilViscosity': m.oilViscosity,
+              'maintenanceItems': m.maintenanceItems,
+            },
+          )
           .toList(),
       'partRecords': parts
-          .map((p) => {
-                'id': p.id,
-                'motoId': p.motoId,
-                'name': p.name,
-                'intervalKm': p.intervalKm,
-                'lastChangedKm': p.lastChangedKm,
-                'lastChangedDate': p.lastChangedDate.toIso8601String(),
-                'cost': p.cost,
-                'isActive': p.isActive,
-                'partCategory': p.partCategory,
-                'filterType': p.filterType,
-                'brakeType': p.brakeType,
-                'tireType': p.tireType,
-                'chainType': p.chainType,
-                'requiresComboChange': p.requiresComboChange,
-              })
+          .map(
+            (p) => {
+              'id': p.id,
+              'motoId': p.motoId,
+              'name': p.name,
+              'intervalKm': p.intervalKm,
+              'lastChangedKm': p.lastChangedKm,
+              'lastChangedDate': p.lastChangedDate.toIso8601String(),
+              'cost': p.cost,
+              'isActive': p.isActive,
+              'partCategory': p.partCategory,
+              'filterType': p.filterType,
+              'brakeType': p.brakeType,
+              'tireType': p.tireType,
+              'chainType': p.chainType,
+              'requiresComboChange': p.requiresComboChange,
+            },
+          )
           .toList(),
       'partHistory': history
-          .map((h) => {
-                'id': h.id,
-                'partId': h.partId,
-                'motoId': h.motoId,
-                'partName': h.partName,
-                'km': h.km,
-                'changedAt': h.changedAt.toIso8601String(),
-                'cost': h.cost,
-                'notes': h.notes,
-              })
+          .map(
+            (h) => {
+              'id': h.id,
+              'partId': h.partId,
+              'motoId': h.motoId,
+              'partName': h.partName,
+              'km': h.km,
+              'changedAt': h.changedAt.toIso8601String(),
+              'cost': h.cost,
+              'notes': h.notes,
+            },
+          )
           .toList(),
       'settings': settings
           .map((s) => {'key': s.key, 'value': s.value})
@@ -650,8 +747,12 @@ class AppDatabase extends _$AppDatabase {
             coolingType: Value(m['coolingType'] as String? ?? 'air'),
             oilType: Value(m['oilType'] as String?),
             oilViscosity: Value(m['oilViscosity'] as String?),
-            oilFilterType: Value(m['oilFilterType'] as String? ?? 'replaceable'),
-            transmissionType: Value(m['transmissionType'] as String? ?? 'chain'),
+            oilFilterType: Value(
+              m['oilFilterType'] as String? ?? 'replaceable',
+            ),
+            transmissionType: Value(
+              m['transmissionType'] as String? ?? 'chain',
+            ),
             rimType: Value(m['rimType'] as String? ?? 'alloy'),
             tankCapacity: Value((m['tankCapacity'] as num?)?.toDouble()),
             isActive: Value(m['isActive'] as bool? ?? false),
@@ -692,9 +793,11 @@ class AppDatabase extends _$AppDatabase {
             description: Value(m['description'] as String),
             cost: Value((m['cost'] as num?)?.toDouble()),
             workshop: Value(m['workshop'] as String?),
-            nextServiceDate: Value(m['nextServiceDate'] != null
-                ? DateTime.parse(m['nextServiceDate'] as String)
-                : null),
+            nextServiceDate: Value(
+              m['nextServiceDate'] != null
+                  ? DateTime.parse(m['nextServiceDate'] as String)
+                  : null,
+            ),
             nextServiceKm: Value(m['nextServiceKm'] as int?),
             notes: Value(m['notes'] as String?),
             oilType: Value(m['oilType'] as String?),
@@ -714,8 +817,9 @@ class AppDatabase extends _$AppDatabase {
             name: Value(p['name'] as String),
             intervalKm: Value(p['intervalKm'] as int),
             lastChangedKm: Value(p['lastChangedKm'] as int),
-            lastChangedDate:
-                Value(DateTime.parse(p['lastChangedDate'] as String)),
+            lastChangedDate: Value(
+              DateTime.parse(p['lastChangedDate'] as String),
+            ),
             cost: Value((p['cost'] as num?)?.toDouble()),
             isActive: Value(p['isActive'] as bool? ?? true),
             partCategory: Value(p['partCategory'] as String?),
@@ -723,8 +827,9 @@ class AppDatabase extends _$AppDatabase {
             brakeType: Value(p['brakeType'] as String?),
             tireType: Value(p['tireType'] as String?),
             chainType: Value(p['chainType'] as String?),
-            requiresComboChange:
-                Value(p['requiresComboChange'] as bool? ?? false),
+            requiresComboChange: Value(
+              p['requiresComboChange'] as bool? ?? false,
+            ),
           ),
           mode: InsertMode.insertOrReplace,
         );
@@ -766,8 +871,9 @@ class AppDatabase extends _$AppDatabase {
   // ─── Settings ──────────────────────────────────────────────────────────────
 
   Future<String?> getSetting(String key) async {
-    final row = await (select(appSettings)..where((t) => t.key.equals(key)))
-        .getSingleOrNull();
+    final row = await (select(
+      appSettings,
+    )..where((t) => t.key.equals(key))).getSingleOrNull();
     return row?.value;
   }
 

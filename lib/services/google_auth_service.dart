@@ -6,9 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 const _googleWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
 const _googleIosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
-const _driveScopes = <String>[
-  'https://www.googleapis.com/auth/drive.appdata',
-];
+const _driveScopes = <String>['https://www.googleapis.com/auth/drive.appdata'];
 
 String? get _platformClientId {
   if (kIsWeb) {
@@ -29,9 +27,10 @@ final googleSignInInstance = GoogleSignIn(
 );
 
 final googleAccountProvider =
-    StateNotifierProvider<GoogleAccountNotifier, AsyncValue<GoogleSignInAccount?>>(
-  (ref) => GoogleAccountNotifier(),
-);
+    StateNotifierProvider<
+      GoogleAccountNotifier,
+      AsyncValue<GoogleSignInAccount?>
+    >((ref) => GoogleAccountNotifier());
 
 class GoogleAccountNotifier
     extends StateNotifier<AsyncValue<GoogleSignInAccount?>> {
@@ -47,14 +46,14 @@ class GoogleAccountNotifier
 
   late final StreamSubscription<GoogleSignInAccount?> _userSubscription;
 
-  Future<void> _handleCurrentUserChanged(
-    GoogleSignInAccount? account,
-  ) async {
+  Future<void> _handleCurrentUserChanged(GoogleSignInAccount? account) async {
     if (mounted) state = AsyncValue.data(account);
 
     if (kIsWeb && account != null) {
       try {
-        final authorized = await googleSignInInstance.canAccessScopes(_driveScopes);
+        final authorized = await googleSignInInstance.canAccessScopes(
+          _driveScopes,
+        );
         debugPrint('Google Drive scopes authorized on Web: $authorized');
       } catch (e, st) {
         debugPrint('Google Drive scope check failed on Web: $e\n$st');

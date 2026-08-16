@@ -19,10 +19,7 @@ class MotoCheckApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       locale: const Locale('es'),
-      supportedLocales: const [
-        Locale('es'),
-        Locale('en'),
-      ],
+      supportedLocales: const [Locale('es'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
@@ -34,7 +31,10 @@ class MotoCheckApp extends StatelessWidget {
 }
 
 class MainShell extends ConsumerStatefulWidget {
-  const MainShell({super.key});
+  /// Permite inyectar pantallas ligeras en pruebas de navegación.
+  const MainShell({super.key, this.screens});
+
+  final List<Widget>? screens;
 
   @override
   ConsumerState<MainShell> createState() => _MainShellState();
@@ -42,27 +42,30 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
+  late final List<Widget> _screens;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    MaintenanceScreen(),
-    FuelScreen(),
-    PartsScreen(),
-    SettingsScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _screens =
+        widget.screens ??
+        const [
+          DashboardScreen(),
+          MaintenanceScreen(),
+          FuelScreen(),
+          PartsScreen(),
+          SettingsScreen(),
+        ];
+    assert(_screens.length == 5, 'MainShell requiere cinco pantallas.');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: DecoratedBox(
         decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Color(0x1AFFFFFF), width: 1),
-          ),
+          border: Border(top: BorderSide(color: Color(0x1AFFFFFF), width: 1)),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
