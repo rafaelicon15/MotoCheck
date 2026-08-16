@@ -148,3 +148,8 @@ Vercel publicó `dpl_CFoXJicMWrMbpgAeSiweagfY7x6h` para `29ecf33` en estado **RE
 **Verificación.** La consola Google Cloud del proyecto `motocheck-500004` muestra el cliente habilitado **MotoCheck Web**, de tipo Aplicación web, y sus orígenes incluyen el alias estable de la rama `motocheck-web-preview-git-fea-1440ff-rafael-s-projects-4c5bba13.vercel.app`. La huella SHA-256 del Client ID compilado en `preview-build/main.dart.js` no coincide con la huella del cliente Web habilitado en la consola. La causa inmediata queda clasificada como **build Web compilado con un Client ID diferente/obsoleto**.
 
 **Acción planificada.** Reconstruir el artefacto Web con el identificador público del cliente **MotoCheck Web** actualmente habilitado, sin almacenar secretos OAuth ni modificar los orígenes autorizados. Posteriormente se verificará el hash publicado y se repetirá el login en el alias estable autorizado.
+
+
+### Seguimiento AUTH-004 — publicación y validación pendiente
+
+Vercel publicó `dpl_Ew7vV4Y6Hi33NuFVy6D4bN9fhs75` para el commit `4399f5f` en estado **READY**, con URL inmutable `https://motocheck-web-preview-lie4n8yck-rafael-s-projects-4c5bba13.vercel.app`. Tanto esa URL como el alias autorizado de rama devuelven el mismo SHA-256 de bundle (`bda79ee507c8b2ba93de796ca0b5fde656e6debef2ddf8535170fdd5760f0911`) y la huella del Client ID coincide con el cliente Web habilitado. El alias se abrió en Chrome conectado, pero el canvas de Flutter no expuso controles ni captura de pantalla al canal de inspección; por ello la comprobación final de consentimiento debe realizarse manualmente desde Configuración → Conectar o recuperar Google. No se deben borrar datos del sitio.

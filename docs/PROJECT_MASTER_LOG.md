@@ -399,3 +399,8 @@ La captura del propietario confirmó que Google devolvía `Error 401: invalid_cl
 | Nuevo `main.dart.js` local | SHA-256 `bda79ee507c8b2ba93de796ca0b5fde656e6debef2ddf8535170fdd5760f0911` |
 
 Se reconstruyó el artefacto Web con el Client ID público del cliente Web habilitado, sin incorporar ni modificar secretos OAuth, tokens, datos locales, scopes, Drift ni orígenes. Falta publicar el artefacto, comprobar la coincidencia del hash remoto y repetir el consentimiento desde el alias autorizado. La propagación de cambios de Google Cloud puede tardar algunos minutos; no se considera una prueba de flujo completada hasta verificar la pantalla de consentimiento real.
+
+
+### Seguimiento de entrega AUTH-004
+
+El commit `4399f5f` generó el deployment `dpl_Ew7vV4Y6Hi33NuFVy6D4bN9fhs75` en estado **READY**. La URL inmutable es `https://motocheck-web-preview-lie4n8yck-rafael-s-projects-4c5bba13.vercel.app`; el alias autorizado de rama conserva el mismo bundle, con SHA-256 `bda79ee507c8b2ba93de796ca0b5fde656e6debef2ddf8535170fdd5760f0911` y la huella correcta del Client ID Web. La inspección automatizada no puede manipular los controles dentro del canvas de Flutter; el cierre de AUTH-004 exige una prueba manual de **Configuración → Conectar o recuperar Google** desde el alias autorizado y confirmar que Google muestra consentimiento, no `401 invalid_client`.
