@@ -1,0 +1,6 @@
+{
+  "buildCommand": "echo 'MotoCheck Flutter Web artifact already generated'",
+  "outputDirectory": "preview-build",
+  "framework": null,
+  "cleanUrls": false
+}

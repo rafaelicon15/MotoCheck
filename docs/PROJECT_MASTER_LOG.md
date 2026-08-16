@@ -48,11 +48,11 @@ MotoCheck utiliza un ciclo de cinco pasos: cuestionar requisitos con dueño, eli
 |---|---|---|
 | App | Flutter con Dart null-safe y Riverpod | Activo |
 | Datos | Drift/SQLite local | Activo; migraciones v8–v10 preservan datos |
-| Respaldo | Google Drive `appDataFolder` | Implementado; OAuth pendiente de prueba real |
+| Respaldo | Google Drive `appDataFolder` | Implementado; OAuth Web y Drive API configurados en modo Prueba; validación runtime pendiente |
 | Autenticación | `google_sign_in` directo; no Firebase Auth | Google es opcional para backup |
 | Android | `com.motocheck.motocheck` | Firma release pendiente de keystore real |
 | iOS | `com.motocheck.motocheck` | Callback OAuth, certificados y prueba en Mac pendientes |
-| Web | Flutter Web | Build y prueba funcional en curso |
+| Web | Flutter Web | Build release validado; preview OAuth recompilado localmente; despliegue versionado pendiente |
 
 ## 4. Cambios incorporados en la rama de trabajo
 
@@ -74,7 +74,7 @@ La base Drift tiene versión 10. La migración ya no borra tablas: para versione
 | Servicio | Identificador o recurso | Estado | Ubicación segura | Nunca guardar en Git |
 |---|---|---|---|---|
 | Google Cloud | Proyecto `motocheck-500004` | Existe | Consola de Google Cloud | Tokens, claves privadas |
-| OAuth Web | Client ID Web | Pendiente | Variable `GOOGLE_WEB_CLIENT_ID` | Secretos o tokens |
+| OAuth Web | Client ID Web | Configurado en Google Cloud para `MotoCheck Web`; Client ID público usado solo en build seguro | Variable `GOOGLE_WEB_CLIENT_ID` | Secretos OAuth y tokens |
 | OAuth iOS | Client ID iOS y esquema reverso | Pendiente | Configuración iOS fuera de Git | Certificados Apple |
 | OAuth Android | Package, SHA-1/SHA-256 debug/release/Play | Pendiente | Google Cloud / Play Console | Keystore y contraseñas |
 | Android firma | `android/key.properties` | Pendiente | Equipo/CI seguro | `key.properties`, `.jks`, `.keystore` |
@@ -106,13 +106,13 @@ La matriz completa de recorridos, entornos, severidad y criterios de salida est�
 |---|---|---|---|---|
 | AUTH-001 | Android OAuth | Login/Drive pueden fallar por SHA o client ID | Bloqueado | Crear OAuth Android con huellas debug/release/Play |
 | AUTH-002 | iOS OAuth | Callback no regresará a la app sin URL scheme | Bloqueado | Configurar cliente iOS, plist, Mac/Xcode |
-| AUTH-003 | Web OAuth | Login puede fallar sin client ID/orígenes autorizados | Bloqueado | Configurar client ID Web y localhost/HTTPS |
+| AUTH-003 | Web OAuth | Conexión Drive no puede autorizarse hasta probar el Client ID en el preview final | En configuración; pendiente de prueba runtime | Client ID Web creado, Drive API habilitada, consentimiento en Prueba, `motocheck.mail@gmail.com` añadido como usuario de prueba y origen HTTPS registrado; desplegar build con `GOOGLE_WEB_CLIENT_ID` y probar conexión/restauración |
 | DATA-001 | Migraciones Drift | Riesgo de incompatibilidad de versiones históricas | Pendiente | Probar snapshots v7/v8/v9 |
 | BUILD-001 | Toolchain sandbox | Flutter/Dart ya disponible; Android SDK y Xcode todavía no | Parcialmente resuelto | Usar CI/equipo macOS para releases Android/iOS |
 | BUILD-002 | Android release | Requiere keystore y Play App Signing | Pendiente | Crear keystore y validación AAB |
 | TEST-001 | Cobertura | La suite todavía es insuficiente para beta | Pendiente | Añadir tests de datos, migraciones, backup y errores |
-| WEB-001 | Preview Vercel | El preview estático actual entrega HTTP 200 e `index.html` de Flutter | Resuelto para preview | Ejecutar CORE-01 a CORE-09 y automatizar despliegue desde CI |
-| WEB-002 | Pantalla blanca Web | `driftDatabase` Web se construía sin `DriftWebOptions`, lanzando `ArgumentError` durante el arranque | Corregido localmente y verificado en preview | Mantener `sqlite3.wasm` y `drift_worker.js` en el artefacto; repetir CORE-01 a CORE-09 |
+| WEB-001 | Preview Vercel | El preview estático entrega HTTP 200 e `index.html` de Flutter | Resuelto para preview base | Verificar el nuevo preview con OAuth y ejecutar CORE-01 a CORE-09 |
+| WEB-002 | Pantalla blanca Web | `driftDatabase` Web se construía sin `DriftWebOptions`, lanzando `ArgumentError` durante el arranque | Corregido y verificado en preview | Mantener `sqlite3.wasm` y `drift_worker.js` en el artefacto; repetir CORE-01 a CORE-09 |
 | GH-001 | GitHub push | La sesión inválida impedía publicar commits | Resuelto | Push de `33387c7` y `ec83725` completado; CI verde |
 
 ## 8. Despliegue Web de prueba
@@ -159,6 +159,7 @@ La ruta sostenible para Vercel es compilar Flutter Web en CI y desplegar únicam
 | 2026-08-16 | Se corrige conexión Drift Web | `AppDatabase` recibe `DriftWebOptions` con `sqlite3.wasm` y `drift_worker.js`; analyze, tests y build Web pasan |
 | 2026-08-16 | Se despliega preview corregido | Vercel `READY`; Chromium headless renderiza dashboard y navegación en `dpl_56JawPdiqiHfE2wiBQkJUE2Rt4Po` |
 | 2026-08-16 | CI valida la corrección Drift Web | Run `31918758896` verde en preflight, dependencias, formato, análisis, tests, build Web y artefacto; quedan advertencias de deprecación de acciones Node.js |
+| 2026-08-16 | Se diagnostica conexión Google Drive | El build no contiene `GOOGLE_WEB_CLIENT_ID`; se evita inicializar OAuth sin configuración y se añade mensaje accionable en Configuración; evidencia en `WEB_OAUTH_DIAGNOSIS_2026-08-16.md` |
 
 ## 10. Dominio y presencia digital
 
@@ -192,5 +193,52 @@ No se ha comprado ningún dominio. Antes de una compra: verificar precio final e
 | `docs/DOMAIN_PRICE_SNAPSHOT_2026-08-16.md` | Snapshot de precios, renovaciones y disponibilidad de dominios |
 | `docs/WEB_PREVIEW_VERIFICATION_2026-08-16.md` | Evidencia HTTP, recursos críticos y límites de observabilidad del preview |
 | `docs/WEB_BLANK_SCREEN_EVIDENCE_2026-08-16.md` | Reproducción, diagnóstico y verificación de la pantalla blanca Web |
+| `docs/WEB_OAUTH_DIAGNOSIS_2026-08-16.md` | Evidencia y corrección del flujo OAuth Web/Drive |
 
 A partir de esta actualización, el presente documento es la fuente de verdad legible. Los documentos especializados se mantienen como anexos técnicos y no deben contradecirlo.
+
+
+## 12. Registro detallado de configuración OAuth Web — 2026-08-16
+
+### 12.1 Cuenta operativa y permisos
+
+La configuración se realizó con `motocheck.mail@gmail.com` como cuenta operativa de la aplicación. Como esa cuenta no veía inicialmente el proyecto, el propietario existente le concedió el rol **Editor** sobre `motocheck-500004`. El propietario original no fue eliminado y las acciones se mantuvieron dentro del proyecto MotoCheck.
+
+### 12.2 Google Auth Platform
+
+La pantalla de consentimiento quedó en estado **Prueba** y tipo de usuario **Usuarios externos**. La aplicación conserva el nombre `MotoCheck`; el correo de asistencia al usuario se cambió a `motocheck.mail@gmail.com`. El mismo correo se añadió a los contactos del desarrollador sin eliminar `rafaelicon15@gmail.com`, para preservar las notificaciones previamente configuradas.
+
+Se añadió `motocheck.mail@gmail.com` como usuario de prueba. Mientras la aplicación permanezca en estado Prueba, solo las cuentas registradas como usuarios de prueba podrán completar el consentimiento; esto es una condición de Google Cloud y no una restricción implementada por MotoCheck.
+
+### 12.3 Google Drive API y cliente Web
+
+`drive.googleapis.com` aparece como **API habilitada** en el proyecto. Se creó el cliente OAuth **MotoCheck Web**, de tipo **Aplicación web**. Se registraron como orígenes autorizados el preview HTTPS usado para las pruebas y `http://localhost:7357` para el desarrollo local. No se configuró una URI de redireccionamiento de servidor porque el flujo actual usa `google_sign_in_web` desde el navegador y no mantiene un callback de servidor propio.
+
+El Client ID Web se utilizó únicamente como valor público de compilación mediante `--dart-define=GOOGLE_WEB_CLIENT_ID`. El secreto que Google mostró durante la creación no se copió, no se guardó y no se incorporó al código, al build como secreto, a Git ni al chat. La evidencia detallada se conserva en `docs/OAUTH_CLOUD_CONSOLE_EVIDENCE_2026-08-16.md`.
+
+### 12.4 Código y compilación
+
+El servicio `GoogleAuthService` ahora evita inicializar Google Sign-In Web cuando falta el Client ID y devuelve un diagnóstico explícito. Configuración mantiene Drive como respaldo opcional; el auto-backup no consulta el usuario actual cuando OAuth no está configurado. Se compiló `flutter build web --release` con el Client ID público recién creado y la compilación terminó correctamente con tree-shaking de iconos y sin secretos detectados.
+
+La verificación local de seguridad sobre el artefacto `preview-build` reportó cero coincidencias con marcadores de secretos OAuth. El artefacto contiene 24 archivos y ocupa aproximadamente 6,4 MB; CanvasKit local se excluyó porque el bootstrap de Flutter lo carga desde CDN, manteniendo `sqlite3.wasm` y `drift_worker.js`.
+
+### 12.5 Vercel y limitaciones del despliegue
+
+El intento de despliegue directo mediante un archivo comprimido fue rechazado por el límite de 3 MB por archivo del canal: primero el archivo comprimido superó ese límite y, después, `main.dart.js` fue rechazado por medir aproximadamente 3,8 MB. Este resultado se conserva como evidencia operativa y no como fallo de la aplicación.
+
+Para resolverlo de forma reproducible se creó `vercel.json` con `buildCommand` no destructivo y `outputDirectory: preview-build`. El artefacto Web generado con OAuth se copió a `preview-build` para que Vercel lo sirva desde el repositorio enlazado, evitando el canal directo limitado. El despliegue versionado todavía debe confirmarse después de publicar estos cambios en la rama de trabajo.
+
+### 12.6 Estado y próximos pasos de OAuth
+
+El siguiente ciclo debe publicar `vercel.json` y `preview-build`, obtener la URL de preview resultante, añadir esa URL exacta como origen autorizado adicional si cambia el hostname y probar en Chrome la secuencia **Configuración → Conectar con Google → consentimiento → listar archivos de appDataFolder → restaurar copia**. La prueba debe realizarse con `motocheck.mail@gmail.com`, que ya está registrada como usuario de prueba.
+
+## 13. Índice de evidencia relacionada
+
+| ID de evidencia | Archivo | Contenido |
+|---|---|---|
+| EVID-OAUTH-001 | `docs/OAUTH_CLOUD_CONSOLE_EVIDENCE_2026-08-16.md` | Cambios y verificaciones realizados en Google Cloud Console |
+| EVID-OAUTH-002 | `docs/WEB_OAUTH_DIAGNOSIS_2026-08-16.md` | Diagnóstico del Client ID ausente y guardas de OAuth |
+| EVID-WEB-001 | `docs/WEB_BLANK_SCREEN_EVIDENCE_2026-08-16.md` | Reproducción y corrección de la pantalla blanca Web |
+| EVID-WEB-002 | `docs/WEB_PREVIEW_VERIFICATION_2026-08-16.md` | Verificación de recursos y runtime del preview |
+| EVID-DOM-001 | `docs/DOMAIN_PRICE_SNAPSHOT_2026-08-16.md` | Comparación de dominios y renovaciones |
+| EVID-QA-001 | `docs/QA_TEST_PLAN.md` | Matriz CORE-01 a CORE-09 y pruebas de beta |

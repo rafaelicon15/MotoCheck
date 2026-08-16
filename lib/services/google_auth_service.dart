@@ -18,7 +18,23 @@ String? get _platformClientId {
   return null;
 }
 
-final googleSignInInstance = GoogleSignIn(
+/// Indica si la integración Google está lista para la plataforma actual.
+/// En Web, el Client ID se inyecta en el build mediante dart-define.
+bool get isGoogleAuthConfigured => !kIsWeb || _googleWebClientId.isNotEmpty;
+
+/// Mensaje accionable para una configuración OAuth Web incompleta.
+String? get googleAuthConfigurationError {
+  if (kIsWeb && _googleWebClientId.isEmpty) {
+    return 'OAuth Web no está configurado. El build requiere '
+        'GOOGLE_WEB_CLIENT_ID.';
+  }
+  return null;
+}
+
+GoogleSignIn? _googleSignInInstance;
+
+/// Se crea de forma diferida para que Drive siga siendo opcional.
+GoogleSignIn get googleSignInInstance => _googleSignInInstance ??= GoogleSignIn(
   // Android usa el client ID Web como serverClientId para validar el ID token.
   // Web usa ese mismo ID como clientId; iOS recibe su client ID nativo.
   serverClientId: _googleWebClientId.isEmpty ? null : _googleWebClientId,
@@ -34,13 +50,21 @@ final googleAccountProvider =
 
 class GoogleAccountNotifier
     extends StateNotifier<AsyncValue<GoogleSignInAccount?>> {
-  GoogleAccountNotifier() : super(const AsyncValue.loading()) {
+  GoogleAccountNotifier() : super(const AsyncValue.data(null)) {
+    if (!isGoogleAuthConfigured) {
+      _userSubscription = const Stream<GoogleSignInAccount?>.empty().listen(
+        (_) {},
+      );
+      return;
+    }
+
     _userSubscription = googleSignInInstance.onCurrentUserChanged.listen(
       _handleCurrentUserChanged,
       onError: (Object error, StackTrace stackTrace) {
         debugPrint('Google user stream failed: $error\n$stackTrace');
       },
     );
+    state = const AsyncValue.loading();
     _trySilentSignIn();
   }
 
@@ -76,6 +100,11 @@ class GoogleAccountNotifier
   }
 
   Future<bool> signIn() async {
+    if (!isGoogleAuthConfigured) {
+      if (mounted) state = const AsyncValue.data(null);
+      return false;
+    }
+
     try {
       final account = await googleSignInInstance.signIn();
       if (mounted) state = AsyncValue.data(account);
@@ -88,6 +117,7 @@ class GoogleAccountNotifier
   }
 
   Future<void> signOut() async {
+    if (!isGoogleAuthConfigured) return;
     await googleSignInInstance.signOut();
     if (mounted) state = const AsyncValue.data(null);
   }

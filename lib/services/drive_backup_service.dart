@@ -90,6 +90,8 @@ class DriveBackupService {
   }
 
   static Future<void> backupIfSignedIn(AppDatabase db) async {
+    if (!isGoogleAuthConfigured) return;
+
     final account = googleSignInInstance.currentUser;
     if (account == null) return;
 

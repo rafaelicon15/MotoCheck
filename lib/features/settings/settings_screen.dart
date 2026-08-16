@@ -204,6 +204,12 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
         const SizedBox(height: 16),
         if (_loading)
           const CircularProgressIndicator()
+        else if (googleAuthConfigurationError != null)
+          Text(
+            googleAuthConfigurationError!,
+            style: const TextStyle(color: Colors.amber, fontSize: 12),
+            textAlign: TextAlign.center,
+          )
         else
           OutlinedButton.icon(
             onPressed: _signIn,
