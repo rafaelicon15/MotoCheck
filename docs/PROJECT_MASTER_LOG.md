@@ -96,7 +96,7 @@ La primera puerta automática es `scripts/preflight.sh`. Revisa archivos sensibl
 | Build Android AAB | Pendiente | Requiere Android SDK y firma release |
 | Build iOS | Pendiente | Requiere Mac, Xcode, certificados y dispositivo |
 | OAuth/Drive | Pendiente | Requiere credenciales y dispositivos/navegadores reales |
-| GitHub Actions | Aprobado | Run `31917725566`, jobs de preflight, formato, análisis, tests y build Web verdes |
+| GitHub Actions | Aprobado | Runs `31917725566` y `31918758896` verdes; preflight, formato, análisis, tests y build Web aprobados. GitHub muestra advertencias no bloqueantes de acciones que fuerzan Node.js 24 por deprecación de Node.js 20 |
 
 La matriz completa de recorridos, entornos, severidad y criterios de salida está en `docs/QA_TEST_PLAN.md`. Cada fallo debe crear un issue con entorno, versión, pasos, resultado esperado, resultado real, evidencia, severidad, responsable y commit de corrección.
 
@@ -158,6 +158,7 @@ La ruta sostenible para Vercel es compilar Flutter Web en CI y desplegar únicam
 | 2026-08-16 | Se reproduce pantalla blanca en preview anterior | Chrome conectado expone título `MotoCheck` pero no controles; se crea `WEB_BLANK_SCREEN_EVIDENCE_2026-08-16.md` |
 | 2026-08-16 | Se corrige conexión Drift Web | `AppDatabase` recibe `DriftWebOptions` con `sqlite3.wasm` y `drift_worker.js`; analyze, tests y build Web pasan |
 | 2026-08-16 | Se despliega preview corregido | Vercel `READY`; Chromium headless renderiza dashboard y navegación en `dpl_56JawPdiqiHfE2wiBQkJUE2Rt4Po` |
+| 2026-08-16 | CI valida la corrección Drift Web | Run `31918758896` verde en preflight, dependencias, formato, análisis, tests, build Web y artefacto; quedan advertencias de deprecación de acciones Node.js |
 
 ## 10. Dominio y presencia digital
 
