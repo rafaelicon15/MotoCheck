@@ -65,12 +65,14 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
 
   Future<void> _signIn() async {
     setState(() => _loading = true);
-    final ok = await ref.read(googleAccountProvider.notifier).signIn();
+    final account = await ref
+        .read(googleAccountProvider.notifier)
+        .ensureDriveAccount(interactive: true);
     if (!mounted) return;
     final diagnostic = ref.read(googleAccountProvider.notifier).lastError;
     setState(() {
       _loading = false;
-      _status = ok
+      _status = account != null
           ? null
           : diagnostic ??
                 'No se pudo conectar con Google. Revisa la consola para más detalles.';
@@ -83,8 +85,17 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
   }
 
   Future<void> _backup() async {
-    final account = ref.read(googleAccountProvider).valueOrNull;
-    if (account == null) return;
+    final account = await ref
+        .read(googleAccountProvider.notifier)
+        .ensureDriveAccount(interactive: true);
+    if (!mounted || account == null) {
+      if (mounted) {
+        setState(() {
+          _status = ref.read(googleAccountProvider.notifier).lastError;
+        });
+      }
+      return;
+    }
     setState(() {
       _loading = true;
       _status = 'Respaldando...';
@@ -108,8 +119,17 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
   }
 
   Future<void> _restore() async {
-    final account = ref.read(googleAccountProvider).valueOrNull;
-    if (account == null) return;
+    final account = await ref
+        .read(googleAccountProvider.notifier)
+        .ensureDriveAccount(interactive: true);
+    if (!mounted || account == null) {
+      if (mounted) {
+        setState(() {
+          _status = ref.read(googleAccountProvider.notifier).lastError;
+        });
+      }
+      return;
+    }
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -201,7 +221,7 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
         ),
         const SizedBox(height: 12),
         const Text(
-          'Respalda tus datos en tu Google Drive personal.\nSi cambias de celular o reinstales la app, restauras todo con un toque.',
+          'Respalda tus datos en tu Google Drive personal.\nLa app intenta recuperar tu sesión automáticamente y solo pedirá reconexión si Google la requiere.',
           style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
           textAlign: TextAlign.center,
         ),
@@ -218,7 +238,7 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
           OutlinedButton.icon(
             onPressed: _signIn,
             icon: const Icon(Icons.login),
-            label: const Text('Conectar con Google'),
+            label: const Text('Conectar o recuperar Google'),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: AppTheme.primary),
@@ -229,7 +249,12 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
           const SizedBox(height: 8),
           Text(
             _status!,
-            style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+            style: TextStyle(
+              color: _status!.startsWith('✓')
+                  ? AppTheme.success
+                  : Colors.redAccent,
+              fontSize: 12,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

@@ -90,6 +90,72 @@ class GoogleAccountNotifier
     }
   }
 
+  /// Recupera la sesión Web existente y, cuando la acción del usuario lo
+  /// permite, renueva también el permiso de Drive antes de operar.
+  Future<GoogleSignInAccount?> ensureDriveAccount({
+    bool interactive = false,
+  }) async {
+    lastError = null;
+    if (!isGoogleAuthConfigured) {
+      lastError = googleAuthConfigurationError;
+      if (mounted) state = const AsyncValue.data(null);
+      return null;
+    }
+
+    var account = googleSignInInstance.currentUser;
+    if (account == null) {
+      try {
+        account = await googleSignInInstance.signInSilently(
+          suppressErrors: false,
+        );
+        if (account != null) {
+          await _handleCurrentUserChanged(account);
+        }
+      } catch (e, st) {
+        debugPrint('Google session recovery failed: $e\\n$st');
+      }
+    }
+
+    if (account == null && interactive) {
+      final signedIn = await signIn();
+      return signedIn ? googleSignInInstance.currentUser : null;
+    }
+    if (account == null) {
+      lastError = 'La sesión de Google requiere reconexión.';
+      if (mounted) state = const AsyncValue.data(null);
+      return null;
+    }
+
+    try {
+      if (kIsWeb) {
+        final hasDriveScope = await googleSignInInstance.canAccessScopes(
+          _driveScopes,
+        );
+        if (!hasDriveScope) {
+          if (!interactive) {
+            if (mounted) state = AsyncValue.data(account);
+            return account;
+          }
+          final granted = await googleSignInInstance.requestScopes(
+            _driveScopes,
+          );
+          if (!granted) {
+            throw StateError(
+              'La cuenta necesita volver a conceder el permiso de Google Drive.',
+            );
+          }
+        }
+      }
+      if (mounted) state = AsyncValue.data(account);
+      return account;
+    } catch (e, st) {
+      lastError = e.toString();
+      debugPrint('Google Drive authorization refresh failed: $e\\n$st');
+      if (mounted) state = AsyncValue.data(account);
+      return null;
+    }
+  }
+
   Future<void> _trySilentSignIn() async {
     try {
       final account = await googleSignInInstance.signInSilently();
@@ -121,7 +187,7 @@ class GoogleAccountNotifier
       }
 
       // En Web, el login y el permiso de Drive son operaciones separadas.
-      // El segundo paso debe ocurrir dentro de la acción explícita del usuario.
+      // El segundo paso ocurre dentro de la acción explícita del usuario.
       if (kIsWeb) {
         final hasDriveScope = await googleSignInInstance.canAccessScopes(
           _driveScopes,
