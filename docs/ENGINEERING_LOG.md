@@ -88,4 +88,4 @@ El registro compartido contiene un token de GitHub en texto plano. El valor no s
 
 **Riesgos y reversión.** `device_calendar` requiere permisos Android `READ_CALENDAR`/`WRITE_CALENDAR`, claves iOS `NSCalendarsUsageDescription`/`NSCalendarsFullAccessUsageDescription`, pruebas de zona horaria y atención a R8/ProGuard en release. El rollback de calendario consiste en revertir el commit de servicio y la migración v11; no se debe borrar la columna en una instalación existente. El rollback visual consiste en revertir el commit de tarjeta, sin afectar datos.
 
-**Referencia.** Commit GIS/contraste/informe: `57d28dd`; dependencia GIS Web: `00ad426`; calendario pendiente de commit después de CI y preflight. No se almacenan tokens, claves privadas ni credenciales.
+**Referencia.** Commit GIS/contraste/informe: `57d28dd`; dependencia GIS Web: `00ad426`; calendario: `b17ffaf`; CI verde en `31926435388` y `31926433445`; preview `motocheck-web-preview-5sb5rbmoh-rafael-s-projects-4c5bba13.vercel.app`. No se almacenan tokens, claves privadas ni credenciales.
