@@ -49,7 +49,8 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 ### Respaldo / Google Drive
 - [x] MotoCheck abre en modo local sin requerir cuenta Google
 - [x] Conexión opcional a Google Drive desde Configuración
-- [ ] Configuración OAuth nativa y validación por plataforma; Web usa botón GIS oficial y Drive sigue pendiente de prueba repetible
+- [x] OAuth Web: cliente habilitado, preview reconstruido y flujo de Google verificado manualmente
+- [ ] OAuth Android/iOS: faltan huellas de firma Android y configuración URL scheme/cliente iOS
 - [x] Respaldo manual y automático cuando existe cuenta conectada
 - [x] Restauración manual con confirmación explícita
 - [x] Calendario: eventos nativos Android/iOS y descarga `.ics` en Web
@@ -66,6 +67,7 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 - [x] Resumen rápido: último km/L y próximo servicio
 - [x] Alertas de refacciones próximas a vencer
 - [x] Selector de moto activa / agregar nueva / eliminar
+- [x] Espaciado responsive: márgenes explícitos, alertas más legibles y resumen en columna en pantallas compactas
 
 ### Perfil de moto (formulario)
 - [x] Marca, modelo, año, km actuales, placa
@@ -145,11 +147,14 @@ lib/
 Remove-Item "lib\data\database\app_database.g.dart" -Force
 dart run build_runner build
 
-# Build APK debug
+# Build APK debug (requiere Android SDK + JDK 17)
 flutter build apk --debug
 
-# Instalar en dispositivo (TECNO KI7)
-adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
+# Artefacto de prueba verificado el 2026-08-16
+# MotoCheck-android-debug-9ccda56.apk · 160 MB · SHA-256 documentado en PROJECT_MASTER_LOG.md
+
+# Instalar en un dispositivo conectado
+adb install -r build/app/outputs/apk/debug/app-debug.apk
 ```
 
 ---
@@ -166,8 +171,9 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 - [x] Skill compuesta `motocheck-engineering` creada y validada.
 - [x] Marca MotoCheck confirmada; no se renombrará en esta etapa.
 - [ ] Revocar token de GitHub expuesto en material compartido.
-- [ ] Crear client IDs OAuth y validar Android, iOS y Web.
-- [x] Toolchain Flutter 3.47/Dart 3.13 verificado en sandbox; Android SDK y macOS/Xcode siguen pendientes.
+- [x] Cliente OAuth Web validado; Android e iOS continúan pendientes de configuración nativa.
+- [x] Toolchain Flutter 3.47/Dart 3.13, Android SDK, NDK, CMake y JDK 17 verificados en sandbox; macOS/Xcode siguen pendientes.
+- [x] APK Android debug compilado, alineado y firmado para prueba física; falta validación en dispositivo.
 - [x] `flutter analyze`, `flutter test` y build Web release ejecutados sobre el checkout actual.
 - [x] Migraciones Drift v8–v11 son aditivas; faltan snapshots históricos v7/v8/v9.
 - [ ] Configurar firma release, Play App Signing, Apple Developer y CI/CD.
@@ -175,8 +181,8 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 ## Bloqueadores actuales
 
 - [ ] Revocar el token de GitHub expuesto en material compartido.
-- [ ] Crear y restringir client IDs OAuth para Android, iOS y Web.
-- [ ] Validar build release Android firmado e iOS/TestFlight; iOS requiere macOS/Xcode.
+- [ ] Registrar y restringir huellas OAuth para Android; configurar cliente y URL scheme iOS.
+- [ ] Validar build release Android firmado/AAB e iOS/TestFlight; iOS requiere macOS/Xcode.
 - [ ] Crear keystore release y completar Play App Signing.
 - [ ] Publicar política de privacidad y definir dominio/correo corporativo.
 
@@ -191,6 +197,7 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 - [ ] Exportar historial a PDF o CSV
 - [ ] Foto de la moto en el perfil
 - [ ] Registro de seguros y documentos (tenencia, verificación)
+- [ ] Implementar épicas posteriores solo según gates de `docs/FUNCTIONS_ROADMAP_2026-08-16.md`
 
 ---
 

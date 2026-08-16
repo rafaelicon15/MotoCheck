@@ -418,3 +418,23 @@ La captura Web confirmó que el contenido principal —resumen y alertas— se p
 | Alertas de refacciones | 16 px horizontal, 12 px vertical, 10 px entre filas | Igual |
 
 La corrección mantiene las tarjetas con altura uniforme de 108 px y conserva la jerarquía grafito/naranja. El build Web release, análisis estático y pruebas pasan; la verificación visual final se realizará en el preview publicado y el APK de prueba Android.
+
+
+## 2026-08-16 — AND-001: APK Android debug verificado
+
+El entorno de compilación Android quedó preparado con SDK, NDK, CMake y JDK 17. Se corrigió una reserva de memoria de Gradle desproporcionada para el entorno disponible (`8 GB` a `2 GB`, un worker y sin paralelismo), y el ensamblado debug finalizó correctamente.
+
+| Propiedad | Resultado |
+|---|---|
+| Artefacto de prueba | `MotoCheck-android-debug-9ccda56.apk` |
+| Tamaño | 160 MB |
+| SHA-256 | `b218b27acbb444061e96bf98b713fe9cf63e4355bf45c703bba82810c580e99d` |
+| Paquete | `com.motocheck.motocheck` |
+| Integridad | `zipalign` correcto y firma APK v2 válida |
+| Firma | Certificado Android Debug; **no apto para Play Store** |
+
+El APK se entrega para instalación manual en un teléfono. Persisten las pruebas físicas de calendario, permisos, migración, respaldo/restauración y OAuth Android. Para que Drive funcione en Android se deben registrar las huellas SHA-1/SHA-256 de debug, release y Play App Signing en Google Cloud (AUTH-001).
+
+## 2026-08-16 — PRODUCT-002: estructuración de funciones posteriores a v1
+
+Se añadió `docs/FUNCTIONS_ROADMAP_2026-08-16.md`. La ruta mantiene v1 enfocada en mantenimiento local-first y define gates antes de cualquier expansión. Alertas accionables y gastos se priorizan como P0 tras estabilidad; consumo anómalo, exportación y documentos son P1; compatibilidad y clima contextual se reservan para v2. Marketplace, navegación, seguridad conectada y comunidad no se autorizan antes de que exista backend, privacidad, operación, moderación y cumplimiento demostrables.

@@ -166,3 +166,20 @@ Vercel publicó `dpl_Ew7vV4Y6Hi33NuFVy6D4bN9fhs75` para el commit `4399f5f` en e
 **Validación.** `dart format lib/features/dashboard/dashboard_screen.dart`, `flutter analyze` sin incidencias, `flutter test` con 3 pruebas aprobadas y `flutter build web --release --no-wasm-dry-run`. El artefacto `preview-build` fue regenerado conservando el Client ID OAuth Web previamente validado y los activos SVG; CanvasKit local se excluyó y el artefacto permanece en aproximadamente 6.6 MB.
 
 **Riesgos y reversión.** En móviles el resumen ocupa más altura al apilarse, a cambio de objetivos y valores más legibles. La reversión consiste en revertir el commit de layout; no requiere migración ni afecta persistencia.
+
+
+## 2026-08-16 — AND-001: APK Android debug para prueba física
+
+**Objetivo.** Preparar un APK instalable para validar MotoCheck en un teléfono Android real antes de cualquier firma de producción.
+
+**Entorno habilitado.** Se instaló el SDK Android aislado en `/home/ubuntu/android-sdk`, con plataformas 34, 35 y 36, Build-Tools 36.0.0, NDK 28.2.13676358, CMake 3.22.1 y JDK 17. La configuración de Flutter apunta a ese SDK y JDK. La primera ejecución reveló que `gradle.properties` reservaba 8 GB de heap en un entorno de aproximadamente 3.8 GB; se ajustó a 2 GB, máximo de metaspace de 512 MB, code cache de 128 MB, un worker y sin ejecución paralela. El cambio estabiliza compilaciones con memoria limitada y no afecta el runtime de la aplicación.
+
+**Artefacto.** `MotoCheck-android-debug-9ccda56.apk`, 160 MB, SHA-256 `b218b27acbb444061e96bf98b713fe9cf63e4355bf45c703bba82810c580e99d`. El APK declara `com.motocheck.motocheck`, pasó verificación de `zipalign` y firma APK v2. Está firmado por el certificado Android Debug, por lo que es exclusivamente para pruebas internas y no es apto para Google Play.
+
+**Validación.** `./gradlew :app:assembleDebug --no-daemon --stacktrace` finalizó correctamente: 168 tareas (163 ejecutadas, 5 actualizadas) en 4m07s. Las advertencias de manifiestos y Kotlin provienen de dependencias de terceros, entre ellas `device_calendar`; se registran como deuda de compatibilidad y no bloquean el APK debug.
+
+**Limitaciones conocidas.** No existe un dispositivo Android físico conectado a este entorno; la instalación, permisos de calendario y OAuth Android requieren prueba manual. AUTH-001 permanece abierto hasta registrar las huellas de la firma debug, release y Play App Signing en el cliente Android de Google Cloud.
+
+## 2026-08-16 — PRODUCT-002: roadmap de funciones futuras
+
+Se creó `docs/FUNCTIONS_ROADMAP_2026-08-16.md` para convertir las referencias de MotorCheck, MotoMeteo, Detecht y Calimoto en épicas secuenciadas. El documento prioriza alertas accionables y gastos (P0) tras los gates de estabilidad; difiere compatibilidad, clima, rutas, marketplace, comunidad y seguridad conectada hasta que sus requisitos de datos, backend, privacidad, operación y cumplimiento sean demostrables. La decisión mantiene la metodología: eliminar expansiones desproporcionadas antes de simplificar e implementar.
