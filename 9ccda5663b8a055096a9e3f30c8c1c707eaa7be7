@@ -1,0 +1,7 @@
+2026-08-16 | UX-004
+
+Qué: se ajustan márgenes del dashboard, separación de alertas y resumen responsive.
+Por qué: la captura mostraba contenido demasiado pegado a los bordes y riesgo de compresión móvil.
+Validación: formato, analyze, 3 tests, build Web y preflight.
+Riesgo: el resumen ocupa más altura en móvil para mejorar legibilidad; no cambia datos.
+Rollback: revertir este commit.
