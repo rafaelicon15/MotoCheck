@@ -404,3 +404,17 @@ Se reconstruyó el artefacto Web con el Client ID público del cliente Web habil
 ### Seguimiento de entrega AUTH-004
 
 El commit `4399f5f` generó el deployment `dpl_Ew7vV4Y6Hi33NuFVy6D4bN9fhs75` en estado **READY**. La URL inmutable es `https://motocheck-web-preview-lie4n8yck-rafael-s-projects-4c5bba13.vercel.app`; el alias autorizado de rama conserva el mismo bundle, con SHA-256 `bda79ee507c8b2ba93de796ca0b5fde656e6debef2ddf8535170fdd5760f0911` y la huella correcta del Client ID Web. La inspección automatizada no puede manipular los controles dentro del canvas de Flutter; el cierre de AUTH-004 exige una prueba manual de **Configuración → Conectar o recuperar Google** desde el alias autorizado y confirmar que Google muestra consentimiento, no `401 invalid_client`.
+
+
+## 2026-08-16 — UX-004: dashboard con espaciado responsive
+
+La captura Web confirmó que el contenido principal —resumen y alertas— se percibía demasiado cercano a los bordes, mientras que la densidad de las dos tarjetas de resumen podía resultar insuficiente en pantalla pequeña. Se ajustó el layout sin cambiar datos ni comportamiento funcional.
+
+| Elemento | Escritorio | Pantalla compacta |
+|---|---|---|
+| Margen horizontal del contenido | 24 px | 16 px (<600 px) |
+| Margen vertical del scroll | 20 px arriba / 32 px abajo | Igual |
+| Resumen rápido | Dos tarjetas con separación de 16 px | Una tarjeta por fila (<640 px) |
+| Alertas de refacciones | 16 px horizontal, 12 px vertical, 10 px entre filas | Igual |
+
+La corrección mantiene las tarjetas con altura uniforme de 108 px y conserva la jerarquía grafito/naranja. El build Web release, análisis estático y pruebas pasan; la verificación visual final se realizará en el preview publicado y el APK de prueba Android.

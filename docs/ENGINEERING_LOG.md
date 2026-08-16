@@ -153,3 +153,16 @@ Vercel publicó `dpl_CFoXJicMWrMbpgAeSiweagfY7x6h` para `29ecf33` en estado **RE
 ### Seguimiento AUTH-004 — publicación y validación pendiente
 
 Vercel publicó `dpl_Ew7vV4Y6Hi33NuFVy6D4bN9fhs75` para el commit `4399f5f` en estado **READY**, con URL inmutable `https://motocheck-web-preview-lie4n8yck-rafael-s-projects-4c5bba13.vercel.app`. Tanto esa URL como el alias autorizado de rama devuelven el mismo SHA-256 de bundle (`bda79ee507c8b2ba93de796ca0b5fde656e6debef2ddf8535170fdd5760f0911`) y la huella del Client ID coincide con el cliente Web habilitado. El alias se abrió en Chrome conectado, pero el canvas de Flutter no expuso controles ni captura de pantalla al canal de inspección; por ello la comprobación final de consentimiento debe realizarse manualmente desde Configuración → Conectar o recuperar Google. No se deben borrar datos del sitio.
+
+
+## 2026-08-16 — UX-004: márgenes y densidad del dashboard
+
+**Objetivo.** Corregir el contenido visualmente pegado a los bordes en el dashboard Web reportado por el propietario y evitar que el resumen rápido quede comprimido en teléfonos Android.
+
+**Implementación.** El dashboard ahora aplica 24 px de margen horizontal en pantallas de escritorio y 16 px en pantallas de menos de 600 px, con 20 px de margen superior y 32 px inferior. Se incrementó la separación entre selector, resumen y alertas; las tarjetas de resumen conservan 108 px de altura y pasan de fila a columna a menos de 640 px. Las alertas de refacciones ahora tienen 16 px de padding horizontal, 12 px vertical y 10 px de separación entre elementos.
+
+**Alcance.** No se modificaron consultas Drift, cálculos de consumo, reglas de alertas, selección de moto, OAuth, permisos ni datos locales. La adaptación se limita a jerarquía, legibilidad y respuesta visual.
+
+**Validación.** `dart format lib/features/dashboard/dashboard_screen.dart`, `flutter analyze` sin incidencias, `flutter test` con 3 pruebas aprobadas y `flutter build web --release --no-wasm-dry-run`. El artefacto `preview-build` fue regenerado conservando el Client ID OAuth Web previamente validado y los activos SVG; CanvasKit local se excluyó y el artefacto permanece en aproximadamente 6.6 MB.
+
+**Riesgos y reversión.** En móviles el resumen ocupa más altura al apilarse, a cambio de objetivos y valores más legibles. La reversión consiste en revertir el commit de layout; no requiere migración ni afecta persistencia.

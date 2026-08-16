@@ -30,50 +30,75 @@ class DashboardScreen extends ConsumerWidget {
       body: motoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (moto) => SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _MotoSelectorCard(db: db, activeMoto: moto),
-              const SizedBox(height: 16),
-              if (moto != null) ...[
-                _SectionTitle(title: 'Resumen rápido'),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 108,
-                        child: _StatCard(
-                          label: 'Último km/L',
-                          icon: Icons.local_gas_station,
-                          color: AppTheme.fuel,
-                          valueWidget: _LastKmL(db: db, motoId: moto.id),
-                        ),
-                      ),
+        data: (moto) => LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 600 ? 16.0 : 24.0;
+            final isCompact = constraints.maxWidth < 640;
+
+            final lastKmLCard = moto == null
+                ? null
+                : SizedBox(
+                    height: 108,
+                    child: _StatCard(
+                      label: 'Último km/L',
+                      icon: Icons.local_gas_station,
+                      color: AppTheme.fuel,
+                      valueWidget: _LastKmL(db: db, motoId: moto.id),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SizedBox(
-                        height: 108,
-                        child: _StatCard(
-                          label: 'Próximo servicio',
-                          icon: Icons.build,
-                          color: AppTheme.maintenance,
-                          valueWidget: _NextService(db: db, motoId: moto.id),
-                        ),
-                      ),
+                  );
+            final nextServiceCard = moto == null
+                ? null
+                : SizedBox(
+                    height: 108,
+                    child: _StatCard(
+                      label: 'Próximo servicio',
+                      icon: Icons.build,
+                      color: AppTheme.maintenance,
+                      valueWidget: _NextService(db: db, motoId: moto.id),
                     ),
+                  );
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                20,
+                horizontalPadding,
+                32,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _MotoSelectorCard(db: db, activeMoto: moto),
+                  const SizedBox(height: 20),
+                  if (moto != null) ...[
+                    const _SectionTitle(title: 'Resumen rápido'),
+                    const SizedBox(height: 12),
+                    if (isCompact)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          lastKmLCard!,
+                          const SizedBox(height: 12),
+                          nextServiceCard!,
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(child: lastKmLCard!),
+                          const SizedBox(width: 16),
+                          Expanded(child: nextServiceCard!),
+                        ],
+                      ),
+                    const SizedBox(height: 20),
+                    _PartsAlertCard(db: db, moto: moto),
+                  ] else ...[
+                    _NoMotoPrompt(db: db),
                   ],
-                ),
-                const SizedBox(height: 12),
-                _PartsAlertCard(db: db, moto: moto),
-              ] else ...[
-                _NoMotoPrompt(db: db),
-              ],
-            ],
-          ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -1323,16 +1348,16 @@ class _PartsAlertCard extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _SectionTitle(title: 'Alertas de refacciones'),
-            const SizedBox(height: 8),
+            const _SectionTitle(title: 'Alertas de refacciones'),
+            const SizedBox(height: 10),
             ...alerts.map((p) {
               final remaining = (p.lastChangedKm + p.intervalKm) - currentKm;
               final isOverdue = remaining <= 0;
               return Container(
-                margin: const EdgeInsets.only(bottom: 8),
+                margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
+                  horizontal: 16,
+                  vertical: 12,
                 ),
                 decoration: BoxDecoration(
                   color: (isOverdue ? AppTheme.danger : AppTheme.warning)
