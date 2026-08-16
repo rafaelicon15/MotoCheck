@@ -1,0 +1,6 @@
+Registro de ingeniería
+Fecha: 2026-08-15T04:39:27+00:00
+Alcance: refactor(app): make Google Drive backup optional
+Validación: revisar el workflow CI asociado y el preflight/documentación del commit.
+Reversión: git revert 0e933156f9c74b12e0861734f86b086a27b56e6f; no borrar migraciones Drift ya aplicadas.
+Referencia: docs/PROJECT_MASTER_LOG.md y docs/ENGINEERING_LOG.md.
