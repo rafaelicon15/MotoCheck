@@ -1,0 +1,6 @@
+Registro de ingeniería
+Fecha: 2026-08-01T15:40:07-04:00
+Alcance: Expand maintenance parts and auto backup changes
+Validación: revisar el workflow CI asociado y el preflight/documentación del commit.
+Reversión: git revert 82611bbe07218ce73ba5714217a8a16f23c3edc9; no borrar migraciones Drift ya aplicadas.
+Referencia: docs/PROJECT_MASTER_LOG.md y docs/ENGINEERING_LOG.md.
