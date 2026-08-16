@@ -71,3 +71,21 @@ El registro compartido contiene un token de GitHub en texto plano. El valor no s
 **Riesgos y reversión.** Describir efectos secundarios, migraciones y cómo volver atrás.
 
 **Referencia.** Añadir commit, pull request, issue o captura de evidencia sin incluir secretos.
+
+## 2026-08-16 — Auditoría integral, GIS Web, contraste y calendario
+
+**Objetivo.** Responder a la regresión reportada por el propietario: la sesión Google continúa cerrándose, la tarjeta de datos de la moto no tenía un contraste suficientemente claro y se requiere programar servicios en el calendario del usuario.
+
+**Hallazgos.** El flujo Web anterior dependía de `signIn()` y del estado principalmente en memoria del plugin. La persistencia visual de una cuenta no equivale a disponer de un token válido para Drive; Web puede requerir una nueva interacción cuando se eliminan cookies, se revoca la autorización o el navegador no puede completar GIS silenciosamente. La tarjeta naranja seguía concentrando demasiados datos pequeños y emojis en una sola superficie. El registro público de competidores confirma que el valor de las apps exitosas proviene de una promesa focalizada: mantenimiento simple, clima contextualizado por ruta, seguridad del rider o navegación especializada.
+
+**Decisiones.** Se reemplazó el botón Web de MotoCheck por el botón oficial de Google Identity Services mediante `google_sign_in_web` `renderButton`; Android/iOS conservan su flujo nativo. La tarjeta de moto pasó a una superficie grafito con acento naranja lateral, texto secundario centralizado y badges semánticos más grandes sin emojis. Para calendario se eligió `device_calendar` `4.3.3` en Android/iOS, solicitando permiso solamente cuando el usuario confirma “Agregar al calendario”. Web ahora genera un archivo `.ics` descargable con alarma de 24 horas, sin pedir permisos del sistema; queda pendiente validar la importación en Google Calendar, Apple Calendar y Outlook.
+
+**Datos y migración.** Se añadió `MaintenanceRecords.calendarEventId` y se elevó Drift a schema v11 con migración aditiva. El identificador evita duplicar el evento al editar un servicio.
+
+**Archivos afectados.** `lib/services/google_auth_button.dart`, `lib/services/google_auth_button_web.dart`, `lib/services/google_auth_button_stub.dart`, `lib/services/calendar_service.dart`, `lib/services/calendar_service_native.dart`, `lib/services/calendar_service_stub.dart`, `lib/services/calendar_result.dart`, `lib/features/settings/settings_screen.dart`, `lib/features/dashboard/dashboard_screen.dart`, `lib/features/maintenance/screens/maintenance_screen.dart`, `lib/data/database/app_database.dart`, `android/app/src/main/AndroidManifest.xml`, `ios/Runner/Info.plist`, `pubspec.yaml`, `pubspec.lock`, `docs/COMPETITOR_AND_PRODUCT_AUDIT_2026-08-16.md` y archivos generados de Drift.
+
+**Validación.** `flutter pub get`, `dart format lib`, `dart run build_runner build --delete-conflicting-outputs`, `flutter analyze` sin issues y `flutter test` con todas las pruebas exitosas. Falta prueba física en Android/iOS para permisos, creación/actualización de eventos y zona horaria; Web requiere prueba manual de descarga e importación del `.ics`.
+
+**Riesgos y reversión.** `device_calendar` requiere permisos Android `READ_CALENDAR`/`WRITE_CALENDAR`, claves iOS `NSCalendarsUsageDescription`/`NSCalendarsFullAccessUsageDescription`, pruebas de zona horaria y atención a R8/ProGuard en release. El rollback de calendario consiste en revertir el commit de servicio y la migración v11; no se debe borrar la columna en una instalación existente. El rollback visual consiste en revertir el commit de tarjeta, sin afectar datos.
+
+**Referencia.** Commit GIS/contraste/informe: `57d28dd`; dependencia GIS Web: `00ad426`; calendario pendiente de commit después de CI y preflight. No se almacenan tokens, claves privadas ni credenciales.

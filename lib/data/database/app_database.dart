@@ -44,6 +44,7 @@ class MaintenanceRecords extends Table {
   TextColumn get oilViscosity => text().nullable()();
   TextColumn get maintenanceItems =>
       text().nullable()(); // comma-separated selected items
+  TextColumn get calendarEventId => text().nullable()();
 }
 
 class PartRecords extends Table {
@@ -134,7 +135,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -143,8 +144,8 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (m, from, to) async {
       // Historial documentado: v8 agregó PartHistory, v9 agregó isFull
-      // a FuelRecords y v10 agregó rimType a MotoProfile. Estas
-      // migraciones son aditivas para preservar el historial local.
+      // a FuelRecords, v10 agregó rimType a MotoProfile y v11 agregó
+      // calendarEventId a MaintenanceRecords. Todas son aditivas.
       if (from < 8) {
         await m.createTable(partHistory);
       }
@@ -153,6 +154,12 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 10) {
         await m.addColumn(motoProfile, motoProfile.rimType);
+      }
+      if (from < 11) {
+        await m.addColumn(
+          maintenanceRecords,
+          maintenanceRecords.calendarEventId,
+        );
       }
     },
   );

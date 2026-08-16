@@ -1,6 +1,6 @@
 # MotoCheck — Estado del Proyecto
 
-> Última actualización: 2026-08-14
+> Última actualización: 2026-08-16
 
 **Marca confirmada:** MotoCheck. Se mantienen los identificadores técnicos actuales: Android/iOS `com.motocheck.motocheck` y Google Cloud `motocheck-500004`.
 
@@ -26,7 +26,7 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 
 ---
 
-## Schema DB — v10 (actual)
+## Schema DB — v11 (actual)
 
 **Tablas:** `FuelRecords`, `MaintenanceRecords`, `PartRecords`, `MotoProfile`, `AppSettings`, `PartHistory`
 
@@ -37,8 +37,9 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 | v8 | Tabla `PartHistory` (historial de cambios de refacciones) |
 | v9 | Columna `isFull` en `FuelRecords` (detección de rellenos parciales) |
 | v10 | Columna `rimType` en `MotoProfile` (tipo de rin para filtrar tipos de llanta) |
+| v11 | Columna `calendarEventId` en `MaintenanceRecords` para sincronizar servicios con calendario |
 
-> **Nota dev:** La migración es drop-all en `onUpgrade`. Al cambiar schema, borrar `.g.dart` y correr `dart run build_runner build`.
+> **Nota dev:** Las migraciones v8–v11 son aditivas y preservan los datos locales. Al cambiar schema, ejecutar `dart run build_runner build --delete-conflicting-outputs`.
 
 ---
 
@@ -47,9 +48,10 @@ App local-first de mantenimiento de motocicletas. Registra combustible, servicio
 ### Respaldo / Google Drive
 - [x] MotoCheck abre en modo local sin requerir cuenta Google
 - [x] Conexión opcional a Google Drive desde Configuración
-- [ ] Configuración OAuth real y validación por plataforma
+- [ ] Configuración OAuth nativa y validación por plataforma; Web usa botón GIS oficial y Drive sigue pendiente de prueba repetible
 - [x] Respaldo manual y automático cuando existe cuenta conectada
 - [x] Restauración manual con confirmación explícita
+- [x] Calendario: eventos nativos Android/iOS y descarga `.ics` en Web
 
 ### Dashboard
 - [x] Tarjeta activa de moto (marca, modelo, año, km, badges)

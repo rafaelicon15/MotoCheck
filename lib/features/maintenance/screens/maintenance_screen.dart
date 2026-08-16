@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/database/app_database.dart';
+import '../../../services/calendar_service.dart';
 import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
@@ -587,25 +588,26 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
     final oilType = _hasOilChange ? _oilType : null;
     final oilViscosity = _hasOilChange ? _oilViscosity : null;
     final record = widget.record;
-    if (record == null) {
-      await widget.db.insertMaintenance(
-        MaintenanceRecordsCompanion.insert(
-          motoId: drift.Value(widget.motoId),
-          date: _date,
-          odometerKm: odometerKm,
-          type: primaryType,
-          description: desc,
-          cost: drift.Value(cost),
-          workshop: drift.Value(workshop),
-          nextServiceDate: drift.Value(_nextDate),
-          nextServiceKm: drift.Value(nextServiceKm),
-          notes: drift.Value(notes),
-          oilType: drift.Value(oilType),
-          oilViscosity: drift.Value(oilViscosity),
-          maintenanceItems: drift.Value(itemsStr),
-        ),
-      );
-    } else {
+    final maintenanceId = record == null
+        ? await widget.db.insertMaintenance(
+            MaintenanceRecordsCompanion.insert(
+              motoId: drift.Value(widget.motoId),
+              date: _date,
+              odometerKm: odometerKm,
+              type: primaryType,
+              description: desc,
+              cost: drift.Value(cost),
+              workshop: drift.Value(workshop),
+              nextServiceDate: drift.Value(_nextDate),
+              nextServiceKm: drift.Value(nextServiceKm),
+              notes: drift.Value(notes),
+              oilType: drift.Value(oilType),
+              oilViscosity: drift.Value(oilViscosity),
+              maintenanceItems: drift.Value(itemsStr),
+            ),
+          )
+        : record.id;
+    if (record != null) {
       await widget.db.updateMaintenance(
         record.copyWith(
           date: _date,
@@ -631,6 +633,45 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
       cost: cost,
     );
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, odometerKm);
+    final savedRecord = await (widget.db.select(
+      widget.db.maintenanceRecords,
+    )..where((t) => t.id.equals(maintenanceId))).getSingle();
+    if (_nextDate != null && mounted) {
+      final addToCalendar = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Agregar al calendario'),
+          content: Text(
+            '¿Quieres programar “$primaryType” para el ${DateFormat('dd/MM/yyyy').format(_nextDate!)}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Ahora no'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Agregar'),
+            ),
+          ],
+        ),
+      );
+      if (addToCalendar == true) {
+        final sync = await CalendarService.addMaintenanceEvent(
+          title: 'MotoCheck: $primaryType',
+          start: _nextDate!,
+          description:
+              '$desc\\nKilometraje programado: ${nextServiceKm ?? 'sin definir'} km',
+          location: workshop,
+          eventId: savedRecord.calendarEventId,
+        );
+        if (sync.status == CalendarResult.success && sync.eventId != null) {
+          await widget.db.updateMaintenance(
+            savedRecord.copyWith(calendarEventId: drift.Value(sync.eventId)),
+          );
+        }
+      }
+    }
     await DriveBackupService.backupIfSignedIn(widget.db);
     if (mounted) Navigator.pop(context);
   }
