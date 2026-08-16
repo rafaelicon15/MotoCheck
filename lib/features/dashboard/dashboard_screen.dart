@@ -43,20 +43,26 @@ class DashboardScreen extends ConsumerWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: _StatCard(
-                        label: 'Último km/L',
-                        icon: Icons.local_gas_station,
-                        color: AppTheme.fuel,
-                        valueWidget: _LastKmL(db: db, motoId: moto.id),
+                      child: SizedBox(
+                        height: 108,
+                        child: _StatCard(
+                          label: 'Último km/L',
+                          icon: Icons.local_gas_station,
+                          color: AppTheme.fuel,
+                          valueWidget: _LastKmL(db: db, motoId: moto.id),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _StatCard(
-                        label: 'Próximo servicio',
-                        icon: Icons.build,
-                        color: AppTheme.maintenance,
-                        valueWidget: _NextService(db: db, motoId: moto.id),
+                      child: SizedBox(
+                        height: 108,
+                        child: _StatCard(
+                          label: 'Próximo servicio',
+                          icon: Icons.build,
+                          color: AppTheme.maintenance,
+                          valueWidget: _NextService(db: db, motoId: moto.id),
+                        ),
                       ),
                     ),
                   ],
@@ -1386,6 +1392,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.card,

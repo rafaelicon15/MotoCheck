@@ -275,3 +275,20 @@ La validación local pasó con `dart format lib/features/dashboard/dashboard_scr
 | OAuth/Drive | Funcional en Web tras habilitar People API | El respaldo real debe probarse con `Respaldar ahora` y `Restaurar` |
 
 Referencia: cambio preparado después de la validación OAuth Web; commit pendiente de publicación junto con el artefacto Web actualizado.
+
+
+## Registro 2026-08-16 — altura uniforme en Resumen rápido
+
+La revisión visual del usuario mostró que las tarjetas **Último km/L** y **Próximo servicio** podían presentar alturas diferentes cuando sus widgets internos devolvían valores con distinta métrica visual. Para mantener una cuadrícula estable y evitar que el resumen se perciba desalineado, ambas tarjetas ahora se renderizan dentro de un `SizedBox(height: 108)` y `_StatCard` ocupa toda la altura disponible mediante `height: double.infinity`.
+
+El cambio no altera los datos ni las reglas de negocio. Se mantienen intactos los streams de combustible y mantenimiento, incluidos los estados `—`, `Sin próx.`, `En N días` y los futuros estados de carga/error. La altura común se eligió para conservar el padding existente de 16 px, el encabezado, el icono y el valor principal sin introducir desplazamiento vertical innecesario.
+
+| Validación | Resultado |
+|---|---|
+| Formato Dart | Aprobado; no hubo cambios adicionales tras `dart format` |
+| Análisis estático | Aprobado; `flutter analyze` sin incidencias |
+| Pruebas | Aprobadas; `flutter test` completo |
+| Build Web | Aprobado; artefacto release regenerado con OAuth público existente |
+| Preflight | Aprobado; no se detectaron secretos ni regresiones de arranque local-first |
+
+La verificación visual pendiente consiste en comprobar el nuevo deployment en escritorio y pantalla angosta, confirmar que ambos cuadros conservan exactamente la misma altura y revisar que el texto dinámico no se desborde.
