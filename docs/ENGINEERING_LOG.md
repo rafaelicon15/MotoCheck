@@ -134,3 +134,8 @@ La comprobación inicial reveló que Vercel resuelve la página de inicio como `
 **Riesgos y reversión.** El paquete añade dependencias de render SVG y los nuevos activos son pequeños (474 bytes en total). Revertir el commit elimina la abstracción y devuelve el control a Material Icons, sin afectar datos, Drift, OAuth ni permisos.
 
 **Referencia.** Commit pendiente de publicación.
+
+
+### Seguimiento ICON-001 — entrega verificada
+
+Vercel publicó `dpl_CFoXJicMWrMbpgAeSiweagfY7x6h` para `29ecf33` en estado **READY**. URL inmutable: `https://motocheck-web-preview-nrf2czv2n-rafael-s-projects-4c5bba13.vercel.app`. El SHA-256 de `main.dart.js` remoto y de `preview-build/main.dart.js` coincide: `0edacd315cc1d16c660e2bdc8b4c4ceb55a7003d50947bf8993ecf672b38be0c`. La ruta raíz y el bootstrap responden `Cache-Control: no-store, max-age=0`; el SVG de Lucide responde HTTP 200 con tipo `image/svg+xml`. La siguiente confirmación pendiente es visual y debe realizarse sobre datos locales existentes sin ejecutar limpieza de almacenamiento del sitio.

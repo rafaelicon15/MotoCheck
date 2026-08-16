@@ -377,3 +377,10 @@ Se implementó el primer hito de la estrategia Morphicons-compatible: `MotoIcon`
 | Peso de los SVG | 474 bytes sin comprimir | Dentro del presupuesto de 50 KB para primer lote |
 
 La validación local aprobó `flutter analyze`, `flutter test` (3 pruebas) y `flutter build web --release --no-wasm-dry-run`. El preview se regeneró con los activos; CanvasKit local se excluyó porque Flutter lo obtiene desde CDN, manteniendo el artefacto cerca de 6.6 MB. La migración restante de navegación, edición, alta y estado Drive sigue pendiente; no se realizará de forma masiva antes de revisar cada par, licencia y efecto visual.
+
+
+### Verificación final de ICON-001 — 2026-08-16
+
+El deployment `dpl_CFoXJicMWrMbpgAeSiweagfY7x6h` de Vercel, asociado al commit `29ecf33`, quedó **READY** en `https://motocheck-web-preview-nrf2czv2n-rafael-s-projects-4c5bba13.vercel.app`. La comprobación HTTP confirma que el SHA-256 remoto y local de `main.dart.js` es `0edacd315cc1d16c660e2bdc8b4c4ceb55a7003d50947bf8993ecf672b38be0c`; la raíz y `flutter_bootstrap.js` responden `Cache-Control: no-store, max-age=0`; y `assets/assets/icons/lucide/chevron-down.svg` responde HTTP 200 con `image/svg+xml`.
+
+La validación funcional automática no sustituye la confirmación visual de la tarjeta de moto activa en el navegador que conserva los datos del propietario. Dado que la corrección no usa **Clear site data**, el usuario debe poder verificar el cambio sin perder Drift/IndexedDB local.
