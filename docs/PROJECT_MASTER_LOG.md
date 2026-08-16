@@ -354,3 +354,10 @@ Morphicons queda adoptado como referencia oficial de morphing SVG, no como paque
 | WEB-003 | Actualización visual Web | Corrección preparada; publicación pendiente | Desplegar las cabeceras y probar recarga sin borrar datos |
 | ICON-001 | Migración Morphicons | Diseño documentado | Seleccionar SVG con licencia compatible y crear `MotoIcon` en un cambio aislado |
 | VISUAL-001 | Contraste de tarjeta activa | Código ya publicado; confirmación por usuario pendiente | Verificar con la moto existente tras actualizar el worker |
+
+
+### Seguimiento de publicación WEB-003
+
+El commit `594cd35` generó el deployment Vercel `dpl_4AtvqLmfWoia9sPSWqf3sMV7ooJg`, en estado **READY**. El URL inmutable verificable es `https://motocheck-web-preview-6dselsbse-rafael-s-projects-4c5bba13.vercel.app`; el alias de rama continúa siendo `https://motocheck-web-preview-git-fea-1440ff-rafael-s-projects-4c5bba13.vercel.app`. Ambos exponen `no-store` para bootstrap, Service Worker y `version.json`; el bundle principal mantiene revalidación normal para no penalizar rendimiento.
+
+Durante la comprobación de cabeceras se detectó que la entrada de Vercel se resuelve por `/`, no por `/index.html`; la configuración se amplía con una regla exacta para `/`. Chrome conectado llegó al documento con título `MotoCheck`, aunque no transfirió la captura del canvas a la sesión de auditoría. Esta limitación no permite certificar visualmente la tarjeta de moto activa; después del despliegue final, la confirmación debe realizarse con la motocicleta persistida del usuario sin borrar datos de sitio.

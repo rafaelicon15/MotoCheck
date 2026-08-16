@@ -108,3 +108,10 @@ El registro compartido contiene un token de GitHub en texto plano. El valor no s
 **Riesgos y reversión.** Las cabeceras `no-store` aumentan validaciones de archivos de arranque, no el peso del bundle. Se revierten eliminando el bloque `headers` de `vercel.json` si producen un comportamiento inesperado. No se eliminan datos ni se cambian migraciones. La decisión de Morphicons se revierte sin impacto funcional porque todavía no modifica widgets de producción.
 
 **Referencia.** Commit pendiente de publicación desde la rama `feat/local-first-oauth-simplification`.
+
+
+### Seguimiento WEB-003 — verificación del deployment `594cd35`
+
+El deployment Git de Vercel `dpl_4AtvqLmfWoia9sPSWqf3sMV7ooJg` quedó en estado **READY** para el commit `594cd35`, con URL inmutable `https://motocheck-web-preview-6dselsbse-rafael-s-projects-4c5bba13.vercel.app` y alias de rama `https://motocheck-web-preview-git-fea-1440ff-rafael-s-projects-4c5bba13.vercel.app`. Ambas URL aplican `Cache-Control: no-store, max-age=0` a `flutter_bootstrap.js`, `flutter_service_worker.js` y `version.json`; `main.dart.js` mantiene `public, max-age=0, must-revalidate`.
+
+La comprobación inicial reveló que Vercel resuelve la página de inicio como `/`, no como `/index.html`; por ello se añadió también una regla exacta de `no-store` para `/`. La navegación con Chrome conectado confirma título `MotoCheck` y carga de la URL, pero la captura de pantalla del canvas no se transfirió desde ese navegador. Este límite de observabilidad no se interpreta como fallo visual; la evidencia visual independiente del estado vacío y la confirmación con datos reales del propietario siguen siendo necesarias.
