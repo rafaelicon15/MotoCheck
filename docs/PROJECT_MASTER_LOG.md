@@ -292,3 +292,19 @@ El cambio no altera los datos ni las reglas de negocio. Se mantienen intactos lo
 | Preflight | Aprobado; no se detectaron secretos ni regresiones de arranque local-first |
 
 La verificación visual pendiente consiste en comprobar el nuevo deployment en escritorio y pantalla angosta, confirmar que ambos cuadros conservan exactamente la misma altura y revisar que el texto dinámico no se desborde.
+
+
+## Registro 2026-08-16 — diagnóstico de desconexión de Google en Web
+
+La auditoría de `lib/services/google_auth_service.dart` y de `google_sign_in_web 0.12.4+4` muestra que MotoCheck no ejecuta `signOut()` automáticamente. La cuenta puede aparentar desconectarse por estas razones:
+
+| Causa | Evidencia técnica | Efecto visible |
+|---|---|---|
+| Recarga, cierre o suspensión de la pestaña | `GoogleSignInNotifier` inicia con `AsyncValue.data(null)` y depende de `signInSilently()`; el plugin Web conserva `_lastCredentialResponse`, `_lastTokenResponse` y `_requestedUserData` en memoria | Configuración vuelve a mostrar “Conectar con Google” aunque la autorización previa de Drive pueda seguir vigente |
+| Silent sign-in sin credencial recuperable | `signInSilently()` completa con `null` en momentos GIS no mostrados, omitidos o descartados; `_trySilentSignIn()` convierte ese resultado en `AsyncValue.data(null)` | La app interpreta ausencia temporal de identidad como desconexión |
+| Expiración de credencial/token | El plugin considera al usuario autenticado mientras el último credential tenga expiración futura o exista `_requestedUserData`; `canAccessScopes` también devuelve `false` si el access token expiró | Una operación de respaldo puede fallar o exigir reautorización |
+| Sesión del navegador/cookies de Google | Google Identity Services depende de la sesión del navegador y de sus políticas de privacidad; borrar cookies, usar incógnito o bloquear almacenamiento impide el silent sign-in | La cuenta no se recupera automáticamente |
+
+La causa de diseño principal es que la app usa el estado en memoria del plugin como si fuera una sesión persistente. El ProviderScope único evita que cambiar de pestaña sea la causa; el problema aparece principalmente al recargar/reabrir Web, cuando GIS no devuelve identidad silenciosamente o cuando caduca el token.
+
+La corrección recomendada es separar tres estados: `cuenta conocida`, `autorización Drive válida` y `token renovable`. MotoCheck debe conservar solo metadatos no sensibles de la última cuenta para mostrar estado informativo, reintentar `signInSilently()` al recuperar foco/visibilidad, renovar scopes antes de backup y mostrar “Requiere reconexión” en vez de borrar inmediatamente la cuenta por un `null` transitorio. Nunca se deben guardar access tokens, refresh tokens ni credenciales en Drift o LocalStorage.
