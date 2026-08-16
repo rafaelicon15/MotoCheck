@@ -67,3 +67,25 @@ En Google Auth Platform → Clientes → `MotoCheck Web`, se comprobó que los o
 La consola confirmó **“Se guardó el cliente OAuth”**. Google advierte que la propagación puede tardar desde unos minutos hasta algunas horas; se repetirá la autorización desde el preview después de la actualización.
 
 No se modificó el Client ID, no se rotó el secreto y no se copió ningún secreto de cliente.
+
+## 2026-08-16 — origen estable para previews de rama
+
+El commit `b423121` generó el deployment `dpl_GyCxRTitgQM5nA4MxQHZ3YRz9FCN`, con alias `https://motocheck-web-preview-fk4smax0s-rafael-s-projects-4c5bba13.vercel.app`. Para evitar registrar un hostname distinto en cada commit, se añadió y guardó también el alias estable de la rama:
+
+`https://motocheck-web-preview-git-fea-1440ff-rafael-s-projects-4c5bba13.vercel.app`
+
+Ese alias responde HTTP 200 y queda como origen recomendado para la prueba OAuth del preview. El origen del deployment `cvd8qodzf` se conserva temporalmente porque ya fue utilizado y documentado.
+
+## 2026-08-16 — corrección del deployment `fk4smax0s`
+
+Una segunda captura del usuario confirmó **Error 400: `origin_mismatch`** desde `https://motocheck-web-preview-fk4smax0s-rafael-s-projects-4c5bba13.vercel.app`. La inspección de Google Cloud demostró que ese hostname temporal no estaba incluido todavía: la configuración tenía los orígenes `dy3ukb57k`, `localhost:7357`, `cvd8qodzf` y el alias estable de rama, pero no `fk4smax0s`.
+
+Se añadió como URI 5 y la consola guardó el cliente OAuth. Este era un desajuste de hostname, no un problema de Drive API, scopes ni de necesidad de dominio propio. Se esperará la propagación anunciada por Google antes de repetir el consentimiento.
+
+## 2026-08-16 — People API habilitada
+
+Tras propagarse el origen, el flujo OAuth avanzó y devolvió un error nuevo y específico: **403 `PERMISSION_DENIED` / `SERVICE_DISABLED`** para `people.googleapis.com`. El mensaje de Google indicó que `google_sign_in_web` solicitó `https://content-people.googleapis.com/v1/people/me?...` para completar el perfil de la cuenta y que People API no se había usado antes o estaba deshabilitada.
+
+Se abrió Google People API en el proyecto `motocheck-500004` y se pulsó **Habilitar**. La página de detalles confirma ahora `people.googleapis.com` con estado **Habilitada** y muestra el botón **Inhabilitar API**, que solo aparece cuando el servicio está activo. Drive API no se modificó porque ya estaba habilitada.
+
+La siguiente prueba debe esperar la propagación de la API, usar el hostname `fk4smax0s` ya autorizado y comprobar primero la identificación de cuenta, luego el permiso `drive.appdata`, y finalmente la operación de respaldo.

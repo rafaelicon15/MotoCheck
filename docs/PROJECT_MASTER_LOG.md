@@ -257,3 +257,21 @@ La corrección aplicada en el siguiente commit hace lo siguiente:
 | EVID-WEB-002 | `docs/WEB_PREVIEW_VERIFICATION_2026-08-16.md` | Verificación de recursos y runtime del preview |
 | EVID-DOM-001 | `docs/DOMAIN_PRICE_SNAPSHOT_2026-08-16.md` | Comparación de dominios y renovaciones |
 | EVID-QA-001 | `docs/QA_TEST_PLAN.md` | Matriz CORE-01 a CORE-09 y pruebas de beta |
+
+
+## Registro 2026-08-16 — contraste de datos de la moto
+
+Las capturas del preview Web mostraron que la tarjeta de la moto activa utilizaba un degradado naranja muy luminoso y badges con colores independientes sobre una superficie igualmente naranja. Los nombres de marca/modelo se distinguían, pero los datos secundarios —año, kilometraje y especificaciones como `26507 km`, `4T`, `Radiador`, `Filtro metálico` y tipo de aceite— presentaban contraste insuficiente y una jerarquía visual débil.
+
+Se aplicó una corrección localizada en `lib/features/dashboard/dashboard_screen.dart`: el degradado de la tarjeta ahora usa `#D84315 → #8E280F`, el año/kilometraje se muestra en blanco con opacidad 95 % y peso semibold, y `_MotoBadge` utiliza una superficie grafito semitransparente `#CC111117`, texto blanco de 11 px y borde blanco al 32 %. La lógica de selección, persistencia, Drift y respaldo no fue modificada.
+
+La validación local pasó con `dart format lib/features/dashboard/dashboard_screen.dart`, `flutter analyze` sin incidencias y `flutter test` con todas las pruebas aprobadas. Se generó nuevamente `preview-build/` con build Web release y el Client ID OAuth público ya configurado. La verificación visual final debe hacerse en el preview desplegado, con especial atención a la lectura de chips en pantallas pequeñas y a la consistencia con el modo oscuro.
+
+| Área | Estado | Riesgo restante |
+|---|---|---|
+| Contraste de tarjeta de moto | Validado en código y build local | Falta verificación visual en el deployment nuevo |
+| Datos principales | Mejorados | Confirmar que no haya truncamiento en nombres largos |
+| Badges técnicos | Mejorados | Revisar densidad si una moto tiene muchas especificaciones |
+| OAuth/Drive | Funcional en Web tras habilitar People API | El respaldo real debe probarse con `Respaldar ahora` y `Restaurar` |
+
+Referencia: cambio preparado después de la validación OAuth Web; commit pendiente de publicación junto con el artefacto Web actualizado.

@@ -88,11 +88,8 @@ class _MotoSelectorCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primary.withValues(alpha: 0.85),
-            AppTheme.primaryDark,
-          ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFFD84315), Color(0xFF8E280F)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -121,8 +118,9 @@ class _MotoSelectorCard extends ConsumerWidget {
                       ? '${activeMoto!.year}  ·  ${activeMoto!.currentKm} km'
                       : 'Agrega tu moto para comenzar',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: Colors.white.withValues(alpha: 0.95),
                     fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (activeMoto != null) ...[
@@ -1127,15 +1125,15 @@ class _MotoBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: const Color(0xCC111117),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.32)),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: color,
-          fontSize: 10,
+          color: Colors.white,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
       ),
