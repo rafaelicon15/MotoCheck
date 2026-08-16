@@ -1,0 +1,6 @@
+Registro de ingeniería
+Fecha: 2026-08-16T02:00:36+00:00
+Alcance: fix(web): request Drive scope explicitly
+Validación: revisar el workflow CI asociado y el preflight/documentación del commit.
+Reversión: git revert b423121fdb982019c616784ce6c68a8d76cf2a35; no borrar migraciones Drift ya aplicadas.
+Referencia: docs/PROJECT_MASTER_LOG.md y docs/ENGINEERING_LOG.md.
