@@ -384,3 +384,18 @@ La validación local aprobó `flutter analyze`, `flutter test` (3 pruebas) y `fl
 El deployment `dpl_CFoXJicMWrMbpgAeSiweagfY7x6h` de Vercel, asociado al commit `29ecf33`, quedó **READY** en `https://motocheck-web-preview-nrf2czv2n-rafael-s-projects-4c5bba13.vercel.app`. La comprobación HTTP confirma que el SHA-256 remoto y local de `main.dart.js` es `0edacd315cc1d16c660e2bdc8b4c4ceb55a7003d50947bf8993ecf672b38be0c`; la raíz y `flutter_bootstrap.js` responden `Cache-Control: no-store, max-age=0`; y `assets/assets/icons/lucide/chevron-down.svg` responde HTTP 200 con `image/svg+xml`.
 
 La validación funcional automática no sustituye la confirmación visual de la tarjeta de moto activa en el navegador que conserva los datos del propietario. Dado que la corrección no usa **Clear site data**, el usuario debe poder verificar el cambio sin perder Drift/IndexedDB local.
+
+
+## 2026-08-16 — AUTH-004: corrección de `401 invalid_client` en Web
+
+La captura del propietario confirmó que Google devolvía `Error 401: invalid_client` antes de presentar autorización de Drive. La investigación separó el estado del navegador de la configuración: el cliente Web **MotoCheck Web** está habilitado en Google Cloud y el alias de rama está incluido en sus orígenes autorizados, pero la huella SHA-256 del Client ID incrustado en el preview no coincidía con ese cliente.
+
+| Control | Resultado |
+|---|---|
+| Cliente Web de Google Cloud | Habilitado y de tipo Aplicación web |
+| Alias estable de la rama | Registrado como origen JavaScript autorizado |
+| Build anterior | Client ID no coincidente; causa directa del `invalid_client` |
+| Build corregido | Client ID efectivo coincide con el cliente Web habilitado mediante huella SHA-256 |
+| Nuevo `main.dart.js` local | SHA-256 `bda79ee507c8b2ba93de796ca0b5fde656e6debef2ddf8535170fdd5760f0911` |
+
+Se reconstruyó el artefacto Web con el Client ID público del cliente Web habilitado, sin incorporar ni modificar secretos OAuth, tokens, datos locales, scopes, Drift ni orígenes. Falta publicar el artefacto, comprobar la coincidencia del hash remoto y repetir el consentimiento desde el alias autorizado. La propagación de cambios de Google Cloud puede tardar algunos minutos; no se considera una prueba de flujo completada hasta verificar la pantalla de consentimiento real.

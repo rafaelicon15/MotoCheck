@@ -139,3 +139,12 @@ La comprobación inicial reveló que Vercel resuelve la página de inicio como `
 ### Seguimiento ICON-001 — entrega verificada
 
 Vercel publicó `dpl_CFoXJicMWrMbpgAeSiweagfY7x6h` para `29ecf33` en estado **READY**. URL inmutable: `https://motocheck-web-preview-nrf2czv2n-rafael-s-projects-4c5bba13.vercel.app`. El SHA-256 de `main.dart.js` remoto y de `preview-build/main.dart.js` coincide: `0edacd315cc1d16c660e2bdc8b4c4ceb55a7003d50947bf8993ecf672b38be0c`. La ruta raíz y el bootstrap responden `Cache-Control: no-store, max-age=0`; el SVG de Lucide responde HTTP 200 con tipo `image/svg+xml`. La siguiente confirmación pendiente es visual y debe realizarse sobre datos locales existentes sin ejecutar limpieza de almacenamiento del sitio.
+
+
+## 2026-08-16 — AUTH-004: `invalid_client` por Client ID Web desalineado
+
+**Evidencia reportada.** La pantalla de Google mostrada por el propietario confirma `Error 401: invalid_client` y el mensaje “The OAuth client was not found”. Este error ocurre antes de solicitar o conceder el scope de Drive, por lo que no corresponde a una denegación de permisos, sesión o caché de MotoCheck.
+
+**Verificación.** La consola Google Cloud del proyecto `motocheck-500004` muestra el cliente habilitado **MotoCheck Web**, de tipo Aplicación web, y sus orígenes incluyen el alias estable de la rama `motocheck-web-preview-git-fea-1440ff-rafael-s-projects-4c5bba13.vercel.app`. La huella SHA-256 del Client ID compilado en `preview-build/main.dart.js` no coincide con la huella del cliente Web habilitado en la consola. La causa inmediata queda clasificada como **build Web compilado con un Client ID diferente/obsoleto**.
+
+**Acción planificada.** Reconstruir el artefacto Web con el identificador público del cliente **MotoCheck Web** actualmente habilitado, sin almacenar secretos OAuth ni modificar los orígenes autorizados. Posteriormente se verificará el hash publicado y se repetirá el login en el alias estable autorizado.
