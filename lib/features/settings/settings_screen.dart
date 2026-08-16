@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/database/app_database.dart';
 import '../../services/drive_backup_service.dart';
+import '../../services/google_auth_button.dart';
 import '../../services/google_auth_service.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/settings_provider.dart';
@@ -234,6 +236,8 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
             style: const TextStyle(color: Colors.amber, fontSize: 12),
             textAlign: TextAlign.center,
           )
+        else if (kIsWeb)
+          SizedBox(height: 44, child: googleAuthButton())
         else
           OutlinedButton.icon(
             onPressed: _signIn,
