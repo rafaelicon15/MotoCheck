@@ -1,0 +1,6 @@
+2026-08-16 | AUTH-004 entrega
+
+Qué: se registra la entrega READY del preview OAuth corregido y su criterio de cierre manual.
+Por qué: la automatización no puede interactuar con controles dentro del canvas Flutter.
+Validación: preflight y coincidencia de bundle/huella de Client ID en Vercel.
+Rollback: revertir este commit solo de documentación.
