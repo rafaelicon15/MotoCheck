@@ -1,0 +1,7 @@
+2026-08-16 | AUTH-004
+
+Qué: se recompila el preview Web con el Client ID público del cliente MotoCheck Web habilitado.
+Por qué: la captura mostró 401 invalid_client; la huella del bundle anterior no coincidía con el cliente habilitado en Google Cloud.
+Validación: huella del ID efectivo coincide, flutter analyze, 3 tests, build Web y preflight.
+Riesgo: Google puede tardar minutos en propagar; no modifica tokens, secretos, scopes, Drift ni datos.
+Rollback: revertir este commit.
