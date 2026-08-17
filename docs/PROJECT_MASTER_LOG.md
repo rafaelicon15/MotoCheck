@@ -438,3 +438,9 @@ El APK se entrega para instalación manual en un teléfono. Persisten las prueba
 ## 2026-08-16 — PRODUCT-002: estructuración de funciones posteriores a v1
 
 Se añadió `docs/FUNCTIONS_ROADMAP_2026-08-16.md`. La ruta mantiene v1 enfocada en mantenimiento local-first y define gates antes de cualquier expansión. Alertas accionables y gastos se priorizan como P0 tras estabilidad; consumo anómalo, exportación y documentos son P1; compatibilidad y clima contextual se reservan para v2. Marketplace, navegación, seguridad conectada y comunidad no se autorizan antes de que exista backend, privacidad, operación, moderación y cumplimiento demostrables.
+
+## 2026-08-17 — AUTH-005 — APK Android OAuth v1.0.0+2
+
+La reincidencia de `ApiException: 10 (DEVELOPER_ERROR)` se explicó por dos discrepancias: Google Cloud conservaba la SHA-1 antigua `53:24:56:8C:C4:EB:90:77:DB:7B:9A:C0:17:92:3E:E4:B0:A9:E1:4D`, mientras el APK debug usa `40:77:C1:89:F3:8D:3A:E1:3F:03:B2:29:22:96:95:B6:9D:5C:50:CB`; además, el APK anterior no tenía evidencia de `GOOGLE_WEB_CLIENT_ID` inyectado para `serverClientId`. Google Cloud confirmó `Se guardó el cliente OAuth` para `com.motocheck.motocheck` con la SHA-1 correcta. Se elevó el versionCode a `+2` y se generó `MotoCheck-android-debug-oauthfixed-v1.0.0-2.apk` con el Client ID Web inyectado.
+
+Validación: `flutter analyze`, `flutter test` con 3 pruebas, `scripts/preflight.sh` y `apksigner verify` correctos. APK Signature Scheme v2 válido. SHA-256: `e07f44173761dbb93e4b49d00f3feac3f58731c65727ccda760d5c9bb1dc688a`. Tamaño: 167456942 bytes. La landing fue actualizada con el nuevo enlace y metadatos. La propagación OAuth queda sujeta al intervalo indicado por Google Cloud; el usuario debe instalar esta versión `+2`, no la anterior.

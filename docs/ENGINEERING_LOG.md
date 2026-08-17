@@ -183,3 +183,33 @@ Vercel publicó `dpl_Ew7vV4Y6Hi33NuFVy6D4bN9fhs75` para el commit `4399f5f` en e
 ## 2026-08-16 — PRODUCT-002: roadmap de funciones futuras
 
 Se creó `docs/FUNCTIONS_ROADMAP_2026-08-16.md` para convertir las referencias de MotorCheck, MotoMeteo, Detecht y Calimoto en épicas secuenciadas. El documento prioriza alertas accionables y gastos (P0) tras los gates de estabilidad; difiere compatibilidad, clima, rutas, marketplace, comunidad y seguridad conectada hasta que sus requisitos de datos, backend, privacidad, operación y cumplimiento sean demostrables. La decisión mantiene la metodología: eliminar expansiones desproporcionadas antes de simplificar e implementar.
+
+## AUTH-005 — Android Google Drive `ApiException: 10` — 2026-08-17
+
+La evidencia del dispositivo muestra `PlatformException(sign_in_failed, com.google.android.gms.common.api.ApiException: 10, null, null)` al pulsar la conexión/recuperación de Google Drive. `ApiException: 10` corresponde a un rechazo de configuración del cliente Android antes de completar el selector de cuenta; no es un error de credenciales introducidas por la persona.
+
+La auditoría local confirmó que `android/app/build.gradle.kts` usa `namespace` y `applicationId` `com.motocheck.motocheck`. No existe `android/app/google-services.json` en el árbol de trabajo. La app tampoco contiene un Client ID Android nativo; el servicio Dart solo inyecta Client ID para Web y iOS, mientras Android depende de la configuración nativa del cliente Google Sign-In. El APK debug usa el certificado debug local del entorno. Deben registrarse sus huellas SHA-1/SHA-256 en el cliente OAuth Android de Google Cloud, manteniendo package ID exacto y sin subir el keystore al repositorio.
+
+El estado local sin moto registrada no debe requerir Google ni internet; se verificará por separado para descartar un indicador de carga persistente. Próxima acción: confirmar el cliente Android en Google Cloud, agregar la configuración pública generada por esa consola fuera de Git si corresponde y regenerar el APK debug. Rollback: revertir únicamente la configuración Android agregada y conservar la arquitectura local-first.
+
+## 2026-08-17 — AUTH-005: Android OAuth `DEVELOPER_ERROR`
+
+**Objetivo.** Resolver el error `PlatformException(sign_in_failed, com.google.android.gms.common.api.ApiException: 10, null, null)` observado en el APK debug al conectar Google Drive.
+
+**Hallazgo.** El `applicationId` y package ID son `com.motocheck.motocheck`. El cliente OAuth Android existe en el proyecto `motocheck-500004`, pero la SHA-1 registrada no coincidía con la firma debug del APK probado. La SHA-1 correcta fue introducida en el formulario del cliente; Google Cloud aún no mostró confirmación de guardado porque el botón no fue expuesto al navegador automatizado.
+
+**Validación.** `flutter analyze` terminó sin issues y `flutter test` terminó con 3 pruebas exitosas. La aplicación continúa siendo local-first: el fallo solo afecta el respaldo opcional de Google Drive, no el uso local ni la creación de una moto.
+
+**Estado.** Bloqueado hasta guardar la huella en Google Cloud y esperar la propagación indicada por la consola. Después debe reinstalarse el APK debug y repetirse la conexión. Para release será necesaria otra SHA-1 del keystore release y, posteriormente, la de Play App Signing.
+
+## 2026-08-17 — AUTH-005 — corrección Android OAuth y APK v1.0.0+2
+
+**Objetivo.** Resolver `PlatformException(sign_in_failed, com.google.android.gms.common.api.ApiException: 10, null, null)` en el APK debug usado en el dispositivo.
+
+**Causa confirmada.** El cliente OAuth Android conservaba la SHA-1 antigua `53:24:56:8C:C4:EB:90:77:DB:7B:9A:C0:17:92:3E:E4:B0:A9:E1:4D`, mientras que el APK firmado por el entorno usa `40:77:C1:89:F3:8D:3A:E1:3F:03:B2:29:22:96:95:B6:9D:5C:50:CB`. Además, el APK anterior no se había generado con evidencia de `GOOGLE_WEB_CLIENT_ID` para `serverClientId` Android.
+
+**Corrección.** Google Cloud guardó el cliente OAuth Android con el package ID `com.motocheck.motocheck` y la SHA-1 del APK debug. Se elevó `versionCode` a `+2` y se generó un APK debug con `--dart-define=GOOGLE_WEB_CLIENT_ID`.
+
+**Validación.** `flutter analyze`, `flutter test` con 3 pruebas, `scripts/preflight.sh` y `apksigner verify` pasan. El artefacto tiene APK Signature Scheme v2 válido, SHA-256 `e07f44173761dbb93e4b49d00f3feac3f58731c65727ccda760d5c9bb1dc688a` y tamaño de 167456942 bytes. Google Cloud mostró `Se guardó el cliente OAuth`; la propagación puede tardar entre 5 minutos y algunas horas.
+
+**Rollback.** Mantener la base local; si la nueva prueba presenta una regresión, conservar temporalmente la versión anterior. No publicar esta firma debug como release de Play Store.
