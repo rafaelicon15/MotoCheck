@@ -22,8 +22,13 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>NSCalendarsUsageDescription</key>
+		<string>MotoCheck necesita acceso al calendario para programar recordatorios de mantenimiento de tu moto.</string>
+		<key>NSCalendarsFullAccessUsageDescription</key>
+		<string>MotoCheck necesita acceso al calendario para crear y actualizar recordatorios de mantenimiento de tu moto.</string>
+
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

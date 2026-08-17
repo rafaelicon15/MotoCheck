@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/moto_icon.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/database/app_database.dart';
+import '../../../services/calendar_service.dart';
 import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
@@ -17,7 +19,8 @@ class MaintenanceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(databaseProvider);
     final moto = ref.watch(activeMotoProvider).valueOrNull;
-    final currency = ref.watch(currencyCodeProvider).valueOrNull ?? kDefaultCurrency;
+    final currency =
+        ref.watch(currencyCodeProvider).valueOrNull ?? kDefaultCurrency;
     final engineType = moto?.engineType ?? '4T';
     final fuelSystem = moto?.fuelSystem ?? 'carb';
     final transmissionType = moto?.transmissionType ?? 'chain';
@@ -33,16 +36,15 @@ class MaintenanceScreen extends ConsumerWidget {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: records.length,
-            itemBuilder: (_, i) =>
-                _MaintenanceCard(
-                  record: records[i],
-                  db: db,
-                  currency: currency,
-                  engineType: engineType,
-                  fuelSystem: fuelSystem,
-                  transmissionType: transmissionType,
-                  currentKm: currentKm,
-                ),
+            itemBuilder: (_, i) => _MaintenanceCard(
+              record: records[i],
+              db: db,
+              currency: currency,
+              engineType: engineType,
+              fuelSystem: fuelSystem,
+              transmissionType: transmissionType,
+              currentKm: currentKm,
+            ),
           );
         },
       ),
@@ -52,11 +54,17 @@ class MaintenanceScreen extends ConsumerWidget {
           isScrollControlled: true,
           backgroundColor: AppTheme.surface,
           shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           builder: (_) => _AddMaintenanceSheet(
-              db: db, motoId: moto?.id, currency: currency,
-              engineType: engineType, fuelSystem: fuelSystem,
-              transmissionType: transmissionType, currentKm: currentKm),
+            db: db,
+            motoId: moto?.id,
+            currency: currency,
+            engineType: engineType,
+            fuelSystem: fuelSystem,
+            transmissionType: transmissionType,
+            currentKm: currentKm,
+          ),
         ),
         icon: const Icon(Icons.add),
         label: const Text('Agregar servicio'),
@@ -76,15 +84,16 @@ class _AddMaintenanceSheet extends StatefulWidget {
   final String transmissionType;
   final int currentKm;
   final MaintenanceRecord? record;
-  const _AddMaintenanceSheet(
-      {required this.db,
-      required this.motoId,
-      required this.currency,
-      required this.engineType,
-      required this.fuelSystem,
-      required this.transmissionType,
-      required this.currentKm,
-      this.record});
+  const _AddMaintenanceSheet({
+    required this.db,
+    required this.motoId,
+    required this.currency,
+    required this.engineType,
+    required this.fuelSystem,
+    required this.transmissionType,
+    required this.currentKm,
+    this.record,
+  });
 
   @override
   State<_AddMaintenanceSheet> createState() => _AddMaintenanceSheetState();
@@ -124,10 +133,11 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
     _workshopCtrl.text = record.workshop ?? '';
     _notesCtrl.text = record.notes ?? '';
     _nextKmCtrl.text = record.nextServiceKm?.toString() ?? '';
-    _selectedItems.addAll(record.maintenanceItems != null &&
-            record.maintenanceItems!.isNotEmpty
-        ? record.maintenanceItems!.split(',')
-        : [record.type]);
+    _selectedItems.addAll(
+      record.maintenanceItems != null && record.maintenanceItems!.isNotEmpty
+          ? record.maintenanceItems!.split(',')
+          : [record.type],
+    );
     _date = record.date;
     _nextDate = record.nextServiceDate;
     _oilType = record.oilType;
@@ -158,54 +168,80 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        20,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(children: [
-              const Icon(Icons.build, color: AppTheme.maintenance),
-              const SizedBox(width: 8),
-              Text(
-                widget.record == null ? 'Nuevo servicio' : 'Editar servicio',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-            ]),
+            Row(
+              children: [
+                const Icon(Icons.build, color: AppTheme.maintenance),
+                const SizedBox(width: 8),
+                Text(
+                  widget.record == null ? 'Nuevo servicio' : 'Editar servicio',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
             // Fecha
             GestureDetector(
               onTap: () async {
                 final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _date,
-                    firstDate: DateTime(2015),
-                    lastDate: DateTime.now());
+                  context: context,
+                  initialDate: _date,
+                  firstDate: DateTime(2015),
+                  lastDate: DateTime.now(),
+                );
                 if (picked != null) setState(() => _date = picked);
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                    color: AppTheme.card, borderRadius: BorderRadius.circular(12)),
-                child: Row(children: [
-                  const Icon(Icons.calendar_today,
-                      color: AppTheme.textSecondary, size: 18),
-                  const SizedBox(width: 10),
-                  Text(DateFormat('dd/MM/yyyy').format(_date),
-                      style: const TextStyle(color: AppTheme.textPrimary)),
-                ]),
+                  color: AppTheme.card,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today,
+                      color: AppTheme.textSecondary,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(_date),
+                      style: const TextStyle(color: AppTheme.textPrimary),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
 
             // ── Selección múltiple de items ──
-            const Text('¿Qué se realizó?',
-                style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5)),
+            const Text(
+              '¿Qué se realizó?',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 8),
 
             // Chips seleccionados (resumen)
@@ -213,16 +249,29 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
-                children: _selectedItems.map((item) => Chip(
-                  label: Text(item,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.primary)),
-                  backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
-                  side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
-                  deleteIconColor: AppTheme.primary,
-                  onDeleted: () => _toggle(item),
-                  padding: EdgeInsets.zero,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                )).toList(),
+                children: _selectedItems
+                    .map(
+                      (item) => Chip(
+                        label: Text(
+                          item,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                        backgroundColor: AppTheme.primary.withValues(
+                          alpha: 0.12,
+                        ),
+                        side: BorderSide(
+                          color: AppTheme.primary.withValues(alpha: 0.4),
+                        ),
+                        deleteIconColor: AppTheme.primary,
+                        onDeleted: () => _toggle(item),
+                        padding: EdgeInsets.zero,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 12),
             ],
@@ -236,33 +285,47 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
             TextField(
               controller: _descCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Descripción / Notas del servicio (opcional)'),
+                labelText: 'Descripción / Notas del servicio (opcional)',
+              ),
               maxLines: 2,
             ),
             const SizedBox(height: 12),
 
             // Km y Costo
-            Row(children: [
-              Expanded(child: TextField(
-                controller: _kmCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Km al servicio', suffixText: 'km'),
-              )),
-              const SizedBox(width: 12),
-              Expanded(child: TextField(
-                controller: _costCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Costo',
-                  prefixText: '${currencySymbol(widget.currency)} ',
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _kmCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Km al servicio',
+                      suffixText: 'km',
+                    ),
+                  ),
                 ),
-              )),
-            ]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _costCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Costo',
+                      prefixText: '${currencySymbol(widget.currency)} ',
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
 
             TextField(
               controller: _workshopCtrl,
-              decoration: const InputDecoration(labelText: 'Taller / Mecánico (opcional)'),
+              decoration: const InputDecoration(
+                labelText: 'Taller / Mecánico (opcional)',
+              ),
             ),
 
             // ── Datos de aceite (solo 4T + "Cambio de aceite" seleccionado) ──
@@ -273,29 +336,45 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
                 decoration: BoxDecoration(
                   color: AppTheme.fuel.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.fuel.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppTheme.fuel.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(children: [
-                      const Icon(Icons.opacity, color: AppTheme.fuel, size: 16),
-                      const SizedBox(width: 6),
-                      const Text('Datos del aceite',
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.opacity,
+                          color: AppTheme.fuel,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Datos del aceite',
                           style: TextStyle(
-                              color: AppTheme.fuel,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13)),
-                    ]),
+                            color: AppTheme.fuel,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _oilType,
                       hint: const Text('Tipo de aceite'),
                       decoration: const InputDecoration(),
                       dropdownColor: AppTheme.surface,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 13,
+                      ),
                       items: AppConstants.oilTypes4T
-                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                          .map(
+                            (t) => DropdownMenuItem(value: t, child: Text(t)),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => _oilType = v),
                     ),
@@ -305,9 +384,14 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
                       hint: const Text('Viscosidad'),
                       decoration: const InputDecoration(),
                       dropdownColor: AppTheme.surface,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 13,
+                      ),
                       items: AppConstants.oilViscosities
-                          .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                          .map(
+                            (v) => DropdownMenuItem(value: v, child: Text(v)),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => _oilViscosity = v),
                     ),
@@ -318,43 +402,58 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
 
             // Próximo servicio
             const SizedBox(height: 16),
-            const Text('Próximo servicio (opcional)',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            const Text(
+              'Próximo servicio (opcional)',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
             const SizedBox(height: 8),
-            Row(children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
                         context: context,
-                        initialDate: DateTime.now().add(const Duration(days: 90)),
+                        initialDate: DateTime.now().add(
+                          const Duration(days: 90),
+                        ),
                         firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 730)));
-                    if (picked != null) setState(() => _nextDate = picked);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    decoration: BoxDecoration(
-                        color: AppTheme.card, borderRadius: BorderRadius.circular(12)),
-                    child: Text(
-                      _nextDate != null
-                          ? DateFormat('dd/MM/yyyy').format(_nextDate!)
-                          : 'Fecha',
-                      style: TextStyle(
+                        lastDate: DateTime.now().add(const Duration(days: 730)),
+                      );
+                      if (picked != null) setState(() => _nextDate = picked);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.card,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _nextDate != null
+                            ? DateFormat('dd/MM/yyyy').format(_nextDate!)
+                            : 'Fecha',
+                        style: TextStyle(
                           color: _nextDate != null
                               ? AppTheme.textPrimary
-                              : AppTheme.textSecondary),
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: TextField(
-                controller: _nextKmCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'O en km'),
-              )),
-            ]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _nextKmCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'O en km'),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
 
             ElevatedButton(
@@ -364,9 +463,11 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
             if (_isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 6),
-                child: Text('Selecciona al menos un ítem realizado',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-                    textAlign: TextAlign.center),
+                child: Text(
+                  'Selecciona al menos un ítem realizado',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
               ),
           ],
         ),
@@ -386,10 +487,14 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
 
       // Para 2T: quitar cambio de aceite, filtro de aceite y calibración de válvulas
       if (is2T) {
-        items = items.where((i) =>
-            i != 'Cambio de aceite' &&
-            i != 'Cambio de filtro de aceite' &&
-            !i.startsWith('Calibración de válvulas')).toList();
+        items = items
+            .where(
+              (i) =>
+                  i != 'Cambio de aceite' &&
+                  i != 'Cambio de filtro de aceite' &&
+                  !i.startsWith('Calibración de válvulas'),
+            )
+            .toList();
         if (cat.key == 'Distribución / tren de válvulas') {
           items = const [];
         }
@@ -397,9 +502,11 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
 
       // Para transmisión no-cadena: quitar lubricación y limpieza de cadena
       if (cat.key == 'Lubricación' && !isChain) {
-        items = items.where((i) =>
-            i != 'Lubricación de cadena' &&
-            i != 'Limpieza de cadena').toList();
+        items = items
+            .where(
+              (i) => i != 'Lubricación de cadena' && i != 'Limpieza de cadena',
+            )
+            .toList();
       }
 
       // Para CVT/automáticas: quitar guaya de clutch (no tienen palanca de clutch)
@@ -409,32 +516,36 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
 
       if (items.isEmpty) continue;
 
-      result.add(_CategorySection(
-        label: cat.key,
-        items: items,
-        selectedItems: _selectedItems,
-        onToggle: _toggle,
-      ));
+      result.add(
+        _CategorySection(
+          label: cat.key,
+          items: items,
+          selectedItems: _selectedItems,
+          onToggle: _toggle,
+        ),
+      );
     }
 
     // Categoría de transmisión dinámica
     final transmItems = isChain
         ? AppConstants.chainTransmissionItems
         : widget.transmissionType == 'shaft'
-            ? AppConstants.shaftTransmissionItems
-            : AppConstants.beltCvtTransmissionItems;
+        ? AppConstants.shaftTransmissionItems
+        : AppConstants.beltCvtTransmissionItems;
     final transmLabel = isChain
         ? 'Transmisión (cadena)'
         : widget.transmissionType == 'shaft'
-            ? 'Cardan'
-            : 'Transmisión CVT';
+        ? 'Cardan'
+        : 'Transmisión CVT';
 
-    result.add(_CategorySection(
-      label: transmLabel,
-      items: transmItems,
-      selectedItems: _selectedItems,
-      onToggle: _toggle,
-    ));
+    result.add(
+      _CategorySection(
+        label: transmLabel,
+        items: transmItems,
+        selectedItems: _selectedItems,
+        onToggle: _toggle,
+      ),
+    );
 
     // Categoría dinámica según sistema de combustible
     final fuelItems = isCarb
@@ -442,12 +553,14 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
         : AppConstants.injectionMaintenanceItems;
     final fuelLabel = isCarb ? 'Carburador' : 'Inyección electrónica';
 
-    result.add(_CategorySection(
-      label: fuelLabel,
-      items: fuelItems,
-      selectedItems: _selectedItems,
-      onToggle: _toggle,
-    ));
+    result.add(
+      _CategorySection(
+        label: fuelLabel,
+        items: fuelItems,
+        selectedItems: _selectedItems,
+        onToggle: _toggle,
+      ),
+    );
 
     return result;
   }
@@ -461,8 +574,9 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
       );
       return;
     }
-    final primaryType =
-        _selectedItems.length == 1 ? _selectedItems.first : 'Mantenimiento general';
+    final primaryType = _selectedItems.length == 1
+        ? _selectedItems.first
+        : 'Mantenimiento general';
     final itemsStr = _selectedItems.join(',');
     final desc = _descCtrl.text.isEmpty
         ? _selectedItems.join(' · ')
@@ -475,37 +589,42 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
     final oilType = _hasOilChange ? _oilType : null;
     final oilViscosity = _hasOilChange ? _oilViscosity : null;
     final record = widget.record;
-    if (record == null) {
-      await widget.db.insertMaintenance(MaintenanceRecordsCompanion.insert(
-        motoId: drift.Value(widget.motoId),
-        date: _date,
-        odometerKm: odometerKm,
-        type: primaryType,
-        description: desc,
-        cost: drift.Value(cost),
-        workshop: drift.Value(workshop),
-        nextServiceDate: drift.Value(_nextDate),
-        nextServiceKm: drift.Value(nextServiceKm),
-        notes: drift.Value(notes),
-        oilType: drift.Value(oilType),
-        oilViscosity: drift.Value(oilViscosity),
-        maintenanceItems: drift.Value(itemsStr),
-      ));
-    } else {
-      await widget.db.updateMaintenance(record.copyWith(
-        date: _date,
-        odometerKm: odometerKm,
-        type: primaryType,
-        description: desc,
-        cost: drift.Value(cost),
-        workshop: drift.Value(workshop),
-        nextServiceDate: drift.Value(_nextDate),
-        nextServiceKm: drift.Value(nextServiceKm),
-        notes: drift.Value(notes),
-        oilType: drift.Value(oilType),
-        oilViscosity: drift.Value(oilViscosity),
-        maintenanceItems: drift.Value(itemsStr),
-      ));
+    final maintenanceId = record == null
+        ? await widget.db.insertMaintenance(
+            MaintenanceRecordsCompanion.insert(
+              motoId: drift.Value(widget.motoId),
+              date: _date,
+              odometerKm: odometerKm,
+              type: primaryType,
+              description: desc,
+              cost: drift.Value(cost),
+              workshop: drift.Value(workshop),
+              nextServiceDate: drift.Value(_nextDate),
+              nextServiceKm: drift.Value(nextServiceKm),
+              notes: drift.Value(notes),
+              oilType: drift.Value(oilType),
+              oilViscosity: drift.Value(oilViscosity),
+              maintenanceItems: drift.Value(itemsStr),
+            ),
+          )
+        : record.id;
+    if (record != null) {
+      await widget.db.updateMaintenance(
+        record.copyWith(
+          date: _date,
+          odometerKm: odometerKm,
+          type: primaryType,
+          description: desc,
+          cost: drift.Value(cost),
+          workshop: drift.Value(workshop),
+          nextServiceDate: drift.Value(_nextDate),
+          nextServiceKm: drift.Value(nextServiceKm),
+          notes: drift.Value(notes),
+          oilType: drift.Value(oilType),
+          oilViscosity: drift.Value(oilViscosity),
+          maintenanceItems: drift.Value(itemsStr),
+        ),
+      );
     }
     await widget.db.markPartsServicedFromMaintenance(
       motoId: widget.motoId,
@@ -515,6 +634,45 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
       cost: cost,
     );
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, odometerKm);
+    final savedRecord = await (widget.db.select(
+      widget.db.maintenanceRecords,
+    )..where((t) => t.id.equals(maintenanceId))).getSingle();
+    if (_nextDate != null && mounted) {
+      final addToCalendar = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Agregar al calendario'),
+          content: Text(
+            '¿Quieres programar “$primaryType” para el ${DateFormat('dd/MM/yyyy').format(_nextDate!)}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Ahora no'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Agregar'),
+            ),
+          ],
+        ),
+      );
+      if (addToCalendar == true) {
+        final sync = await CalendarService.addMaintenanceEvent(
+          title: 'MotoCheck: $primaryType',
+          start: _nextDate!,
+          description:
+              '$desc\\nKilometraje programado: ${nextServiceKm ?? 'sin definir'} km',
+          location: workshop,
+          eventId: savedRecord.calendarEventId,
+        );
+        if (sync.status == CalendarResult.success && sync.eventId != null) {
+          await widget.db.updateMaintenance(
+            savedRecord.copyWith(calendarEventId: drift.Value(sync.eventId)),
+          );
+        }
+      }
+    }
     await DriveBackupService.backupIfSignedIn(widget.db);
     if (mounted) Navigator.pop(context);
   }
@@ -561,9 +719,11 @@ class _CategorySectionState extends State<_CategorySection> {
             borderRadius: BorderRadius.circular(10),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(children: [
-                Expanded(
-                  child: Text(widget.label,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.label,
                       style: TextStyle(
                         color: _selectedCount > 0
                             ? AppTheme.maintenance
@@ -572,29 +732,41 @@ class _CategorySectionState extends State<_CategorySection> {
                             ? FontWeight.w700
                             : FontWeight.normal,
                         fontSize: 13,
-                      )),
-                ),
-                if (_selectedCount > 0)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.maintenance.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
-                    child: Text('$_selectedCount',
-                        style: const TextStyle(
-                            color: AppTheme.maintenance,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700)),
                   ),
-                const SizedBox(width: 6),
-                Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
-                  color: AppTheme.textSecondary,
-                  size: 18,
-                ),
-              ]),
+                  if (_selectedCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.maintenance.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '$_selectedCount',
+                        style: const TextStyle(
+                          color: AppTheme.maintenance,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 6),
+                  AnimatedMotoIcon(
+                    icon: _expanded
+                        ? MotoIconName.chevronUp
+                        : MotoIconName.chevronDown,
+                    color: AppTheme.textSecondary,
+                    size: 18,
+                    semanticLabel: _expanded
+                        ? 'Contraer opciones'
+                        : 'Expandir opciones',
+                  ),
+                ],
+              ),
             ),
           ),
           if (_expanded)
@@ -606,22 +778,23 @@ class _CategorySectionState extends State<_CategorySection> {
                 children: widget.items.map((item) {
                   final selected = widget.selectedItems.contains(item);
                   return FilterChip(
-                    label: Text(item,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: selected
-                              ? AppTheme.maintenance
-                              : AppTheme.textSecondary,
-                        )),
+                    label: Text(
+                      item,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: selected
+                            ? AppTheme.maintenance
+                            : AppTheme.textSecondary,
+                      ),
+                    ),
                     selected: selected,
                     onSelected: (_) => widget.onToggle(item),
                     selectedColor: AppTheme.maintenance.withValues(alpha: 0.15),
                     checkmarkColor: AppTheme.maintenance,
                     backgroundColor: AppTheme.surface,
                     side: BorderSide(
-                        color: selected
-                            ? AppTheme.maintenance
-                            : Colors.white12),
+                      color: selected ? AppTheme.maintenance : Colors.white12,
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   );
@@ -655,7 +828,8 @@ class _MaintenanceCard extends StatelessWidget {
   });
 
   List<String> get _items {
-    if (record.maintenanceItems != null && record.maintenanceItems!.isNotEmpty) {
+    if (record.maintenanceItems != null &&
+        record.maintenanceItems!.isNotEmpty) {
       return record.maintenanceItems!.split(',');
     }
     return [record.type];
@@ -663,10 +837,12 @@ class _MaintenanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasUpcoming = record.nextServiceDate != null &&
+    final hasUpcoming =
+        record.nextServiceDate != null &&
         record.nextServiceDate!.isAfter(DateTime.now());
-    final daysLeft =
-        hasUpcoming ? record.nextServiceDate!.difference(DateTime.now()).inDays : null;
+    final daysLeft = hasUpcoming
+        ? record.nextServiceDate!.difference(DateTime.now()).inDays
+        : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -678,163 +854,250 @@ class _MaintenanceCard extends StatelessWidget {
             ? Border.all(color: AppTheme.warning.withValues(alpha: 0.5))
             : Border.all(color: AppTheme.cardBorder),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Cabecera
-        Row(children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: AppTheme.maintenance.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.build, color: AppTheme.maintenance, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(
-              _items.length == 1 ? _items.first : 'Mantenimiento general',
-              style: const TextStyle(
-                  color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
-            ),
-            if (record.description.isNotEmpty &&
-                record.description != _items.join(' · '))
-              Text(record.description,
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 11)),
-          ])),
-          Column(children: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined,
-                  color: AppTheme.maintenance, size: 20),
-              onPressed: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: AppTheme.surface,
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                builder: (_) => _AddMaintenanceSheet(
-                  db: db,
-                  motoId: record.motoId,
-                  currency: currency,
-                  engineType: engineType,
-                  fuelSystem: fuelSystem,
-                  transmissionType: transmissionType,
-                  currentKm: currentKm,
-                  record: record,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cabecera
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.maintenance.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.build,
+                  color: AppTheme.maintenance,
+                  size: 18,
                 ),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline,
-                  color: AppTheme.danger, size: 20),
-              onPressed: () async {
-                await db.deleteMaintenance(record.id);
-                await DriveBackupService.backupIfSignedIn(db);
-              },
-            ),
-          ]),
-        ]),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _items.length == 1
+                          ? _items.first
+                          : 'Mantenimiento general',
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (record.description.isNotEmpty &&
+                        record.description != _items.join(' · '))
+                      Text(
+                        record.description,
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: AppTheme.maintenance,
+                      size: 20,
+                    ),
+                    onPressed: () => showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: AppTheme.surface,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                      ),
+                      builder: (_) => _AddMaintenanceSheet(
+                        db: db,
+                        motoId: record.motoId,
+                        currency: currency,
+                        engineType: engineType,
+                        fuelSystem: fuelSystem,
+                        transmissionType: transmissionType,
+                        currentKm: currentKm,
+                        record: record,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: AppTheme.danger,
+                      size: 20,
+                    ),
+                    onPressed: () async {
+                      await db.deleteMaintenance(record.id);
+                      await DriveBackupService.backupIfSignedIn(db);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
 
-        // Items como chips (si hay más de uno)
-        if (_items.length > 1) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: _items
-                .map((item) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          // Items como chips (si hay más de uno)
+          if (_items.length > 1) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: _items
+                  .map(
+                    (item) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.maintenance.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(item,
-                          style: const TextStyle(
-                              color: AppTheme.maintenance,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600)),
-                    ))
-                .toList(),
-          ),
-        ],
-
-        // Badge de aceite
-        if (record.oilType != null) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.fuel.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          color: AppTheme.maintenance,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
-            child: Row(children: [
-              const Icon(Icons.opacity, size: 14, color: AppTheme.fuel),
-              const SizedBox(width: 6),
-              Text(
-                '${record.oilType}${record.oilViscosity != null ? ' · ${record.oilViscosity}' : ''}',
-                style: const TextStyle(
-                    color: AppTheme.fuel, fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ]),
-          ),
-        ],
+          ],
 
-        const SizedBox(height: 8),
-        Row(children: [
-          const Icon(Icons.calendar_today, size: 13, color: AppTheme.textSecondary),
-          const SizedBox(width: 4),
-          Text(DateFormat('dd MMM yyyy').format(record.date),
-              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-          const SizedBox(width: 12),
-          const Icon(Icons.speed, size: 13, color: AppTheme.textSecondary),
-          const SizedBox(width: 4),
-          Text('${record.odometerKm} km',
-              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-          if (record.cost != null) ...[
-            const Spacer(),
-            Text('${currencySymbol(currency)} ${record.cost!.toStringAsFixed(0)}',
+          // Badge de aceite
+          if (record.oilType != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.fuel.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.opacity, size: 14, color: AppTheme.fuel),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${record.oilType}${record.oilViscosity != null ? ' · ${record.oilViscosity}' : ''}',
+                    style: const TextStyle(
+                      color: AppTheme.fuel,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today,
+                size: 13,
+                color: AppTheme.textSecondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                DateFormat('dd MMM yyyy').format(record.date),
                 style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Icon(Icons.speed, size: 13, color: AppTheme.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                '${record.odometerKm} km',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              if (record.cost != null) ...[
+                const Spacer(),
+                Text(
+                  '${currencySymbol(currency)} ${record.cost!.toStringAsFixed(0)}',
+                  style: const TextStyle(
                     color: AppTheme.success,
                     fontWeight: FontWeight.w600,
-                    fontSize: 13)),
-          ],
-        ]),
-
-        if (record.workshop != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(children: [
-              const Icon(Icons.store, size: 13, color: AppTheme.textSecondary),
-              const SizedBox(width: 4),
-              Text(record.workshop!,
-                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-            ]),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ],
           ),
 
-        if (hasUpcoming) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: (daysLeft! <= 7 ? AppTheme.warning : AppTheme.maintenance)
-                  .withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(children: [
-              Icon(Icons.alarm,
-                  size: 14,
-                  color: daysLeft <= 7 ? AppTheme.warning : AppTheme.maintenance),
-              const SizedBox(width: 6),
-              Text(
-                'Próximo en $daysLeft días · ${DateFormat('dd MMM').format(record.nextServiceDate!)}',
-                style: TextStyle(
-                    color: daysLeft <= 7 ? AppTheme.warning : AppTheme.maintenance,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600),
+          if (record.workshop != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.store,
+                    size: 13,
+                    color: AppTheme.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    record.workshop!,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          ),
+            ),
+
+          if (hasUpcoming) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color:
+                    (daysLeft! <= 7 ? AppTheme.warning : AppTheme.maintenance)
+                        .withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.alarm,
+                    size: 14,
+                    color: daysLeft <= 7
+                        ? AppTheme.warning
+                        : AppTheme.maintenance,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Próximo en $daysLeft días · ${DateFormat('dd MMM').format(record.nextServiceDate!)}',
+                    style: TextStyle(
+                      color: daysLeft <= 7
+                          ? AppTheme.warning
+                          : AppTheme.maintenance,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -845,17 +1108,26 @@ class _EmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
-        child: Column(children: [
-          Icon(Icons.build_outlined,
-              size: 64, color: AppTheme.textSecondary.withValues(alpha: 0.3)),
-          const SizedBox(height: 16),
-          const Text('Sin servicios registrados',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
-          const SizedBox(height: 8),
-          const Text('Registra el historial de mantenimiento de tu moto',
+        child: Column(
+          children: [
+            Icon(
+              Icons.build_outlined,
+              size: 64,
+              color: AppTheme.textSecondary.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Sin servicios registrados',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Registra el historial de mantenimiento de tu moto',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-              textAlign: TextAlign.center),
-        ]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

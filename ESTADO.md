@@ -1,12 +1,14 @@
 # MotoCheck — Estado del Proyecto
 
-> Última actualización: 2026-07-31
+> Última actualización: 2026-08-16
+
+**Marca confirmada:** MotoCheck. Se mantienen los identificadores técnicos actuales: Android/iOS `com.motocheck.motocheck` y Google Cloud `motocheck-500004`.
 
 ---
 
 ## Descripción
 
-App móvil de mantenimiento de motocicletas. Registra combustible, servicios, refacciones y alertas de vida útil. Respaldo opcional en Google Drive. Login con Google.
+App local-first de mantenimiento de motocicletas. Registra combustible, servicios, refacciones y alertas de vida útil sin requerir cuenta. El respaldo opcional en Google Drive se conecta desde Configuración.
 
 ---
 
@@ -21,10 +23,11 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 | Respaldo | Google Drive `appDataFolder` (sin Firebase) |
 | Gráficas | `fl_chart` |
 | Fechas/formatos | `intl` |
+| Iconografía SVG | `flutter_svg` + activos locales Lucide, con Morphicons como referencia de transición |
 
 ---
 
-## Schema DB — v10 (actual)
+## Schema DB — v11 (actual)
 
 **Tablas:** `FuelRecords`, `MaintenanceRecords`, `PartRecords`, `MotoProfile`, `AppSettings`, `PartHistory`
 
@@ -35,24 +38,36 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 | v8 | Tabla `PartHistory` (historial de cambios de refacciones) |
 | v9 | Columna `isFull` en `FuelRecords` (detección de rellenos parciales) |
 | v10 | Columna `rimType` en `MotoProfile` (tipo de rin para filtrar tipos de llanta) |
+| v11 | Columna `calendarEventId` en `MaintenanceRecords` para sincronizar servicios con calendario |
 
-> **Nota dev:** La migración es drop-all en `onUpgrade`. Al cambiar schema, borrar `.g.dart` y correr `dart run build_runner build`.
+> **Nota dev:** Las migraciones v8–v11 son aditivas y preservan los datos locales. Al cambiar schema, ejecutar `dart run build_runner build --delete-conflicting-outputs`.
 
 ---
 
 ## Funcionalidades implementadas
 
-### Auth / Sesión
-- [x] Login con Google Sign-In
-- [x] `AuthGate` — splash → login → app (via `AsyncValue`)
-- [x] Detección de respaldo en Drive al primer login
-- [x] Restaurar o empezar de cero al detectar respaldo
+### Respaldo / Google Drive
+- [x] MotoCheck abre en modo local sin requerir cuenta Google
+- [x] Conexión opcional a Google Drive desde Configuración
+- [x] OAuth Web: cliente habilitado, preview reconstruido y flujo de Google verificado manualmente
+- [ ] OAuth Android/iOS: faltan huellas de firma Android y configuración URL scheme/cliente iOS
+- [x] Respaldo manual y automático cuando existe cuenta conectada
+- [x] Restauración manual con confirmación explícita
+- [x] Calendario: eventos nativos Android/iOS y descarga `.ics` en Web
+
+### Iconografía y accesibilidad
+- [x] Capa `MotoIcon`/`AnimatedMotoIcon` para SVG locales con etiquetas semánticas
+- [x] Primera transición expandir/contraer en Mantenimiento, con respeto a movimiento reducido
+- [x] Atribución ISC/MIT para activos Lucide incluidos
+- [ ] Migrar por pares evaluados los iconos de navegación, edición, alta y estado Drive
+- [ ] Adoptar morphing real solo si existe adaptador Flutter/Dart multiplataforma
 
 ### Dashboard
 - [x] Tarjeta activa de moto (marca, modelo, año, km, badges)
 - [x] Resumen rápido: último km/L y próximo servicio
 - [x] Alertas de refacciones próximas a vencer
 - [x] Selector de moto activa / agregar nueva / eliminar
+- [x] Espaciado responsive: márgenes explícitos, alertas más legibles y resumen en columna en pantallas compactas
 
 ### Perfil de moto (formulario)
 - [x] Marca, modelo, año, km actuales, placa
@@ -105,14 +120,14 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 
 ```
 lib/
-├── app.dart                          # AuthGate + MainShell + navegación
+├── app.dart                          # MainShell local-first + navegación
 ├── core/
 │   ├── constants/app_constants.dart  # Todos los datos: tipos de motor, cadenas, rines, etc.
-│   └── theme/app_theme.dart          # Colores, cardDecoration(), ThemeData
+│   ├── theme/app_theme.dart          # Colores, cardDecoration(), ThemeData
+│   └── widgets/moto_icon.dart        # SVG, semántica y transición de iconos
 ├── data/
-│   └── database/app_database.dart    # Schema Drift v10, migraciones, exportToJson/importFromJson
+│   └── database/app_database.dart    # Schema Drift v11, migraciones, exportToJson/importFromJson
 ├── features/
-│   ├── auth/auth_screen.dart         # Pantalla de login
 │   ├── dashboard/dashboard_screen.dart
 │   ├── fuel/screens/fuel_screen.dart
 │   ├── maintenance/screens/maintenance_screen.dart
@@ -132,26 +147,57 @@ lib/
 Remove-Item "lib\data\database\app_database.g.dart" -Force
 dart run build_runner build
 
-# Build APK debug
+# Build APK debug (requiere Android SDK + JDK 17)
 flutter build apk --debug
 
-# Instalar en dispositivo (TECNO KI7)
-adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
+# Artefacto de prueba verificado el 2026-08-16
+# MotoCheck-android-debug-9ccda56.apk · 160 MB · SHA-256 documentado en PROJECT_MASTER_LOG.md
+
+# Instalar en un dispositivo conectado
+adb install -r build/app/outputs/apk/debug/app-debug.apk
 ```
 
 ---
 
+## Estado de auditoría — 2026-08-14
+
+- [x] Proyecto local comparado con el repositorio remoto público.
+- [x] Arquitectura, dependencias y plataformas inspeccionadas.
+- [x] Requisitos OAuth documentados sin almacenar secretos.
+- [x] Inventario seguro de credenciales creado.
+- [x] Registro de ingeniería y riesgos creado.
+- [x] Requisitos de publicación y estrategia de tamaño documentados.
+- [x] Roadmap de lanzamiento hasta noviembre de 2026 creado.
+- [x] Skill compuesta `motocheck-engineering` creada y validada.
+- [x] Marca MotoCheck confirmada; no se renombrará en esta etapa.
+- [ ] Revocar token de GitHub expuesto en material compartido.
+- [x] Cliente OAuth Web validado; Android e iOS continúan pendientes de configuración nativa.
+- [x] Toolchain Flutter 3.47/Dart 3.13, Android SDK, NDK, CMake y JDK 17 verificados en sandbox; macOS/Xcode siguen pendientes.
+- [x] APK Android debug compilado, alineado y firmado para prueba física; falta validación en dispositivo.
+- [x] `flutter analyze`, `flutter test` y build Web release ejecutados sobre el checkout actual.
+- [x] Migraciones Drift v8–v11 son aditivas; faltan snapshots históricos v7/v8/v9.
+- [ ] Configurar firma release, Play App Signing, Apple Developer y CI/CD.
+
+## Bloqueadores actuales
+
+- [ ] Revocar el token de GitHub expuesto en material compartido.
+- [ ] Registrar y restringir huellas OAuth para Android; configurar cliente y URL scheme iOS.
+- [ ] Validar build release Android firmado/AAB e iOS/TestFlight; iOS requiere macOS/Xcode.
+- [ ] Crear keystore release y completar Play App Signing.
+- [ ] Publicar política de privacidad y definir dominio/correo corporativo.
+
 ## Pendientes / Ideas futuras
 
-- [ ] Subir a repositorio remoto (GitHub)
-- [ ] Configurar Google Cloud Console para release (SHA-1 de keystore)
-- [ ] Build release (APK firmado o bundle para Play Store)
+- [ ] Configurar Google Cloud Console para Android, iOS y Web
+- [ ] Validar conexión opcional de Google Drive y respaldo/restauración en todas las plataformas
+- [ ] Build release firmado (AAB, IPA/TestFlight y Web)
 - [ ] Notificaciones push para alertas de mantenimiento
 - [ ] Widget de pantalla de inicio (km restantes refacción crítica)
 - [ ] Soporte multi-idioma (ES / EN)
 - [ ] Exportar historial a PDF o CSV
 - [ ] Foto de la moto en el perfil
 - [ ] Registro de seguros y documentos (tenencia, verificación)
+- [ ] Implementar épicas posteriores solo según gates de `docs/FUNCTIONS_ROADMAP_2026-08-16.md`
 
 ---
 

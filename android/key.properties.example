@@ -1,0 +1,6 @@
+# Copiar como android/key.properties solo en el equipo o CI protegido.
+# Este archivo de ejemplo no contiene valores reales.
+storePassword=REPLACE_WITH_SECURE_VALUE
+keyPassword=REPLACE_WITH_SECURE_VALUE
+keyAlias=motocheck
+storeFile=/absolute/path/to/motocheck-upload-keystore.jks

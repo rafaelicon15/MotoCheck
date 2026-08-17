@@ -80,13 +80,18 @@ class DriveBackupService {
           uploadMedia: media,
         );
       }
-      await db.setSetting(lastBackupSettingKey, DateTime.now().toIso8601String());
+      await db.setSetting(
+        lastBackupSettingKey,
+        DateTime.now().toIso8601String(),
+      );
     } finally {
       client.close();
     }
   }
 
   static Future<void> backupIfSignedIn(AppDatabase db) async {
+    if (!isGoogleAuthConfigured) return;
+
     final account = googleSignInInstance.currentUser;
     if (account == null) return;
 
@@ -110,10 +115,12 @@ class DriveBackupService {
       final fileId = await _existingFileId(api);
       if (fileId == null) return false;
 
-      final media = await api.files.get(
-        fileId,
-        downloadOptions: drive.DownloadOptions.fullMedia,
-      ) as drive.Media;
+      final media =
+          await api.files.get(
+                fileId,
+                downloadOptions: drive.DownloadOptions.fullMedia,
+              )
+              as drive.Media;
 
       final chunks = <int>[];
       await for (final chunk in media.stream) {

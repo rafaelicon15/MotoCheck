@@ -817,6 +817,17 @@ class $MaintenanceRecordsTable extends MaintenanceRecords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _calendarEventIdMeta = const VerificationMeta(
+    'calendarEventId',
+  );
+  @override
+  late final GeneratedColumn<String> calendarEventId = GeneratedColumn<String>(
+    'calendar_event_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -833,6 +844,7 @@ class $MaintenanceRecordsTable extends MaintenanceRecords
     oilType,
     oilViscosity,
     maintenanceItems,
+    calendarEventId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -950,6 +962,15 @@ class $MaintenanceRecordsTable extends MaintenanceRecords
         ),
       );
     }
+    if (data.containsKey('calendar_event_id')) {
+      context.handle(
+        _calendarEventIdMeta,
+        calendarEventId.isAcceptableOrUnknown(
+          data['calendar_event_id']!,
+          _calendarEventIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1015,6 +1036,10 @@ class $MaintenanceRecordsTable extends MaintenanceRecords
         DriftSqlType.string,
         data['${effectivePrefix}maintenance_items'],
       ),
+      calendarEventId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}calendar_event_id'],
+      ),
     );
   }
 
@@ -1040,6 +1065,7 @@ class MaintenanceRecord extends DataClass
   final String? oilType;
   final String? oilViscosity;
   final String? maintenanceItems;
+  final String? calendarEventId;
   const MaintenanceRecord({
     required this.id,
     this.motoId,
@@ -1055,6 +1081,7 @@ class MaintenanceRecord extends DataClass
     this.oilType,
     this.oilViscosity,
     this.maintenanceItems,
+    this.calendarEventId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1091,6 +1118,9 @@ class MaintenanceRecord extends DataClass
     if (!nullToAbsent || maintenanceItems != null) {
       map['maintenance_items'] = Variable<String>(maintenanceItems);
     }
+    if (!nullToAbsent || calendarEventId != null) {
+      map['calendar_event_id'] = Variable<String>(calendarEventId);
+    }
     return map;
   }
 
@@ -1126,6 +1156,9 @@ class MaintenanceRecord extends DataClass
       maintenanceItems: maintenanceItems == null && nullToAbsent
           ? const Value.absent()
           : Value(maintenanceItems),
+      calendarEventId: calendarEventId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(calendarEventId),
     );
   }
 
@@ -1149,6 +1182,7 @@ class MaintenanceRecord extends DataClass
       oilType: serializer.fromJson<String?>(json['oilType']),
       oilViscosity: serializer.fromJson<String?>(json['oilViscosity']),
       maintenanceItems: serializer.fromJson<String?>(json['maintenanceItems']),
+      calendarEventId: serializer.fromJson<String?>(json['calendarEventId']),
     );
   }
   @override
@@ -1169,6 +1203,7 @@ class MaintenanceRecord extends DataClass
       'oilType': serializer.toJson<String?>(oilType),
       'oilViscosity': serializer.toJson<String?>(oilViscosity),
       'maintenanceItems': serializer.toJson<String?>(maintenanceItems),
+      'calendarEventId': serializer.toJson<String?>(calendarEventId),
     };
   }
 
@@ -1187,6 +1222,7 @@ class MaintenanceRecord extends DataClass
     Value<String?> oilType = const Value.absent(),
     Value<String?> oilViscosity = const Value.absent(),
     Value<String?> maintenanceItems = const Value.absent(),
+    Value<String?> calendarEventId = const Value.absent(),
   }) => MaintenanceRecord(
     id: id ?? this.id,
     motoId: motoId.present ? motoId.value : this.motoId,
@@ -1208,6 +1244,9 @@ class MaintenanceRecord extends DataClass
     maintenanceItems: maintenanceItems.present
         ? maintenanceItems.value
         : this.maintenanceItems,
+    calendarEventId: calendarEventId.present
+        ? calendarEventId.value
+        : this.calendarEventId,
   );
   MaintenanceRecord copyWithCompanion(MaintenanceRecordsCompanion data) {
     return MaintenanceRecord(
@@ -1237,6 +1276,9 @@ class MaintenanceRecord extends DataClass
       maintenanceItems: data.maintenanceItems.present
           ? data.maintenanceItems.value
           : this.maintenanceItems,
+      calendarEventId: data.calendarEventId.present
+          ? data.calendarEventId.value
+          : this.calendarEventId,
     );
   }
 
@@ -1256,7 +1298,8 @@ class MaintenanceRecord extends DataClass
           ..write('notes: $notes, ')
           ..write('oilType: $oilType, ')
           ..write('oilViscosity: $oilViscosity, ')
-          ..write('maintenanceItems: $maintenanceItems')
+          ..write('maintenanceItems: $maintenanceItems, ')
+          ..write('calendarEventId: $calendarEventId')
           ..write(')'))
         .toString();
   }
@@ -1277,6 +1320,7 @@ class MaintenanceRecord extends DataClass
     oilType,
     oilViscosity,
     maintenanceItems,
+    calendarEventId,
   );
   @override
   bool operator ==(Object other) =>
@@ -1295,7 +1339,8 @@ class MaintenanceRecord extends DataClass
           other.notes == this.notes &&
           other.oilType == this.oilType &&
           other.oilViscosity == this.oilViscosity &&
-          other.maintenanceItems == this.maintenanceItems);
+          other.maintenanceItems == this.maintenanceItems &&
+          other.calendarEventId == this.calendarEventId);
 }
 
 class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
@@ -1313,6 +1358,7 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
   final Value<String?> oilType;
   final Value<String?> oilViscosity;
   final Value<String?> maintenanceItems;
+  final Value<String?> calendarEventId;
   const MaintenanceRecordsCompanion({
     this.id = const Value.absent(),
     this.motoId = const Value.absent(),
@@ -1328,6 +1374,7 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
     this.oilType = const Value.absent(),
     this.oilViscosity = const Value.absent(),
     this.maintenanceItems = const Value.absent(),
+    this.calendarEventId = const Value.absent(),
   });
   MaintenanceRecordsCompanion.insert({
     this.id = const Value.absent(),
@@ -1344,6 +1391,7 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
     this.oilType = const Value.absent(),
     this.oilViscosity = const Value.absent(),
     this.maintenanceItems = const Value.absent(),
+    this.calendarEventId = const Value.absent(),
   }) : date = Value(date),
        odometerKm = Value(odometerKm),
        type = Value(type),
@@ -1363,6 +1411,7 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
     Expression<String>? oilType,
     Expression<String>? oilViscosity,
     Expression<String>? maintenanceItems,
+    Expression<String>? calendarEventId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1379,6 +1428,7 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
       if (oilType != null) 'oil_type': oilType,
       if (oilViscosity != null) 'oil_viscosity': oilViscosity,
       if (maintenanceItems != null) 'maintenance_items': maintenanceItems,
+      if (calendarEventId != null) 'calendar_event_id': calendarEventId,
     });
   }
 
@@ -1397,6 +1447,7 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
     Value<String?>? oilType,
     Value<String?>? oilViscosity,
     Value<String?>? maintenanceItems,
+    Value<String?>? calendarEventId,
   }) {
     return MaintenanceRecordsCompanion(
       id: id ?? this.id,
@@ -1413,6 +1464,7 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
       oilType: oilType ?? this.oilType,
       oilViscosity: oilViscosity ?? this.oilViscosity,
       maintenanceItems: maintenanceItems ?? this.maintenanceItems,
+      calendarEventId: calendarEventId ?? this.calendarEventId,
     );
   }
 
@@ -1461,6 +1513,9 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
     if (maintenanceItems.present) {
       map['maintenance_items'] = Variable<String>(maintenanceItems.value);
     }
+    if (calendarEventId.present) {
+      map['calendar_event_id'] = Variable<String>(calendarEventId.value);
+    }
     return map;
   }
 
@@ -1480,7 +1535,8 @@ class MaintenanceRecordsCompanion extends UpdateCompanion<MaintenanceRecord> {
           ..write('notes: $notes, ')
           ..write('oilType: $oilType, ')
           ..write('oilViscosity: $oilViscosity, ')
-          ..write('maintenanceItems: $maintenanceItems')
+          ..write('maintenanceItems: $maintenanceItems, ')
+          ..write('calendarEventId: $calendarEventId')
           ..write(')'))
         .toString();
   }
@@ -4411,6 +4467,7 @@ typedef $$MaintenanceRecordsTableCreateCompanionBuilder =
       Value<String?> oilType,
       Value<String?> oilViscosity,
       Value<String?> maintenanceItems,
+      Value<String?> calendarEventId,
     });
 typedef $$MaintenanceRecordsTableUpdateCompanionBuilder =
     MaintenanceRecordsCompanion Function({
@@ -4428,6 +4485,7 @@ typedef $$MaintenanceRecordsTableUpdateCompanionBuilder =
       Value<String?> oilType,
       Value<String?> oilViscosity,
       Value<String?> maintenanceItems,
+      Value<String?> calendarEventId,
     });
 
 class $$MaintenanceRecordsTableFilterComposer
@@ -4506,6 +4564,11 @@ class $$MaintenanceRecordsTableFilterComposer
 
   ColumnFilters<String> get maintenanceItems => $composableBuilder(
     column: $table.maintenanceItems,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get calendarEventId => $composableBuilder(
+    column: $table.calendarEventId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4588,6 +4651,11 @@ class $$MaintenanceRecordsTableOrderingComposer
     column: $table.maintenanceItems,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get calendarEventId => $composableBuilder(
+    column: $table.calendarEventId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MaintenanceRecordsTableAnnotationComposer
@@ -4652,6 +4720,11 @@ class $$MaintenanceRecordsTableAnnotationComposer
     column: $table.maintenanceItems,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get calendarEventId => $composableBuilder(
+    column: $table.calendarEventId,
+    builder: (column) => column,
+  );
 }
 
 class $$MaintenanceRecordsTableTableManager
@@ -4708,6 +4781,7 @@ class $$MaintenanceRecordsTableTableManager
                 Value<String?> oilType = const Value.absent(),
                 Value<String?> oilViscosity = const Value.absent(),
                 Value<String?> maintenanceItems = const Value.absent(),
+                Value<String?> calendarEventId = const Value.absent(),
               }) => MaintenanceRecordsCompanion(
                 id: id,
                 motoId: motoId,
@@ -4723,6 +4797,7 @@ class $$MaintenanceRecordsTableTableManager
                 oilType: oilType,
                 oilViscosity: oilViscosity,
                 maintenanceItems: maintenanceItems,
+                calendarEventId: calendarEventId,
               ),
           createCompanionCallback:
               ({
@@ -4740,6 +4815,7 @@ class $$MaintenanceRecordsTableTableManager
                 Value<String?> oilType = const Value.absent(),
                 Value<String?> oilViscosity = const Value.absent(),
                 Value<String?> maintenanceItems = const Value.absent(),
+                Value<String?> calendarEventId = const Value.absent(),
               }) => MaintenanceRecordsCompanion.insert(
                 id: id,
                 motoId: motoId,
@@ -4755,6 +4831,7 @@ class $$MaintenanceRecordsTableTableManager
                 oilType: oilType,
                 oilViscosity: oilViscosity,
                 maintenanceItems: maintenanceItems,
+                calendarEventId: calendarEventId,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

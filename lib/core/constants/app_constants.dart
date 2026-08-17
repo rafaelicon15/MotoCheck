@@ -43,10 +43,10 @@ class AppConstants {
 
   // Tipos de llanta
   static const List<Map<String, String>> tireTypes = [
-    {'value': 'standard',  'label': '🛞 Estándar'},
-    {'value': 'sealant',   'label': '💧 Antipinchazo / Slime'},
-    {'value': 'tube',      'label': '🔵 Con cámara / Tripa'},
-    {'value': 'tubeless',  'label': '⭕ Sin cámara (tubeless)'},
+    {'value': 'standard', 'label': '🛞 Estándar'},
+    {'value': 'sealant', 'label': '💧 Antipinchazo / Slime'},
+    {'value': 'tube', 'label': '🔵 Con cámara / Tripa'},
+    {'value': 'tubeless', 'label': '⭕ Sin cámara (tubeless)'},
   ];
 
   // Tipos de rin — determina qué tipos de llanta son compatibles
@@ -58,21 +58,24 @@ class AppConstants {
       'value': 'alloy',
       'label': 'Paleta / Aleación',
       'emoji': '⭕',
-      'desc': 'Rin fundido de aluminio en una pieza. Compatible con tubeless, antipinchazo y cámara.',
+      'desc':
+          'Rin fundido de aluminio en una pieza. Compatible con tubeless, antipinchazo y cámara.',
       'compatibleTireTypes': ['standard', 'tubeless', 'sealant', 'tube'],
     },
     {
       'value': 'spoke',
       'label': 'Rayos estándar',
       'emoji': '🔩',
-      'desc': 'Los nipples crean agujeros en el aro, imposible sellar tubeless. Solo admite cámara (tripa).',
+      'desc':
+          'Los nipples crean agujeros en el aro, imposible sellar tubeless. Solo admite cámara (tripa).',
       'compatibleTireTypes': ['tube'],
     },
     {
       'value': 'spoke_double_wall',
       'label': 'Rayos doble pestaña',
       'emoji': '🛞',
-      'desc': 'Pared interior sella los agujeros de los rayos. Compatible con tubeless y antipinchazo.',
+      'desc':
+          'Pared interior sella los agujeros de los rayos. Compatible con tubeless y antipinchazo.',
       'compatibleTireTypes': ['standard', 'tubeless', 'sealant', 'tube'],
     },
   ];
@@ -86,7 +89,10 @@ class AppConstants {
   }
 
   // Sistema de combustible
-  static const List<String> fuelSystems = ['Carburada', 'Inyección electrónica'];
+  static const List<String> fuelSystems = [
+    'Carburada',
+    'Inyección electrónica',
+  ];
 
   // Tipos de transmisión
   static const List<Map<String, String>> transmissionTypes = [
@@ -100,13 +106,15 @@ class AppConstants {
       'value': 'shaft',
       'label': 'Cardan',
       'emoji': '⚙️',
-      'desc': 'Eje cardan sellado. Sin cadena ni piñones. Aceite diferencial cada 6,000 km.',
+      'desc':
+          'Eje cardan sellado. Sin cadena ni piñones. Aceite diferencial cada 6,000 km.',
     },
     {
       'value': 'belt',
       'label': 'Correa / CVT',
       'emoji': '🔄',
-      'desc': 'Automática con variador. Scooters y motos CVT. Sin palanca de clutch.',
+      'desc':
+          'Automática con variador. Scooters y motos CVT. Sin palanca de clutch.',
     },
   ];
 
@@ -117,34 +125,37 @@ class AppConstants {
       'label': 'Estándar (sin retén)',
       'lubKm': 500,
       'cleanKm': 600,
-      'desc': 'Sin sellos entre eslabones. Requiere lubricación frecuente (~500 km). Se seca y desgasta rápido sin mantenimiento constante.',
+      'desc':
+          'Sin sellos entre eslabones. Requiere lubricación frecuente (~500 km). Se seca y desgasta rápido sin mantenimiento constante.',
     },
     {
       'value': 'o_ring',
       'label': 'O-Ring',
       'lubKm': 800,
       'cleanKm': 1000,
-      'desc': 'Retenes circulares de goma entre eslabones. Retiene la grasa original más tiempo. Lubricar cada ~800 km.',
+      'desc':
+          'Retenes circulares de goma entre eslabones. Retiene la grasa original más tiempo. Lubricar cada ~800 km.',
     },
     {
       'value': 'x_ring',
       'label': 'X-Ring',
       'lubKm': 1000,
       'cleanKm': 1200,
-      'desc': 'Retenes en forma de X (4 puntos de contacto). Mejor sellado que O-ring, menor fricción. Lubricar cada ~1,000 km.',
+      'desc':
+          'Retenes en forma de X (4 puntos de contacto). Mejor sellado que O-ring, menor fricción. Lubricar cada ~1,000 km.',
     },
     {
       'value': 'w_ring',
       'label': 'W-Ring',
       'lubKm': 1200,
       'cleanKm': 1500,
-      'desc': 'Variante premium del X-ring. Mayor durabilidad y sellado. Lubricar cada ~1,200 km.',
+      'desc':
+          'Variante premium del X-ring. Mayor durabilidad y sellado. Lubricar cada ~1,200 km.',
     },
   ];
 
-  static Map<String, dynamic> chainTypeByValue(String value) =>
-      chainTypes.firstWhere((t) => t['value'] == value,
-          orElse: () => chainTypes.first);
+  static Map<String, dynamic> chainTypeByValue(String value) => chainTypes
+      .firstWhere((t) => t['value'] == value, orElse: () => chainTypes.first);
 
   // Categorías de mantenimiento base (multi-select)
   // 'Calibración de válvulas' → solo 4T (filtrar en UI)
@@ -178,10 +189,7 @@ class AppConstants {
       'Bomba de aceite',
       'Bomba de agua / refrigerante',
     ],
-    'Filtros': [
-      'Filtro de aire',
-      'Filtro de gasolina',
-    ],
+    'Filtros': ['Filtro de aire', 'Filtro de gasolina'],
     'Lubricación': [
       'Lubricación de cadena',
       'Limpieza de cadena',
@@ -218,11 +226,7 @@ class AppConstants {
       'Rodamiento de dirección',
       'Rodamiento tijera / basculante',
     ],
-    'Frenos': [
-      'Pastillas de freno',
-      'Bandas de freno',
-      'Líquido de frenos',
-    ],
+    'Frenos': ['Pastillas de freno', 'Bandas de freno', 'Líquido de frenos'],
     'Eléctrico / Encendido': [
       'Magneto / estator',
       'CDI / ECU',
@@ -284,92 +288,265 @@ class AppConstants {
 
   // Refacciones base 4T (sin partes de transmisión — se agregan según tipo)
   static const List<Map<String, dynamic>> defaultParts4T = [
-    {'name': 'Aceite del motor',    'intervalKm': 3000,  'category': 'oil'},
-    {'name': 'Filtro de aceite',    'intervalKm': 6000,  'category': 'oil_filter', 'filterType': 'replaceable'},
-    {'name': 'Bujías',              'intervalKm': 8000,  'category': 'general'},
-    {'name': 'Filtro de aire',      'intervalKm': 10000, 'category': 'general'},
-    {'name': 'Filtro de gasolina',  'intervalKm': 12000, 'category': 'fuel_filter'},
-    {'name': 'Árbol de levas',      'intervalKm': 50000, 'category': 'engine_timing'},
-    {'name': 'Cadena de tiempo',    'intervalKm': 40000, 'category': 'engine_timing'},
-    {'name': 'Tensor de cadena de tiempo', 'intervalKm': 40000, 'category': 'engine_timing'},
-    {'name': 'Guías / patines de cadena de tiempo', 'intervalKm': 40000, 'category': 'engine_timing'},
-    {'name': 'Balancines / seguidores', 'intervalKm': 40000, 'category': 'valvetrain'},
-    {'name': 'Pastillas / shims de válvula', 'intervalKm': 30000, 'category': 'valvetrain'},
-    {'name': 'Válvulas de admisión', 'intervalKm': 50000, 'category': 'valvetrain'},
-    {'name': 'Válvulas de escape',  'intervalKm': 50000, 'category': 'valvetrain'},
-    {'name': 'Retenes de válvula',  'intervalKm': 40000, 'category': 'valvetrain'},
-    {'name': 'Empaque tapa de válvulas', 'intervalKm': 30000, 'category': 'gasket'},
-    {'name': 'Pistón',              'intervalKm': 60000, 'category': 'engine_internal'},
-    {'name': 'Anillos / segmentos', 'intervalKm': 50000, 'category': 'engine_internal'},
-    {'name': 'Cilindro / camisa',   'intervalKm': 60000, 'category': 'engine_internal'},
-    {'name': 'Biela',               'intervalKm': 60000, 'category': 'engine_internal'},
-    {'name': 'Cigüeñal',            'intervalKm': 70000, 'category': 'engine_internal'},
-    {'name': 'Retenes de cigüeñal', 'intervalKm': 50000, 'category': 'engine_internal'},
-    {'name': 'Bomba de aceite',     'intervalKm': 50000, 'category': 'engine_internal'},
-    {'name': 'Bomba de agua / refrigerante', 'intervalKm': 40000, 'category': 'engine_internal'},
-    {'name': 'Freno delantero',     'intervalKm': 15000, 'category': 'brake_front', 'brakeType': 'pads'},
-    {'name': 'Freno trasero',       'intervalKm': 12000, 'category': 'brake_rear',  'brakeType': 'pads'},
-    {'name': 'Líquido de frenos',   'intervalKm': 20000, 'category': 'general'},
-    {'name': 'Llanta delantera',    'intervalKm': 25000, 'category': 'tire'},
-    {'name': 'Llanta trasera',      'intervalKm': 20000, 'category': 'tire'},
-    {'name': 'Retenes de barras',    'intervalKm': 20000, 'category': 'fork'},
-    {'name': 'Aceite de barras',     'intervalKm': 15000, 'category': 'fork'},
-    {'name': 'Rodamientos rueda delantera', 'intervalKm': 25000, 'category': 'bearing'},
-    {'name': 'Rodamientos rueda trasera',   'intervalKm': 25000, 'category': 'bearing'},
-    {'name': 'Discos de clutch / crochet',  'intervalKm': 30000, 'category': 'clutch'},
-    {'name': 'Separadores de clutch',       'intervalKm': 30000, 'category': 'clutch'},
-    {'name': 'Estrella / plato prensador',  'intervalKm': 30000, 'category': 'clutch'},
-    {'name': 'Magneto / estator',           'intervalKm': 40000, 'category': 'electrical'},
-    {'name': 'CDI / ECU',                   'intervalKm': 40000, 'category': 'electrical'},
-    {'name': 'Regulador / rectificador',    'intervalKm': 30000, 'category': 'electrical'},
-    {'name': 'Batería',             'intervalKm': 30000, 'category': 'general'},
+    {'name': 'Aceite del motor', 'intervalKm': 3000, 'category': 'oil'},
+    {
+      'name': 'Filtro de aceite',
+      'intervalKm': 6000,
+      'category': 'oil_filter',
+      'filterType': 'replaceable',
+    },
+    {'name': 'Bujías', 'intervalKm': 8000, 'category': 'general'},
+    {'name': 'Filtro de aire', 'intervalKm': 10000, 'category': 'general'},
+    {
+      'name': 'Filtro de gasolina',
+      'intervalKm': 12000,
+      'category': 'fuel_filter',
+    },
+    {
+      'name': 'Árbol de levas',
+      'intervalKm': 50000,
+      'category': 'engine_timing',
+    },
+    {
+      'name': 'Cadena de tiempo',
+      'intervalKm': 40000,
+      'category': 'engine_timing',
+    },
+    {
+      'name': 'Tensor de cadena de tiempo',
+      'intervalKm': 40000,
+      'category': 'engine_timing',
+    },
+    {
+      'name': 'Guías / patines de cadena de tiempo',
+      'intervalKm': 40000,
+      'category': 'engine_timing',
+    },
+    {
+      'name': 'Balancines / seguidores',
+      'intervalKm': 40000,
+      'category': 'valvetrain',
+    },
+    {
+      'name': 'Pastillas / shims de válvula',
+      'intervalKm': 30000,
+      'category': 'valvetrain',
+    },
+    {
+      'name': 'Válvulas de admisión',
+      'intervalKm': 50000,
+      'category': 'valvetrain',
+    },
+    {
+      'name': 'Válvulas de escape',
+      'intervalKm': 50000,
+      'category': 'valvetrain',
+    },
+    {
+      'name': 'Retenes de válvula',
+      'intervalKm': 40000,
+      'category': 'valvetrain',
+    },
+    {
+      'name': 'Empaque tapa de válvulas',
+      'intervalKm': 30000,
+      'category': 'gasket',
+    },
+    {'name': 'Pistón', 'intervalKm': 60000, 'category': 'engine_internal'},
+    {
+      'name': 'Anillos / segmentos',
+      'intervalKm': 50000,
+      'category': 'engine_internal',
+    },
+    {
+      'name': 'Cilindro / camisa',
+      'intervalKm': 60000,
+      'category': 'engine_internal',
+    },
+    {'name': 'Biela', 'intervalKm': 60000, 'category': 'engine_internal'},
+    {'name': 'Cigüeñal', 'intervalKm': 70000, 'category': 'engine_internal'},
+    {
+      'name': 'Retenes de cigüeñal',
+      'intervalKm': 50000,
+      'category': 'engine_internal',
+    },
+    {
+      'name': 'Bomba de aceite',
+      'intervalKm': 50000,
+      'category': 'engine_internal',
+    },
+    {
+      'name': 'Bomba de agua / refrigerante',
+      'intervalKm': 40000,
+      'category': 'engine_internal',
+    },
+    {
+      'name': 'Freno delantero',
+      'intervalKm': 15000,
+      'category': 'brake_front',
+      'brakeType': 'pads',
+    },
+    {
+      'name': 'Freno trasero',
+      'intervalKm': 12000,
+      'category': 'brake_rear',
+      'brakeType': 'pads',
+    },
+    {'name': 'Líquido de frenos', 'intervalKm': 20000, 'category': 'general'},
+    {'name': 'Llanta delantera', 'intervalKm': 25000, 'category': 'tire'},
+    {'name': 'Llanta trasera', 'intervalKm': 20000, 'category': 'tire'},
+    {'name': 'Retenes de barras', 'intervalKm': 20000, 'category': 'fork'},
+    {'name': 'Aceite de barras', 'intervalKm': 15000, 'category': 'fork'},
+    {
+      'name': 'Rodamientos rueda delantera',
+      'intervalKm': 25000,
+      'category': 'bearing',
+    },
+    {
+      'name': 'Rodamientos rueda trasera',
+      'intervalKm': 25000,
+      'category': 'bearing',
+    },
+    {
+      'name': 'Discos de clutch / crochet',
+      'intervalKm': 30000,
+      'category': 'clutch',
+    },
+    {
+      'name': 'Separadores de clutch',
+      'intervalKm': 30000,
+      'category': 'clutch',
+    },
+    {
+      'name': 'Estrella / plato prensador',
+      'intervalKm': 30000,
+      'category': 'clutch',
+    },
+    {
+      'name': 'Magneto / estator',
+      'intervalKm': 40000,
+      'category': 'electrical',
+    },
+    {'name': 'CDI / ECU', 'intervalKm': 40000, 'category': 'electrical'},
+    {
+      'name': 'Regulador / rectificador',
+      'intervalKm': 30000,
+      'category': 'electrical',
+    },
+    {'name': 'Batería', 'intervalKm': 30000, 'category': 'general'},
   ];
 
   // Refacciones base 2T (sin partes de transmisión)
   static const List<Map<String, dynamic>> defaultParts2T = [
-    {'name': 'Bujías',              'intervalKm': 4000,  'category': 'general'},
-    {'name': 'Filtro de aire',      'intervalKm': 8000,  'category': 'general'},
-    {'name': 'Filtro de gasolina',  'intervalKm': 12000, 'category': 'fuel_filter'},
-    {'name': 'Pistón',              'intervalKm': 25000, 'category': 'engine_internal'},
-    {'name': 'Anillos / segmentos', 'intervalKm': 18000, 'category': 'engine_internal'},
-    {'name': 'Cilindro / camisa',   'intervalKm': 30000, 'category': 'engine_internal'},
-    {'name': 'Biela',               'intervalKm': 35000, 'category': 'engine_internal'},
-    {'name': 'Cigüeñal',            'intervalKm': 40000, 'category': 'engine_internal'},
-    {'name': 'Retenes de cigüeñal', 'intervalKm': 25000, 'category': 'engine_internal'},
-    {'name': 'Freno delantero',     'intervalKm': 15000, 'category': 'brake_front', 'brakeType': 'pads'},
-    {'name': 'Freno trasero',       'intervalKm': 12000, 'category': 'brake_rear',  'brakeType': 'pads'},
-    {'name': 'Líquido de frenos',   'intervalKm': 20000, 'category': 'general'},
-    {'name': 'Llanta delantera',    'intervalKm': 25000, 'category': 'tire'},
-    {'name': 'Llanta trasera',      'intervalKm': 20000, 'category': 'tire'},
-    {'name': 'Retenes de barras',    'intervalKm': 20000, 'category': 'fork'},
-    {'name': 'Aceite de barras',     'intervalKm': 15000, 'category': 'fork'},
-    {'name': 'Rodamientos rueda delantera', 'intervalKm': 25000, 'category': 'bearing'},
-    {'name': 'Rodamientos rueda trasera',   'intervalKm': 25000, 'category': 'bearing'},
-    {'name': 'Discos de clutch / crochet',  'intervalKm': 30000, 'category': 'clutch'},
-    {'name': 'Separadores de clutch',       'intervalKm': 30000, 'category': 'clutch'},
-    {'name': 'Estrella / plato prensador',  'intervalKm': 30000, 'category': 'clutch'},
-    {'name': 'Magneto / estator',           'intervalKm': 40000, 'category': 'electrical'},
-    {'name': 'CDI / ECU',                   'intervalKm': 40000, 'category': 'electrical'},
-    {'name': 'Regulador / rectificador',    'intervalKm': 30000, 'category': 'electrical'},
-    {'name': 'Batería',             'intervalKm': 30000, 'category': 'general'},
+    {'name': 'Bujías', 'intervalKm': 4000, 'category': 'general'},
+    {'name': 'Filtro de aire', 'intervalKm': 8000, 'category': 'general'},
+    {
+      'name': 'Filtro de gasolina',
+      'intervalKm': 12000,
+      'category': 'fuel_filter',
+    },
+    {'name': 'Pistón', 'intervalKm': 25000, 'category': 'engine_internal'},
+    {
+      'name': 'Anillos / segmentos',
+      'intervalKm': 18000,
+      'category': 'engine_internal',
+    },
+    {
+      'name': 'Cilindro / camisa',
+      'intervalKm': 30000,
+      'category': 'engine_internal',
+    },
+    {'name': 'Biela', 'intervalKm': 35000, 'category': 'engine_internal'},
+    {'name': 'Cigüeñal', 'intervalKm': 40000, 'category': 'engine_internal'},
+    {
+      'name': 'Retenes de cigüeñal',
+      'intervalKm': 25000,
+      'category': 'engine_internal',
+    },
+    {
+      'name': 'Freno delantero',
+      'intervalKm': 15000,
+      'category': 'brake_front',
+      'brakeType': 'pads',
+    },
+    {
+      'name': 'Freno trasero',
+      'intervalKm': 12000,
+      'category': 'brake_rear',
+      'brakeType': 'pads',
+    },
+    {'name': 'Líquido de frenos', 'intervalKm': 20000, 'category': 'general'},
+    {'name': 'Llanta delantera', 'intervalKm': 25000, 'category': 'tire'},
+    {'name': 'Llanta trasera', 'intervalKm': 20000, 'category': 'tire'},
+    {'name': 'Retenes de barras', 'intervalKm': 20000, 'category': 'fork'},
+    {'name': 'Aceite de barras', 'intervalKm': 15000, 'category': 'fork'},
+    {
+      'name': 'Rodamientos rueda delantera',
+      'intervalKm': 25000,
+      'category': 'bearing',
+    },
+    {
+      'name': 'Rodamientos rueda trasera',
+      'intervalKm': 25000,
+      'category': 'bearing',
+    },
+    {
+      'name': 'Discos de clutch / crochet',
+      'intervalKm': 30000,
+      'category': 'clutch',
+    },
+    {
+      'name': 'Separadores de clutch',
+      'intervalKm': 30000,
+      'category': 'clutch',
+    },
+    {
+      'name': 'Estrella / plato prensador',
+      'intervalKm': 30000,
+      'category': 'clutch',
+    },
+    {
+      'name': 'Magneto / estator',
+      'intervalKm': 40000,
+      'category': 'electrical',
+    },
+    {'name': 'CDI / ECU', 'intervalKm': 40000, 'category': 'electrical'},
+    {
+      'name': 'Regulador / rectificador',
+      'intervalKm': 30000,
+      'category': 'electrical',
+    },
+    {'name': 'Batería', 'intervalKm': 30000, 'category': 'general'},
   ];
 
   // Partes por tipo de TRANSMISIÓN
   static const List<Map<String, dynamic>> chainDefaultParts = [
-    {'name': 'Cadena de transmisión', 'intervalKm': 5000,  'category': 'chain'},
-    {'name': 'Piñón delantero',       'intervalKm': 10000, 'category': 'sprocket'},
-    {'name': 'Corona trasera',        'intervalKm': 10000, 'category': 'sprocket'},
-    {'name': 'Gomas porta corona',    'intervalKm': 15000, 'category': 'general'},
+    {'name': 'Cadena de transmisión', 'intervalKm': 5000, 'category': 'chain'},
+    {'name': 'Piñón delantero', 'intervalKm': 10000, 'category': 'sprocket'},
+    {'name': 'Corona trasera', 'intervalKm': 10000, 'category': 'sprocket'},
+    {'name': 'Gomas porta corona', 'intervalKm': 15000, 'category': 'general'},
   ];
 
   static const List<Map<String, dynamic>> shaftDefaultParts = [
-    {'name': 'Aceite del cardan (SAE 80W-90)', 'intervalKm': 6000, 'category': 'shaft_oil'},
+    {
+      'name': 'Aceite del cardan (SAE 80W-90)',
+      'intervalKm': 6000,
+      'category': 'shaft_oil',
+    },
   ];
 
   static const List<Map<String, dynamic>> beltCvtDefaultParts = [
-    {'name': 'Correa de transmisión CVT', 'intervalKm': 15000, 'category': 'belt'},
-    {'name': 'Rodillos del variador',     'intervalKm': 12000, 'category': 'belt'},
-    {'name': 'Aceite de caja CVT',        'intervalKm': 6000,  'category': 'transmission_oil'},
+    {
+      'name': 'Correa de transmisión CVT',
+      'intervalKm': 15000,
+      'category': 'belt',
+    },
+    {'name': 'Rodillos del variador', 'intervalKm': 12000, 'category': 'belt'},
+    {
+      'name': 'Aceite de caja CVT',
+      'intervalKm': 6000,
+      'category': 'transmission_oil',
+    },
   ];
 
   static List<Map<String, dynamic>> get defaultParts => defaultParts4T;

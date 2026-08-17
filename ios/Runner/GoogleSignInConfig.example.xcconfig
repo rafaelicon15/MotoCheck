@@ -1,0 +1,5 @@
+// Plantilla local para Google Sign-In. No usar directamente en producción.
+// Copiar a un archivo protegido o definir estos valores en CI.
+GOOGLE_IOS_CLIENT_ID = REPLACE_WITH_IOS_CLIENT_ID
+GOOGLE_IOS_REVERSED_CLIENT_ID = REPLACE_WITH_REVERSED_CLIENT_ID
+GOOGLE_WEB_CLIENT_ID = REPLACE_WITH_WEB_CLIENT_ID

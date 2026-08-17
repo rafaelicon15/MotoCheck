@@ -1,27 +1,30 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:motocheck/features/auth/auth_screen.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:motocheck/app.dart';
 
 void main() {
-  testWidgets('shows login screen', (WidgetTester tester) async {
+  testWidgets('opens the local-first main shell without Google login', (
+    WidgetTester tester,
+  ) async {
+    const testScreens = [
+      SizedBox.shrink(),
+      SizedBox.shrink(),
+      SizedBox.shrink(),
+      SizedBox.shrink(),
+      SizedBox.shrink(),
+    ];
+
     await tester.pumpWidget(
       const ProviderScope(
-        child: MaterialApp(home: AuthScreen()),
+        child: MaterialApp(home: MainShell(screens: testScreens)),
       ),
     );
 
-    await tester.pump();
-
-    expect(find.text('MotoCheck'), findsOneWidget);
-    expect(find.text('Continuar con Google'), findsOneWidget);
+    expect(find.text('Inicio'), findsOneWidget);
+    expect(find.text('Servicio'), findsOneWidget);
+    expect(find.text('Combustible'), findsOneWidget);
+    expect(find.text('Refacciones'), findsOneWidget);
+    expect(find.text('Config.'), findsOneWidget);
   });
 }

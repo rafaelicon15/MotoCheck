@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/database/app_database.dart';
 import '../../services/drive_backup_service.dart';
+import '../../services/google_auth_button.dart';
 import '../../services/google_auth_service.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/settings_provider.dart';
@@ -65,11 +67,17 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
 
   Future<void> _signIn() async {
     setState(() => _loading = true);
-    final ok = await ref.read(googleAccountProvider.notifier).signIn();
+    final account = await ref
+        .read(googleAccountProvider.notifier)
+        .ensureDriveAccount(interactive: true);
     if (!mounted) return;
+    final diagnostic = ref.read(googleAccountProvider.notifier).lastError;
     setState(() {
       _loading = false;
-      _status = ok ? null : 'No se pudo conectar con Google';
+      _status = account != null
+          ? null
+          : diagnostic ??
+                'No se pudo conectar con Google. Revisa la consola para más detalles.';
     });
   }
 
@@ -79,8 +87,17 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
   }
 
   Future<void> _backup() async {
-    final account = ref.read(googleAccountProvider).valueOrNull;
-    if (account == null) return;
+    final account = await ref
+        .read(googleAccountProvider.notifier)
+        .ensureDriveAccount(interactive: true);
+    if (!mounted || account == null) {
+      if (mounted) {
+        setState(() {
+          _status = ref.read(googleAccountProvider.notifier).lastError;
+        });
+      }
+      return;
+    }
     setState(() {
       _loading = true;
       _status = 'Respaldando...';
@@ -104,8 +121,17 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
   }
 
   Future<void> _restore() async {
-    final account = ref.read(googleAccountProvider).valueOrNull;
-    if (account == null) return;
+    final account = await ref
+        .read(googleAccountProvider.notifier)
+        .ensureDriveAccount(interactive: true);
+    if (!mounted || account == null) {
+      if (mounted) {
+        setState(() {
+          _status = ref.read(googleAccountProvider.notifier).lastError;
+        });
+      }
+      return;
+    }
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -136,8 +162,10 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
       _status = 'Restaurando...';
     });
     try {
-      final found =
-          await DriveBackupService.restore(db: widget.db, account: account);
+      final found = await DriveBackupService.restore(
+        db: widget.db,
+        account: account,
+      );
       if (mounted) {
         setState(() {
           _loading = false;
@@ -188,22 +216,33 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
   Widget _buildDisconnected() {
     return Column(
       children: [
-        const Icon(Icons.cloud_upload_outlined,
-            size: 40, color: AppTheme.textSecondary),
+        const Icon(
+          Icons.cloud_upload_outlined,
+          size: 40,
+          color: AppTheme.textSecondary,
+        ),
         const SizedBox(height: 12),
         const Text(
-          'Respalda tus datos en tu Google Drive personal.\nSi cambias de celular o reinstales la app, restauras todo con un toque.',
+          'Respalda tus datos en tu Google Drive personal.\nLa app intenta recuperar tu sesión automáticamente y solo pedirá reconexión si Google la requiere.',
           style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         if (_loading)
           const CircularProgressIndicator()
+        else if (googleAuthConfigurationError != null)
+          Text(
+            googleAuthConfigurationError!,
+            style: const TextStyle(color: Colors.amber, fontSize: 12),
+            textAlign: TextAlign.center,
+          )
+        else if (kIsWeb)
+          SizedBox(height: 44, child: googleAuthButton())
         else
           OutlinedButton.icon(
             onPressed: _signIn,
             icon: const Icon(Icons.login),
-            label: const Text('Conectar con Google'),
+            label: const Text('Conectar o recuperar Google'),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: AppTheme.primary),
@@ -212,10 +251,16 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
           ),
         if (_status != null) ...[
           const SizedBox(height: 8),
-          Text(_status!,
-              style: const TextStyle(
-                  color: Colors.redAccent, fontSize: 12),
-              textAlign: TextAlign.center),
+          Text(
+            _status!,
+            style: TextStyle(
+              color: _status!.startsWith('✓')
+                  ? AppTheme.success
+                  : Colors.redAccent,
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ],
     );
@@ -225,33 +270,47 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(children: [
-          CircleAvatar(
-            backgroundColor: AppTheme.primary.withValues(alpha: 0.2),
-            child:
-                const Icon(Icons.person, color: AppTheme.primary, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(
-                account.displayName ?? 'Cuenta Google',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 14),
+        Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.2),
+              child: const Icon(
+                Icons.person,
+                color: AppTheme.primary,
+                size: 20,
               ),
-              Text(
-                account.email,
-                style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    account.displayName ?? 'Cuenta Google',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    account.email,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          ),
-          TextButton(
-            onPressed: _loading ? null : _signOut,
-            child: const Text('Desconectar',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-          ),
-        ]),
+            ),
+            TextButton(
+              onPressed: _loading ? null : _signOut,
+              child: const Text(
+                'Desconectar',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         FutureBuilder<String?>(
           future: ref
@@ -261,49 +320,62 @@ class _DriveBackupCardState extends ConsumerState<_DriveBackupCard> {
             return Text(
               'Último respaldo: ${_formatDate(snap.data)}',
               style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 12),
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+              ),
             );
           },
         ),
         const SizedBox(height: 12),
         if (_loading)
           Center(
-            child: Column(children: [
-              const CircularProgressIndicator(),
-              if (_status != null) ...[
-                const SizedBox(height: 8),
-                Text(_status!,
+            child: Column(
+              children: [
+                const CircularProgressIndicator(),
+                if (_status != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _status!,
                     style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 12)),
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ],
-            ]),
+            ),
           )
         else ...[
-          Row(children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: _backup,
-                icon: const Icon(Icons.cloud_upload, size: 16),
-                label: const Text('Respaldar ahora'),
-                style: FilledButton.styleFrom(
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _backup,
+                  icon: const Icon(Icons.cloud_upload, size: 16),
+                  label: const Text('Respaldar ahora'),
+                  style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _restore,
-                icon: const Icon(Icons.cloud_download, size: 16),
-                label: const Text('Restaurar'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
-            ),
-          ]),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _restore,
+                  icon: const Icon(Icons.cloud_download, size: 16),
+                  label: const Text('Restaurar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
           if (_status != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -347,8 +419,7 @@ class _CurrencySelector extends StatelessWidget {
             onTap: () => onSelect(code),
             borderRadius: BorderRadius.circular(14),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppTheme.primary.withValues(alpha: 0.1)
@@ -358,31 +429,43 @@ class _CurrencySelector extends StatelessWidget {
                     ? Border.all(color: AppTheme.primary.withValues(alpha: 0.4))
                     : null,
               ),
-              child: Row(children: [
-                Text(info['flag']!, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+              child: Row(
+                children: [
+                  Text(info['flag']!, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(info['name']!,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? AppTheme.primary
-                                  : AppTheme.textPrimary,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.normal,
-                            )),
-                        Text('$code · ${info['symbol']}',
-                            style: const TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 12)),
-                      ]),
-                ),
-                if (isSelected)
-                  const Icon(Icons.check_circle,
-                      color: AppTheme.primary, size: 20),
-              ]),
+                        Text(
+                          info['name']!,
+                          style: TextStyle(
+                            color: isSelected
+                                ? AppTheme.primary
+                                : AppTheme.textPrimary,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        Text(
+                          '$code · ${info['symbol']}',
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isSelected)
+                    const Icon(
+                      Icons.check_circle,
+                      color: AppTheme.primary,
+                      size: 20,
+                    ),
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -399,13 +482,15 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(label.toUpperCase(),
-        style: const TextStyle(
-          color: AppTheme.textSecondary,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-        ));
+    return Text(
+      label.toUpperCase(),
+      style: const TextStyle(
+        color: AppTheme.textSecondary,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.2,
+      ),
+    );
   }
 }
 
@@ -417,29 +502,42 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: AppTheme.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.cardBorder)),
-      child: Column(children: [
-        Row(children: [
-          const Icon(Icons.motorcycle, color: AppTheme.primary, size: 28),
-          const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('MotoCheck',
-                style:
-                    TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-            const Text('Versión 1.0.0',
-                style: TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 12)),
-          ]),
-        ]),
-        const SizedBox(height: 12),
-        const Text(
-          'Gestiona el mantenimiento, consumo de combustible y vida útil de refacciones de tu moto.',
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-          textAlign: TextAlign.center,
-        ),
-      ]),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.motorcycle, color: AppTheme.primary, size: 28),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'MotoCheck',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
+                  const Text(
+                    'Versión 1.0.0',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Gestiona el mantenimiento, consumo de combustible y vida útil de refacciones de tu moto.',
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
