@@ -23,5 +23,6 @@ void main() {
 
     expect(find.text('MotoCheck'), findsOneWidget);
     expect(find.text('Continuar con Google'), findsOneWidget);
+    expect(find.text('Usar sin cuenta'), findsOneWidget);
   });
 }

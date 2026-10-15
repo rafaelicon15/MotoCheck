@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/drive_backup_service.dart';
 import '../../shared/providers/database_provider.dart';
+import '../../app.dart' show onboardingDoneKey;
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -64,6 +65,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     if (mounted) setState(() => _loading = false);
     // AuthGate will automatically navigate to MainShell since account is now set
+  }
+
+  Future<void> _continueWithoutAccount() async {
+    await ref.read(databaseProvider).setSetting(onboardingDoneKey, 'true');
+    // AuthGate observa el flag y entra a MainShell.
   }
 
   @override
@@ -128,7 +134,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               _FeatureRow(
                 icon: Icons.cloud_sync_outlined,
                 color: AppTheme.primary,
-                text: 'Respaldo automático en tu Google Drive',
+                text: 'Respaldo opcional en tu Google Drive',
               ),
 
               const Spacer(flex: 2),
@@ -155,6 +161,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                   ),
                 ),
+              if (!_loading) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: _continueWithoutAccount,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textPrimary,
+                      side: const BorderSide(color: Color(0x33FFFFFF)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Usar sin cuenta',
+                        style: TextStyle(fontSize: 15)),
+                  ),
+                ),
+              ],
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(_error!,
@@ -164,7 +188,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ],
               const SizedBox(height: 12),
               const Text(
-                'Tus datos se guardan en tu celular.\nEl login solo sirve para sincronizar con Drive.',
+                'Tus datos se guardan en tu celular.\nPuedes conectar Google Drive después en Configuración.',
                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
                 textAlign: TextAlign.center,
               ),

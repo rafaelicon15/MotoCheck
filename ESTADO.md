@@ -1,6 +1,6 @@
 # MotoCheck — Estado del Proyecto
 
-> Última actualización: 2026-07-31
+> Última actualización: 2026-09-28
 
 ---
 
@@ -43,8 +43,9 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 ## Funcionalidades implementadas
 
 ### Auth / Sesión
-- [x] Login con Google Sign-In
-- [x] `AuthGate` — splash → login → app (via `AsyncValue`)
+- [x] Uso sin cuenta: botón "Usar sin cuenta" en la bienvenida (flag `onboarding_done` en AppSettings)
+- [x] Login con Google Sign-In opcional (también desde Configuración)
+- [x] `AuthGate` — splash → bienvenida (solo la primera vez) → app
 - [x] Detección de respaldo en Drive al primer login
 - [x] Restaurar o empezar de cero al detectar respaldo
 
@@ -93,6 +94,11 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 - [x] "Registrar cambio" actualiza km y graba en historial
 - [x] **Historial de cambios** con fecha, km y costo (tabla `PartHistory`)
 - [x] Cargar refacciones comunes según tipo de moto
+
+### Recordatorios (notificaciones locales)
+- [x] Servicios con fecha: aviso 3 días antes y el mismo día a las 9:00
+- [x] Refacciones y servicios por km: aviso agrupado al entrar en rango (≤ 500 km, igual que el dashboard), una vez por estado
+- [x] Se resincronizan al cambiar motos, mantenimientos o refacciones (incluye restaurar desde Drive)
 
 ### Configuración
 - [x] Conectar/desconectar Google Drive
@@ -143,10 +149,11 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ## Pendientes / Ideas futuras
 
-- [ ] Subir a repositorio remoto (GitHub)
-- [ ] Configurar Google Cloud Console para release (SHA-1 de keystore)
-- [ ] Build release (APK firmado o bundle para Play Store)
-- [ ] Notificaciones push para alertas de mantenimiento
+- [x] Subir a repositorio remoto (GitHub)
+- [x] Firma release configurable vía `android/key.properties` (ver `RELEASE.md`)
+- [ ] **Bloqueante:** reemplazar el drop-all de `onUpgrade` por migraciones incrementales (ver `docs/05-ESQUEMA-DATOS.md`)
+- [ ] Crear keystore de release y registrar SHA-1 en Google Cloud Console
+- [ ] Publicar en Google Play (ficha, prueba cerrada, producción)
 - [ ] Widget de pantalla de inicio (km restantes refacción crítica)
 - [ ] Soporte multi-idioma (ES / EN)
 - [ ] Exportar historial a PDF o CSV

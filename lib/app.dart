@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:drift/drift.dart' show TableUpdateQuery;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,6 +11,8 @@ import 'features/fuel/screens/fuel_screen.dart';
 import 'features/parts/screens/parts_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'services/google_auth_service.dart';
+import 'services/notification_service.dart';
+import 'shared/providers/database_provider.dart';
 
 class MotoCheckApp extends StatelessWidget {
   const MotoCheckApp({super.key});
@@ -36,19 +40,32 @@ class MotoCheckApp extends StatelessWidget {
 
 // ─── Auth Gate ────────────────────────────────────────────────────────────────
 
+/// Clave en AppSettings: el usuario ya pasó la bienvenida (con o sin cuenta).
+const onboardingDoneKey = 'onboarding_done';
+
+final onboardingDoneProvider = StreamProvider<bool>((ref) {
+  return ref
+      .watch(databaseProvider)
+      .watchSetting(onboardingDoneKey)
+      .map((v) => v == 'true');
+});
+
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accountAsync = ref.watch(googleAccountProvider);
+    final onboardingAsync = ref.watch(onboardingDoneProvider);
 
-    return accountAsync.when(
-      loading: () => const _SplashScreen(),
-      error: (_, _) => const AuthScreen(),
-      data: (account) =>
-          account == null ? const AuthScreen() : const MainShell(),
-    );
+    // Si ya hay cuenta o el usuario eligió usar la app sin cuenta, entra directo.
+    if (accountAsync.valueOrNull != null || onboardingAsync.valueOrNull == true) {
+      return const MainShell();
+    }
+    if (accountAsync.isLoading || onboardingAsync.isLoading) {
+      return const _SplashScreen();
+    }
+    return const AuthScreen();
   }
 }
 
@@ -111,6 +128,38 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Marca la bienvenida como vista (también tras restaurar un respaldo que
+    // reemplaza AppSettings), para no volver a pedir login al cerrar sesión.
+    final db = ref.read(databaseProvider);
+    db.setSetting(onboardingDoneKey, 'true');
+
+    // Recordatorios: sincroniza al entrar y cada vez que cambian motos,
+    // mantenimientos o refacciones (incluye restauraciones desde Drive).
+    NotificationService.requestPermission();
+    NotificationService.sync(db);
+    _dataChanges = db
+        .tableUpdates(TableUpdateQuery.onAllTables(
+            [db.motoProfile, db.maintenanceRecords, db.partRecords]))
+        .listen((_) {
+      _syncDebounce?.cancel();
+      _syncDebounce = Timer(const Duration(seconds: 1),
+          () => NotificationService.sync(db));
+    });
+  }
+
+  StreamSubscription<void>? _dataChanges;
+  Timer? _syncDebounce;
+
+  @override
+  void dispose() {
+    _dataChanges?.cancel();
+    _syncDebounce?.cancel();
+    super.dispose();
+  }
 
   final List<Widget> _screens = const [
     DashboardScreen(),
