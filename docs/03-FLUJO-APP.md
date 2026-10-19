@@ -9,8 +9,8 @@ flowchart TD
     A[Abrir app] --> B[Splash: intenta sesión silenciosa de Google<br/>y lee el flag onboarding_done]
     B -->|Hay cuenta o onboarding_done = true| M[App principal]
     B -->|Ninguno| W[Pantalla de bienvenida]
-    W -->|Usar sin cuenta| F[Guarda onboarding_done = true] --> M
-    W -->|Continuar con Google| G[Login de Google]
+    W -->|Empezar| F[Guarda onboarding_done = true] --> M
+    W -->|Ya tengo respaldo en Google Drive| G[Login de Google]
     G -->|Falla o cancela| W2[Mensaje de error, sigue en bienvenida]
     G -->|OK| R{¿Hay respaldo en Drive?}
     R -->|No| M
@@ -35,7 +35,17 @@ Barra inferior con 5 pestañas (se conservan en memoria al cambiar de pestaña):
 
 Todas las pestañas muestran solo los datos de la **moto activa**.
 
-## 3. Motos (desde Inicio)
+## 3. Primeros pasos (Inicio)
+
+Con una moto registrada, Inicio muestra la tarjeta **Primeros pasos** (x de 3) hasta completarla o descartarla (clave `getting_started_dismissed`):
+
+1. Carga las refacciones de tu moto → pestaña Refacciones
+2. Registra tu última carga de gasolina → pestaña Combustible
+3. Registra tu último servicio → pestaña Mantenimientos
+
+La tarjeta de alertas de refacciones no se muestra mientras no haya refacciones (no dice "Todo en orden" sin nada que vigilar).
+
+## 3b. Motos (desde Inicio)
 
 | Acción | Qué pasa |
 |---|---|
@@ -49,6 +59,8 @@ Todas las pestañas muestran solo los datos de la **moto activa**.
 El formulario adapta sus opciones: el tipo de aceite y viscosidad solo aparecen en 4T; el método de lubricación solo en 2T; el sistema de combustible solo en 4T.
 
 ## 4. Combustible
+
+Los errores de validación se muestran **dentro del formulario**, junto al botón de guardar (un SnackBar quedaría tapado por la hoja). Todos los botones de eliminar piden confirmación.
 
 Los números aceptan coma o punto decimal y separadores de miles (`12,5`, `1.250,50`, `26.507 km`).
 
@@ -84,7 +96,7 @@ Cada tarjeta muestra "Próximo en N días" si aplica, y permite editar o elimina
 
 | Acción | Qué pasa |
 |---|---|
-| Cargar refacciones comunes (icono o estado vacío) | Inserta las refacciones típicas según 2T/4T y transmisión, **sin duplicar** nombres existentes |
+| Cargar refacciones comunes (icono o estado vacío) | Inserta las refacciones típicas según 2T/4T y transmisión, **sin duplicar** nombres existentes. Cada una empieza a contar desde los **km actuales** de la moto (sin historial conocido) y un aviso invita a editar las que el usuario sí sepa |
 | Nueva refacción → Guardar | Nombre, categoría, intervalo en km, último cambio (km y fecha), costo y campos según categoría (tipo de filtro, freno, llanta filtrada por tipo de rin, cadena, ubicación, tipo de barras) |
 | Registrar cambio → Guardar | Diálogo "Cambio: [pieza]" (o "Limpieza: [pieza]" en filtros metálicos permanentes) con km actuales y costo opcional. Actualiza el último cambio, agrega una entrada al historial y actualiza los km de la moto si son mayores |
 | Registrar cambio de una pieza con `requiresComboChange` (la cadena) | Después pregunta "Cambio de cadena" si también cambiaste piñón/corona/gomas: **"Sí, también los cambié"** los actualiza igual y muestra "Transmisión actualizada"; **"No"** solo registra la cadena |
@@ -113,6 +125,6 @@ Cada alerta por km se notifica **una sola vez por estado** (próxima → vencida
 | Respaldar ahora | Sube `motocheck_backup.json` a la carpeta privada de la app en Drive |
 | Restaurar → confirmar | **Reemplaza** todos los datos locales (incluidos ajustes) con el respaldo |
 | Desconectar | Cierra sesión de Google; la app sigue funcionando con los datos locales |
-| Moneda | Cambia el símbolo usado en costos |
+| Moneda | Cambia el símbolo usado en costos. Por defecto se deduce del país del teléfono (MX → MXN, CO → COP…; si no coincide, MXN) |
 
 **Respaldo automático:** tras cada alta, edición o baja de registros se intenta respaldar si hay sesión. Si falla, no interrumpe al usuario.

@@ -13,6 +13,8 @@ import 'features/settings/settings_screen.dart';
 import 'services/google_auth_service.dart';
 import 'services/notification_service.dart';
 import 'shared/providers/database_provider.dart';
+import 'shared/providers/navigation_provider.dart';
+import 'shared/widgets/app_logo.dart';
 
 class MotoCheckApp extends StatelessWidget {
   const MotoCheckApp({super.key});
@@ -88,17 +90,7 @@ class _SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: const Center(
-                child: Text('🏍', style: TextStyle(fontSize: 42)),
-              ),
-            ),
+            const AppLogo(size: 80),
             const SizedBox(height: 18),
             const Text(
               'MotoCheck',
@@ -133,7 +125,6 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -177,9 +168,10 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = ref.watch(mainTabProvider).index;
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: DecoratedBox(
@@ -189,8 +181,8 @@ class _MainShellState extends ConsumerState<MainShell> {
           ),
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (i) => setState(() => _currentIndex = i),
+          currentIndex: currentIndex,
+          onTap: (i) => ref.read(mainTabProvider.notifier).state = MainTab.values[i],
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),

@@ -12,6 +12,8 @@ import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../core/utils/number_parsing.dart';
 import '../../../shared/widgets/require_moto.dart';
+import '../../../shared/widgets/confirm_delete.dart';
+import '../../../shared/widgets/form_error.dart';
 
 // Umbrales de rendimiento realista para motos
 const _kMaxKml = 60.0;
@@ -309,6 +311,8 @@ class _AddFuelSheet extends StatefulWidget {
 }
 
 class _AddFuelSheetState extends State<_AddFuelSheet> {
+  String? _formError;
+
   final _litersCtrl = TextEditingController();
   final _kmCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
@@ -518,6 +522,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
             TextField(controller: _notesCtrl, decoration: const InputDecoration(labelText: 'Notas (opcional)')),
             const SizedBox(height: 20),
 
+            FormError(_formError),
             ElevatedButton(onPressed: _save, child: const Text('Guardar carga')),
             const SizedBox(height: 8),
           ],
@@ -530,9 +535,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
     final liters = parseDecimal(_litersCtrl.text);
     final km = parseWholeNumber(_kmCtrl.text);
     if (liters == null || liters <= 0 || km == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Indica los litros y el kilometraje de la carga'),
-      ));
+      setState(() => _formError = 'Indica los litros y el kilometraje de la carga');
       return;
     }
 
@@ -949,6 +952,7 @@ class _FuelCard extends StatelessWidget {
         ),
         Column(children: [
           IconButton(
+            tooltip: 'Editar',
             icon: const Icon(Icons.edit_outlined,
                 color: AppTheme.fuel, size: 20),
             onPressed: () => showModalBottomSheet(
@@ -966,9 +970,11 @@ class _FuelCard extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Eliminar',
             icon: const Icon(Icons.delete_outline,
                 color: AppTheme.danger, size: 20),
             onPressed: () async {
+              if (!await confirmDelete(context, 'esta carga')) return;
               await db.deleteFuelRecord(record.id);
               await DriveBackupService.backupIfSignedIn(db);
             },

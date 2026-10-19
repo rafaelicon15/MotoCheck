@@ -7,6 +7,7 @@ import '../../services/drive_backup_service.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../data/database/app_database.dart' show UnsupportedBackupException;
 import '../../app.dart' show onboardingDoneKey, welcomeSignInInProgressProvider;
+import '../../shared/widgets/app_logo.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -100,19 +101,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             children: [
               const Spacer(flex: 2),
               // Logo
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                      color: AppTheme.primary.withValues(alpha: 0.4), width: 1.5),
-                ),
-                child: const Center(
-                  child: Text('🏍', style: TextStyle(fontSize: 46)),
-                ),
-              ),
+              const AppLogo(size: 90),
               const SizedBox(height: 20),
               const Text(
                 'MotoCheck',
@@ -156,19 +145,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
               const Spacer(flex: 2),
 
-              // Sign-in button
+              // Acción principal: empezar sin cuenta (lo que promete la landing).
+              // Google queda como opción para quien ya tiene un respaldo.
               if (_loading)
                 const CircularProgressIndicator()
-              else
+              else ...[
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _handleSignIn,
-                    icon: const Text('G',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 16)),
-                    label: const Text('Continuar con Google',
-                        style: TextStyle(fontSize: 15)),
+                  child: FilledButton(
+                    onPressed: _continueWithoutAccount,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
@@ -176,14 +161,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
+                    child: const Text('Empezar',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
-              if (!_loading) ...[
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _continueWithoutAccount,
+                  child: OutlinedButton.icon(
+                    onPressed: _handleSignIn,
+                    icon: const Text('G',
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                    label: const Text('Ya tengo respaldo en Google Drive',
+                        style: TextStyle(fontSize: 14)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textPrimary,
                       side: const BorderSide(color: Color(0x33FFFFFF)),
@@ -191,8 +181,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: const Text('Usar sin cuenta',
-                        style: TextStyle(fontSize: 15)),
                   ),
                 ),
               ],
@@ -205,7 +193,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ],
               const SizedBox(height: 12),
               const Text(
-                'Tus datos se guardan en tu celular.\nPuedes conectar Google Drive después en Configuración.',
+                'Sin registro: tus datos se guardan en tu celular.\nPuedes activar el respaldo en Drive cuando quieras.',
                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
                 textAlign: TextAlign.center,
               ),

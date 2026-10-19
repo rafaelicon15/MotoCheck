@@ -22,7 +22,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('MotoCheck'), findsOneWidget);
-    expect(find.text('Continuar con Google'), findsOneWidget);
-    expect(find.text('Usar sin cuenta'), findsOneWidget);
+    expect(find.text('Empezar'), findsOneWidget);
+    expect(find.text('Ya tengo respaldo en Google Drive'), findsOneWidget);
   });
 }

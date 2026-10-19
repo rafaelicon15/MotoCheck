@@ -11,6 +11,8 @@ import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../core/utils/number_parsing.dart';
 import '../../../shared/widgets/require_moto.dart';
+import '../../../shared/widgets/confirm_delete.dart';
+import '../../../shared/widgets/form_error.dart';
 
 class MaintenanceScreen extends ConsumerWidget {
   const MaintenanceScreen({super.key});
@@ -96,6 +98,8 @@ class _AddMaintenanceSheet extends StatefulWidget {
 }
 
 class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
+  String? _formError;
+
   final _descCtrl = TextEditingController();
   final _kmCtrl = TextEditingController();
   final _costCtrl = TextEditingController();
@@ -362,6 +366,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
             ]),
             const SizedBox(height: 20),
 
+            FormError(_formError),
             ElevatedButton(
               onPressed: _isEmpty ? null : _save,
               child: const Text('Guardar servicio'),
@@ -458,12 +463,13 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
   }
 
   Future<void> _save() async {
-    if (_selectedItems.isEmpty) return;
+    if (_selectedItems.isEmpty) {
+      setState(() => _formError = 'Elige al menos un trabajo realizado');
+      return;
+    }
     final odometerKm = parseWholeNumber(_kmCtrl.text) ?? widget.currentKm;
     if (odometerKm <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Indica el kilometraje del servicio')),
-      );
+      setState(() => _formError = 'Indica el kilometraje del servicio');
       return;
     }
     final primaryType =
@@ -708,6 +714,7 @@ class _MaintenanceCard extends StatelessWidget {
           ])),
           Column(children: [
             IconButton(
+              tooltip: 'Editar',
               icon: const Icon(Icons.edit_outlined,
                   color: AppTheme.maintenance, size: 20),
               onPressed: () => showModalBottomSheet(
@@ -729,9 +736,11 @@ class _MaintenanceCard extends StatelessWidget {
               ),
             ),
             IconButton(
+              tooltip: 'Eliminar',
               icon: const Icon(Icons.delete_outline,
                   color: AppTheme.danger, size: 20),
               onPressed: () async {
+                if (!await confirmDelete(context, 'este servicio')) return;
                 await db.deleteMaintenance(record.id);
                 await DriveBackupService.backupIfSignedIn(db);
               },

@@ -8,6 +8,8 @@ import '../../services/drive_backup_service.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/active_moto_provider.dart';
 import '../../core/utils/number_parsing.dart';
+import 'getting_started_card.dart';
+import '../../shared/widgets/form_error.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -39,6 +41,7 @@ class DashboardScreen extends ConsumerWidget {
               _MotoSelectorCard(db: db, activeMoto: moto),
               const SizedBox(height: 16),
               if (moto != null) ...[
+                GettingStartedCard(db: db, moto: moto),
                 _SectionTitle(title: 'Resumen rápido'),
                 const SizedBox(height: 12),
                 Row(children: [
@@ -226,6 +229,7 @@ class _MotoSelectorCard extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
+                        tooltip: 'Editar',
                         icon: const Icon(Icons.edit_outlined,
                             color: AppTheme.primary, size: 20),
                         onPressed: () {
@@ -309,6 +313,8 @@ class _MotoFormSheet extends StatefulWidget {
 }
 
 class _MotoFormSheetState extends State<_MotoFormSheet> {
+  String? _formError;
+
   late final TextEditingController brandCtrl;
   late final TextEditingController modelCtrl;
   late final TextEditingController yearCtrl;
@@ -410,28 +416,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
               )),
             ]),
             const SizedBox(height: 12),
-            // Cilindrada + Capacidad del tanque
-            Row(children: [
-              Expanded(child: TextField(
-                controller: displacementCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Cilindrada', suffixText: 'cc'),
-                onChanged: (v) => displacement = parseWholeNumber(v),
-              )),
-              const SizedBox(width: 12),
-              Expanded(child: TextField(
-                controller: tankCapacityCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Tanque', suffixText: 'L'),
-                onChanged: (v) => tankCapacity = parseDecimal(v),
-              )),
-              const SizedBox(width: 12),
-              Expanded(child: TextField(
-                controller: plateCtrl,
-                decoration: const InputDecoration(labelText: 'Placa'),
-              )),
-            ]),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
 
             // ── Tipo de motor ──
             _FormSectionLabel(label: 'Tipo de motor', icon: Icons.settings),
@@ -456,20 +441,6 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
             const SizedBox(height: 16),
 
             // ── Sistema de combustible (solo 4T) ──
-            if (!is2T) ...[
-              _FormSectionLabel(label: 'Sistema de combustible', icon: Icons.local_gas_station),
-              const SizedBox(height: 10),
-              _ToggleRow(
-                options: const [
-                  _ToggleOption('carb', '🔩 Carburada', Icons.settings),
-                  _ToggleOption('injection', '💉 Inyección electrónica', Icons.memory),
-                ],
-                selected: fuelSystem,
-                onSelect: (v) => setState(() => fuelSystem = v),
-              ),
-              const SizedBox(height: 16),
-            ],
-
             // ── Tipo de transmisión ──
             _FormSectionLabel(label: 'Tipo de transmisión', icon: Icons.settings_input_component),
             const SizedBox(height: 10),
@@ -479,96 +450,153 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
             ),
             const SizedBox(height: 16),
 
-            // ── Tipo de rines ──
-            _FormSectionLabel(label: 'Tipo de rines', icon: Icons.circle_outlined),
-            const SizedBox(height: 10),
-            _RimTypeSelector(
-              selected: rimType,
-              onSelect: (v) => setState(() => rimType = v),
-            ),
-            const SizedBox(height: 16),
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                initiallyExpanded: widget.moto != null,
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+                title: const Text('Más detalles (opcional)',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                subtitle: const Text(
+                  'Cilindrada, tanque, rines, aceite… afinan servicios y alertas. Puedes completarlos después.',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                ),
+                children: [
+                  // Cilindrada + Capacidad del tanque
+                  Row(children: [
+                    Expanded(child: TextField(
+                      controller: displacementCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Cilindrada', suffixText: 'cc'),
+                      onChanged: (v) => displacement = parseWholeNumber(v),
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(child: TextField(
+                      controller: tankCapacityCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'Tanque', suffixText: 'L'),
+                      onChanged: (v) => tankCapacity = parseDecimal(v),
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(child: TextField(
+                      controller: plateCtrl,
+                      decoration: const InputDecoration(labelText: 'Placa'),
+                    )),
+                  ]),
+                  const SizedBox(height: 20),
 
-            // ── Refrigeración ──
-            _FormSectionLabel(label: 'Refrigeración del motor', icon: Icons.thermostat),
-            const SizedBox(height: 10),
-            _ToggleRow(
-              options: const [
-                _ToggleOption('air', '💨 Por aire', Icons.air),
-                _ToggleOption('liquid', '🌡 Por líquido (radiador)', Icons.water_drop),
-              ],
-              selected: coolingType,
-              onSelect: (v) => setState(() => coolingType = v),
-            ),
-            const SizedBox(height: 16),
+                  if (!is2T) ...[
+                    _FormSectionLabel(label: 'Sistema de combustible', icon: Icons.local_gas_station),
+                    const SizedBox(height: 10),
+                    _ToggleRow(
+                      options: const [
+                        _ToggleOption('carb', '🔩 Carburada', Icons.settings),
+                        _ToggleOption('injection', '💉 Inyección electrónica', Icons.memory),
+                      ],
+                      selected: fuelSystem,
+                      onSelect: (v) => setState(() => fuelSystem = v),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
-            // ── Opciones específicas 4T ──
-            if (!is2T) ...[
-              _FormSectionLabel(label: 'Filtro de aceite', icon: Icons.filter_alt),
-              const SizedBox(height: 10),
-              _ToggleRow(
-                options: const [
-                  _ToggleOption('replaceable', '📄 Reemplazable', Icons.swap_horiz),
-                  _ToggleOption('permanent', '⚙️ Metálico permanente', Icons.settings),
+                  // ── Tipo de rines ──
+                  _FormSectionLabel(label: 'Tipo de rines', icon: Icons.circle_outlined),
+                  const SizedBox(height: 10),
+                  _RimTypeSelector(
+                    selected: rimType,
+                    onSelect: (v) => setState(() => rimType = v),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Refrigeración ──
+                  _FormSectionLabel(label: 'Refrigeración del motor', icon: Icons.thermostat),
+                  const SizedBox(height: 10),
+                  _ToggleRow(
+                    options: const [
+                      _ToggleOption('air', '💨 Por aire', Icons.air),
+                      _ToggleOption('liquid', '🌡 Por líquido (radiador)', Icons.water_drop),
+                    ],
+                    selected: coolingType,
+                    onSelect: (v) => setState(() => coolingType = v),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Opciones específicas 4T ──
+                  if (!is2T) ...[
+                    _FormSectionLabel(label: 'Filtro de aceite', icon: Icons.filter_alt),
+                    const SizedBox(height: 10),
+                    _ToggleRow(
+                      options: const [
+                        _ToggleOption('replaceable', '📄 Reemplazable', Icons.swap_horiz),
+                        _ToggleOption('permanent', '⚙️ Metálico permanente', Icons.settings),
+                      ],
+                      selected: oilFilterType,
+                      onSelect: (v) => setState(() => oilFilterType = v),
+                    ),
+                    const SizedBox(height: 16),
+
+                    _FormSectionLabel(label: 'Aceite del motor', icon: Icons.opacity),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      Expanded(child: DropdownButtonFormField<String>(
+                        initialValue: oilType,
+                        hint: const Text('Tipo de aceite'),
+                        decoration: const InputDecoration(),
+                        dropdownColor: AppTheme.surface,
+                        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                        items: AppConstants.oilTypes4T
+                            .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (v) => setState(() => oilType = v),
+                      )),
+                      const SizedBox(width: 12),
+                      Expanded(child: DropdownButtonFormField<String>(
+                        initialValue: oilViscosity,
+                        hint: const Text('Viscosidad'),
+                        decoration: const InputDecoration(),
+                        dropdownColor: AppTheme.surface,
+                        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                        items: AppConstants.oilViscosities
+                            .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                            .toList(),
+                        onChanged: (v) => setState(() => oilViscosity = v),
+                      )),
+                    ]),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ── Opciones específicas 2T ──
+                  if (is2T) ...[
+                    _FormSectionLabel(label: 'Método de lubricación 2T', icon: Icons.opacity),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                      ),
+                      child: const Text(
+                        'Los motores 2T no tienen cárter de aceite. La lubricación se hace mezclando aceite con la gasolina (premezclado) o mediante un sistema de inyección automática (autolube).',
+                        style: TextStyle(color: Colors.amber, fontSize: 11),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _TwoStrokeMethodSelector(
+                      selected: twoStrokeOilMethod,
+                      onSelect: (v) => setState(() => twoStrokeOilMethod = v),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                 ],
-                selected: oilFilterType,
-                onSelect: (v) => setState(() => oilFilterType = v),
               ),
-              const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 12),
 
-              _FormSectionLabel(label: 'Aceite del motor', icon: Icons.opacity),
-              const SizedBox(height: 10),
-              Row(children: [
-                Expanded(child: DropdownButtonFormField<String>(
-                  initialValue: oilType,
-                  hint: const Text('Tipo de aceite'),
-                  decoration: const InputDecoration(),
-                  dropdownColor: AppTheme.surface,
-                  style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-                  items: AppConstants.oilTypes4T
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                      .toList(),
-                  onChanged: (v) => setState(() => oilType = v),
-                )),
-                const SizedBox(width: 12),
-                Expanded(child: DropdownButtonFormField<String>(
-                  initialValue: oilViscosity,
-                  hint: const Text('Viscosidad'),
-                  decoration: const InputDecoration(),
-                  dropdownColor: AppTheme.surface,
-                  style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-                  items: AppConstants.oilViscosities
-                      .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                      .toList(),
-                  onChanged: (v) => setState(() => oilViscosity = v),
-                )),
-              ]),
-              const SizedBox(height: 16),
-            ],
-
-            // ── Opciones específicas 2T ──
-            if (is2T) ...[
-              _FormSectionLabel(label: 'Método de lubricación 2T', icon: Icons.opacity),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-                ),
-                child: const Text(
-                  'Los motores 2T no tienen cárter de aceite. La lubricación se hace mezclando aceite con la gasolina (premezclado) o mediante un sistema de inyección automática (autolube).',
-                  style: TextStyle(color: Colors.amber, fontSize: 11),
-                ),
-              ),
-              const SizedBox(height: 10),
-              _TwoStrokeMethodSelector(
-                selected: twoStrokeOilMethod,
-                onSelect: (v) => setState(() => twoStrokeOilMethod = v),
-              ),
-              const SizedBox(height: 16),
-            ],
-
+            FormError(_formError),
             ElevatedButton(
               onPressed: _save,
               child: const Text('Guardar'),
@@ -581,9 +609,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
 
   Future<void> _save() async {
     if (brandCtrl.text.trim().isEmpty || modelCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Indica la marca y el modelo de tu moto'),
-      ));
+      setState(() => _formError = 'Indica la marca y el modelo de tu moto');
       return;
     }
     final db = widget.db;
@@ -1033,6 +1059,11 @@ class _PartsAlertCard extends StatelessWidget {
           final remaining = (p.lastChangedKm + p.intervalKm) - currentKm;
           return remaining <= 500;
         }).toList();
+
+        if (parts.isEmpty) {
+          // Sin refacciones no hay nada que vigilar: no decir "todo en orden".
+          return const SizedBox.shrink();
+        }
 
         if (alerts.isEmpty) {
           return Container(

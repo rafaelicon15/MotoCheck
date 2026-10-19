@@ -1,3 +1,4 @@
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'database_provider.dart';
 
@@ -24,8 +25,21 @@ const Map<String, Map<String, String>> kCurrencies = {
   'SVC': {'name': 'Colón salvadoreño',  'symbol': '₡',     'flag': '🇸🇻'},
 };
 
-const String kDefaultCurrency = 'USD';
 const String kCurrencyKey = 'currency';
+
+/// País del teléfono → moneda. Sin coincidencia se usa MXN (mercado inicial).
+const Map<String, String> _currencyByCountry = {
+  'MX': 'MXN', 'US': 'USD', 'ES': 'EUR', 'CO': 'COP', 'VE': 'VES', 'AR': 'ARS',
+  'CL': 'CLP', 'BR': 'BRL', 'PE': 'PEN', 'GT': 'GTQ', 'HN': 'HNL', 'NI': 'NIO',
+  'CR': 'CRC', 'PA': 'PAB', 'DO': 'DOP', 'BO': 'BOB', 'PY': 'PYG', 'UY': 'UYU',
+  'SV': 'USD', 'EC': 'USD', 'PR': 'USD',
+};
+
+String get kDefaultCurrency {
+  final country = PlatformDispatcher.instance.locale.countryCode?.toUpperCase();
+  final code = _currencyByCountry[country];
+  return code != null && kCurrencies.containsKey(code) ? code : 'MXN';
+}
 
 final currencyCodeProvider = StreamProvider<String>((ref) {
   final db = ref.watch(databaseProvider);

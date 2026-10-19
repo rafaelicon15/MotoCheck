@@ -49,6 +49,14 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 - [x] Detección de respaldo en Drive al primer login
 - [x] Restaurar o empezar de cero al detectar respaldo
 
+### Primer uso
+- [x] Bienvenida con "Empezar" (sin cuenta) como acción principal y "Ya tengo respaldo en Google Drive"
+- [x] Formulario de moto corto; detalles técnicos en "Más detalles (opcional)"
+- [x] Tarjeta "Primeros pasos" en Inicio (refacciones, primera carga, último servicio)
+- [x] Refacciones comunes cuentan desde los km actuales (no salen vencidas)
+- [x] Confirmación en todos los borrados; errores de formulario visibles dentro de la hoja
+- [x] Ícono y logo propios (`assets/branding`, `dart run flutter_launcher_icons`); arranque nativo oscuro
+
 ### Dashboard
 - [x] Tarjeta activa de moto (marca, modelo, año, km, badges)
 - [x] Resumen rápido: último km/L y próximo servicio
@@ -167,6 +175,7 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 - Tema oscuro neutro (sin tinte azul/morado) inspirado en Fintrixity
 - Fondo: `#0D0D12` | Surface: `#161619` | Card: `#1D1D26`
 - Acento principal: naranja `#FF5722`
+- Ícono/logo: velocímetro naranja con palomita blanca sobre `#0D0D12`; fuente en `assets/branding/` (generado con Pillow, regenerar con `flutter_launcher_icons`)
 - Todos los cards tienen borde sutil `rgba(255,255,255, 0.10)`
 - `AppTheme.cardDecoration()` para cards nuevos
 - `AnimatedContainer` en selectores del formulario de moto

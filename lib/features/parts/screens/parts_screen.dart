@@ -11,6 +11,7 @@ import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../core/utils/number_parsing.dart';
 import '../../../shared/widgets/require_moto.dart';
+import '../../../shared/widgets/confirm_delete.dart';
 
 class PartsScreen extends ConsumerWidget {
   const PartsScreen({super.key});
@@ -29,7 +30,7 @@ class PartsScreen extends ConsumerWidget {
             icon: const Icon(Icons.playlist_add),
             tooltip: 'Cargar refacciones comunes',
             onPressed: () {
-              if (ensureActiveMoto(context, moto)) _addDefaults(db, moto);
+              if (ensureActiveMoto(context, moto)) _addDefaults(context, db, moto);
             },
           ),
         ],
@@ -42,7 +43,7 @@ class PartsScreen extends ConsumerWidget {
 
           if (parts.isEmpty) {
             return _EmptyState(onAddDefaults: () {
-              if (ensureActiveMoto(context, moto)) _addDefaults(db, moto);
+              if (ensureActiveMoto(context, moto)) _addDefaults(context, db, moto);
             });
           }
 
@@ -83,7 +84,11 @@ class PartsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _addDefaults(AppDatabase db, MotoProfileData? moto) async {
+  Future<void> _addDefaults(BuildContext context, AppDatabase db, MotoProfileData? moto) async {
+    // Sin historial conocido, cada pieza empieza a contar desde los km actuales:
+    // marcarla como cambiada en el km 0 la mostraría vencida por miles de km.
+    final startKm = moto?.currentKm ?? 0;
+    var added = 0;
     final engineType = moto?.engineType ?? '4T';
     final coolingType = moto?.coolingType ?? 'air';
     final oilFilterType = moto?.oilFilterType ?? 'replaceable';
@@ -98,6 +103,7 @@ class PartsScreen extends ConsumerWidget {
       if (existingNames.contains(name)) return;
       await db.insertPart(part);
       existingNames.add(name);
+      added++;
     }
 
     // Partes base según tipo de motor
@@ -114,7 +120,7 @@ class PartsScreen extends ConsumerWidget {
         motoId: drift.Value(moto?.id),
         name: part['name'] as String,
         intervalKm: part['intervalKm'] as int,
-        lastChangedKm: 0,
+        lastChangedKm: startKm,
         lastChangedDate: DateTime.now(),
         partCategory: drift.Value(category),
         filterType: drift.Value(filterType),
@@ -138,7 +144,7 @@ class PartsScreen extends ConsumerWidget {
         motoId: drift.Value(moto?.id),
         name: part['name'] as String,
         intervalKm: part['intervalKm'] as int,
-        lastChangedKm: 0,
+        lastChangedKm: startKm,
         lastChangedDate: DateTime.now(),
         partCategory: drift.Value(category),
         filterType: drift.Value(null),
@@ -155,7 +161,7 @@ class PartsScreen extends ConsumerWidget {
         motoId: drift.Value(moto?.id),
         name: 'Aceite 2T (depósito autolube)',
         intervalKm: 3000,
-        lastChangedKm: 0,
+        lastChangedKm: startKm,
         lastChangedDate: DateTime.now(),
         partCategory: drift.Value('oil'),
         filterType: drift.Value(null),
@@ -172,7 +178,7 @@ class PartsScreen extends ConsumerWidget {
         motoId: drift.Value(moto?.id),
         name: 'Aceite 2T premezclado (cada carga de gasolina)',
         intervalKm: 500,
-        lastChangedKm: 0,
+        lastChangedKm: startKm,
         lastChangedDate: DateTime.now(),
         partCategory: drift.Value('oil'),
         filterType: drift.Value(null),
@@ -189,7 +195,7 @@ class PartsScreen extends ConsumerWidget {
         motoId: drift.Value(moto?.id),
         name: 'Líquido refrigerante',
         intervalKm: 25000,
-        lastChangedKm: 0,
+        lastChangedKm: startKm,
         lastChangedDate: DateTime.now(),
         partCategory: drift.Value('coolant'),
         filterType: drift.Value(null),
@@ -200,6 +206,15 @@ class PartsScreen extends ConsumerWidget {
       ));
     }
     await DriveBackupService.backupIfSignedIn(db);
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      duration: const Duration(seconds: 6),
+      content: Text(added == 0
+          ? 'Ya tenías todas las refacciones comunes'
+          : 'Agregamos $added refacciones contando desde $startKm km. '
+              'Si sabes cuándo cambiaste alguna, edítala para ajustar su alerta.'),
+    ));
   }
 
   void _showAddPart(BuildContext context, AppDatabase db, int? motoId, String rimType) {
@@ -381,6 +396,7 @@ class _PartCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           IconButton(
+            tooltip: 'Editar',
             icon: const Icon(Icons.edit_outlined, color: AppTheme.parts, size: 20),
             onPressed: () => showModalBottomSheet(
               context: context,
@@ -397,8 +413,10 @@ class _PartCard extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Eliminar',
             icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
             onPressed: () async {
+              if (!await confirmDelete(context, part.name)) return;
               await db.deletePart(part.id);
               await DriveBackupService.backupIfSignedIn(db);
             },
@@ -1130,16 +1148,19 @@ class _HistoryEntry extends StatelessWidget {
           const SizedBox(height: 2),
           Row(mainAxisSize: MainAxisSize.min, children: [
             IconButton(
+              tooltip: 'Editar',
               visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.edit_outlined,
                   color: AppTheme.parts, size: 16),
               onPressed: () => _editHistory(context),
             ),
             IconButton(
+              tooltip: 'Eliminar del historial',
               visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.close,
                   color: AppTheme.textSecondary, size: 16),
               onPressed: () async {
+                if (!await confirmDelete(context, 'este cambio del historial')) return;
                 await db.deletePartHistory(entry.id);
                 await DriveBackupService.backupIfSignedIn(db);
               },
