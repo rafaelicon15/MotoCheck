@@ -110,22 +110,38 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 10;
 
+  /// Primer esquema distribuido a usuarios (APK 1.0.0+2). Desde aquí ninguna
+  /// actualización puede borrar datos: cada versión nueva se migra paso a paso.
+  static const firstReleasedSchemaVersion = 10;
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      // Dev: drop all and recreate
-      try { await m.drop(partHistory); } catch (_) {}
-      try { await m.drop(fuelRecords); } catch (_) {}
-      try { await m.drop(maintenanceRecords); } catch (_) {}
-      try { await m.drop(partRecords); } catch (_) {}
-      try { await m.drop(motoProfile); } catch (_) {}
-      try { await m.drop(appSettings); } catch (_) {}
-      await m.createAll();
+      if (from < firstReleasedSchemaVersion) {
+        // Esquemas anteriores solo existieron en builds de desarrollo.
+        await _resetPreReleaseSchema(m);
+        return;
+      }
+
+      // Al subir schemaVersion agrega un bloque por versión, en orden, y
+      // regenera el snapshot (ver docs/05-ESQUEMA-DATOS.md). Ejemplo:
+      // if (from < 11) {
+      //   await m.addColumn(motoProfile, motoProfile.photoPath);
+      // }
     },
   );
+
+  Future<void> _resetPreReleaseSchema(Migrator m) async {
+    for (final table in allTables) {
+      try {
+        await m.deleteTable(table.actualTableName);
+      } catch (_) {}
+    }
+    await m.createAll();
+  }
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'motocheck_db');
@@ -169,6 +185,21 @@ class AppDatabase extends _$AppDatabase {
       currentKm: currentKm,
       updatedAt: DateTime.now(),
     ));
+  }
+
+  /// Asigna a [motoId] los registros creados antes de que existiera una moto,
+  /// para que no queden ocultos al filtrar por moto activa.
+  Future<void> adoptOrphanRecords(int motoId) async {
+    await transaction(() async {
+      await (update(fuelRecords)..where((t) => t.motoId.isNull()))
+          .write(FuelRecordsCompanion(motoId: Value(motoId)));
+      await (update(maintenanceRecords)..where((t) => t.motoId.isNull()))
+          .write(MaintenanceRecordsCompanion(motoId: Value(motoId)));
+      await (update(partRecords)..where((t) => t.motoId.isNull()))
+          .write(PartRecordsCompanion(motoId: Value(motoId)));
+      await (update(partHistory)..where((t) => t.motoId.isNull()))
+          .write(PartHistoryCompanion(motoId: Value(motoId)));
+    });
   }
 
   Future<int> deleteMoto(int id) async {
@@ -620,6 +651,11 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> importFromJson(Map<String, dynamic> data) async {
+    final backupVersion = data['schemaVersion'] as int? ?? 0;
+    if (backupVersion > schemaVersion) {
+      throw UnsupportedBackupException(backupVersion, schemaVersion);
+    }
+
     await transaction(() async {
       await delete(partHistory).go();
       await delete(partRecords).go();
@@ -778,4 +814,16 @@ class AppDatabase extends _$AppDatabase {
         .watchSingleOrNull()
         .map((r) => r?.value);
   }
+}
+
+/// Respaldo creado por una versión más nueva de la app: importarlo perdería
+/// columnas que esta versión no conoce.
+class UnsupportedBackupException implements Exception {
+  final int backupVersion;
+  final int appVersion;
+  const UnsupportedBackupException(this.backupVersion, this.appVersion);
+
+  @override
+  String toString() =>
+      'El respaldo es de una versión más nueva de MotoCheck. Actualiza la app para restaurarlo.';
 }

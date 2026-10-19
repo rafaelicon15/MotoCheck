@@ -10,6 +10,8 @@ import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
+import '../../../core/utils/number_parsing.dart';
+import '../../../shared/widgets/require_moto.dart';
 
 // Umbrales de rendimiento realista para motos
 const _kMaxKml = 60.0;
@@ -143,6 +145,7 @@ class _FuelScreenState extends ConsumerState<FuelScreen> {
         onPressed: () {
           final db2 = ref.read(databaseProvider);
           final moto2 = ref.read(activeMotoProvider).valueOrNull;
+          if (!ensureActiveMoto(context, moto2)) return;
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
@@ -524,12 +527,17 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
   }
 
   Future<void> _save() async {
-    final liters = double.tryParse(_litersCtrl.text);
-    final km = int.tryParse(_kmCtrl.text);
-    if (liters == null || km == null) return;
+    final liters = parseDecimal(_litersCtrl.text);
+    final km = parseWholeNumber(_kmCtrl.text);
+    if (liters == null || liters <= 0 || km == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Indica los litros y el kilometraje de la carga'),
+      ));
+      return;
+    }
 
     final record = widget.record;
-    final price = double.tryParse(_priceCtrl.text);
+    final price = parseDecimal(_priceCtrl.text);
     final octaneBrand = _usedOctaneBooster && _octaneBrandCtrl.text.isNotEmpty
         ? _octaneBrandCtrl.text.trim()
         : null;

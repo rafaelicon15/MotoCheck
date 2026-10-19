@@ -7,6 +7,7 @@ import '../../data/database/app_database.dart';
 import '../../services/drive_backup_service.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/providers/active_moto_provider.dart';
+import '../../core/utils/number_parsing.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -415,14 +416,14 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
                 controller: displacementCtrl,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Cilindrada', suffixText: 'cc'),
-                onChanged: (v) => displacement = int.tryParse(v),
+                onChanged: (v) => displacement = parseWholeNumber(v),
               )),
               const SizedBox(width: 12),
               Expanded(child: TextField(
                 controller: tankCapacityCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(labelText: 'Tanque', suffixText: 'L'),
-                onChanged: (v) => tankCapacity = double.tryParse(v),
+                onChanged: (v) => tankCapacity = parseDecimal(v),
               )),
               const SizedBox(width: 12),
               Expanded(child: TextField(
@@ -579,7 +580,12 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
   }
 
   Future<void> _save() async {
-    if (brandCtrl.text.isEmpty || modelCtrl.text.isEmpty) return;
+    if (brandCtrl.text.trim().isEmpty || modelCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Indica la marca y el modelo de tu moto'),
+      ));
+      return;
+    }
     final db = widget.db;
     final moto = widget.moto;
 
@@ -588,8 +594,8 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
       final newId = await db.insertMoto(MotoProfileCompanion.insert(
         brand: brandCtrl.text,
         model: modelCtrl.text,
-        year: int.tryParse(yearCtrl.text) ?? 2020,
-        currentKm: int.tryParse(kmCtrl.text) ?? 0,
+        year: parseWholeNumber(yearCtrl.text) ?? 2020,
+        currentKm: parseWholeNumber(kmCtrl.text) ?? 0,
         plate: drift.Value(plateCtrl.text.isEmpty ? null : plateCtrl.text),
         displacement: drift.Value(displacement),
         tankCapacity: drift.Value(tankCapacity),
@@ -605,14 +611,17 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
         isActive: drift.Value(existing == null),
         updatedAt: DateTime.now(),
       ));
-      if (existing == null) await db.setActiveMoto(newId);
+      if (existing == null) {
+        await db.setActiveMoto(newId);
+        await db.adoptOrphanRecords(newId);
+      }
       await DriveBackupService.backupIfSignedIn(db);
     } else {
       await db.updateMoto(moto.copyWith(
         brand: brandCtrl.text,
         model: modelCtrl.text,
-        year: int.tryParse(yearCtrl.text) ?? moto.year,
-        currentKm: int.tryParse(kmCtrl.text) ?? moto.currentKm,
+        year: parseWholeNumber(yearCtrl.text) ?? moto.year,
+        currentKm: parseWholeNumber(kmCtrl.text) ?? moto.currentKm,
         plate: drift.Value(plateCtrl.text.isEmpty ? null : plateCtrl.text),
         displacement: drift.Value(displacement),
         tankCapacity: drift.Value(tankCapacity),
@@ -911,8 +920,25 @@ class _NoMotoPrompt extends StatelessWidget {
           const Text('Agrega tu primera moto',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
           const SizedBox(height: 4),
-          const Text('Toca el ícono + en la tarjeta de arriba',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+          const Text(
+            'Con su perfil, MotoCheck adapta servicios y refacciones a tu moto.',
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppTheme.surface,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+              builder: (_) => _MotoFormSheet(db: db, moto: null),
+            ),
+            icon: const Icon(Icons.add),
+            label: const Text('Agregar mi moto'),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+          ),
         ]),
       ),
     );

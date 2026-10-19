@@ -39,9 +39,10 @@ Todas las pestañas muestran solo los datos de la **moto activa**.
 
 | Acción | Qué pasa |
 |---|---|
-| Sin motos registradas | Inicio muestra una invitación a agregar la primera moto |
+| Sin motos registradas | Inicio muestra "Agrega tu primera moto" con el botón **Agregar mi moto**. Los botones de agregar de las otras pestañas avisan "Primero agrega tu moto en la pestaña Inicio" |
+| Guardar sin marca o modelo | Aviso "Indica la marca y el modelo de tu moto" |
 | Botón cambiar/agregar moto | Hoja inferior con la lista de motos: **Activar**, **Eliminar** o **Agregar nueva moto** |
-| Agregar moto → Guardar | Inserta la moto; si no había moto activa, la nueva queda activa |
+| Agregar moto → Guardar | Inserta la moto; si no había moto activa, la nueva queda activa y adopta cualquier registro guardado sin moto (datos de versiones anteriores) |
 | Editar (lápiz) → Guardar | Actualiza el perfil |
 | Eliminar → confirmar | Borra la moto **y todos sus registros** (combustible, mantenimientos, refacciones, historial). Si era la activa, activa otra |
 
@@ -49,9 +50,11 @@ El formulario adapta sus opciones: el tipo de aceite y viscosidad solo aparecen 
 
 ## 4. Combustible
 
+Los números aceptan coma o punto decimal y separadores de miles (`12,5`, `1.250,50`, `26.507 km`).
+
 **Registrar carga** → hoja con fecha, litros, precio/L, odómetro, tipo de gasolina (Regular/Premium), aditivo de octanaje (sí/no y marca), lleno/parcial, notas → **Guardar carga**:
 
-1. Inserta (o actualiza) el registro.
+1. Si faltan litros o kilometraje, avisa "Indica los litros y el kilometraje de la carga". Si no, inserta (o actualiza) el registro.
 2. Si el odómetro es mayor que el de la moto, actualiza los km de la moto.
 3. Intenta respaldar en Drive (solo si hay sesión; nunca bloquea).
 4. Los recordatorios se resincronizan (cambió la moto).

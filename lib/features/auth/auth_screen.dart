@@ -5,7 +5,8 @@ import '../../core/theme/app_theme.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/drive_backup_service.dart';
 import '../../shared/providers/database_provider.dart';
-import '../../app.dart' show onboardingDoneKey;
+import '../../data/database/app_database.dart' show UnsupportedBackupException;
+import '../../app.dart' show onboardingDoneKey, welcomeSignInInProgressProvider;
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -23,10 +24,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _loading = true;
       _error = null;
     });
+    // Mantiene esta pantalla visible hasta terminar con el respaldo.
+    final inProgress = ref.read(welcomeSignInInProgressProvider.notifier);
+    inProgress.state = true;
 
     final ok = await ref.read(googleAccountProvider.notifier).signIn();
+    final account = ref.read(googleAccountProvider).valueOrNull;
 
-    if (!ok) {
+    if (!ok || account == null) {
+      inProgress.state = false;
       if (mounted) {
         setState(() {
           _loading = false;
@@ -36,17 +42,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
 
-    // Signed in — check for existing Drive backup
-    final account = ref.read(googleAccountProvider).valueOrNull;
-    if (account == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-
     try {
       final backupTime = await DriveBackupService.getLastBackupTime(account: account);
 
       if (backupTime != null && mounted) {
+        setState(() => _loading = false);
         final shouldRestore = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
@@ -59,12 +59,29 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           await DriveBackupService.restore(db: db, account: account);
         }
       }
-    } catch (_) {
-      // Backup check failed — still let user into app
+    } catch (e) {
+      if (mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppTheme.card,
+            title: const Text('No se pudo restaurar', style: TextStyle(fontSize: 16)),
+            content: Text(
+              e is UnsupportedBackupException
+                  ? e.toString()
+                  : 'No pudimos leer tu respaldo de Drive. Puedes intentarlo después desde Configuración.',
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido')),
+            ],
+          ),
+        );
+      }
     }
 
-    if (mounted) setState(() => _loading = false);
-    // AuthGate will automatically navigate to MainShell since account is now set
+    await ref.read(databaseProvider).setSetting(onboardingDoneKey, 'true');
+    inProgress.state = false; // AuthGate entra a MainShell.
   }
 
   Future<void> _continueWithoutAccount() async {

@@ -50,6 +50,10 @@ final onboardingDoneProvider = StreamProvider<bool>((ref) {
       .map((v) => v == 'true');
 });
 
+/// true mientras la bienvenida inicia sesión y revisa/restaura el respaldo;
+/// evita que AuthGate la reemplace antes de terminar.
+final welcomeSignInInProgressProvider = StateProvider<bool>((ref) => false);
+
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
@@ -57,6 +61,8 @@ class AuthGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accountAsync = ref.watch(googleAccountProvider);
     final onboardingAsync = ref.watch(onboardingDoneProvider);
+
+    if (ref.watch(welcomeSignInInProgressProvider)) return const AuthScreen();
 
     // Si ya hay cuenta o el usuario eligió usar la app sin cuenta, entra directo.
     if (accountAsync.valueOrNull != null || onboardingAsync.valueOrNull == true) {

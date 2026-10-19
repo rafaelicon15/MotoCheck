@@ -36,7 +36,7 @@ App móvil de mantenimiento de motocicletas. Registra combustible, servicios, re
 | v9 | Columna `isFull` en `FuelRecords` (detección de rellenos parciales) |
 | v10 | Columna `rimType` en `MotoProfile` (tipo de rin para filtrar tipos de llanta) |
 
-> **Nota dev:** La migración es drop-all en `onUpgrade`. Al cambiar schema, borrar `.g.dart` y correr `dart run build_runner build`.
+> **Nota dev:** Desde v10 las migraciones son incrementales (ver `docs/05-ESQUEMA-DATOS.md`). Al cambiar el esquema, agrega el bloque `if (from < N)` y corre `dart run build_runner build --delete-conflicting-outputs`.
 
 ---
 
@@ -151,7 +151,7 @@ adb -s 097955433P113119 install -r build/app/outputs/flutter-apk/app-debug.apk
 
 - [x] Subir a repositorio remoto (GitHub)
 - [x] Firma release configurable vía `android/key.properties` (ver `RELEASE.md`)
-- [ ] **Bloqueante:** reemplazar el drop-all de `onUpgrade` por migraciones incrementales (ver `docs/05-ESQUEMA-DATOS.md`)
+- [x] Migraciones incrementales desde v10 (ya no se borran datos al actualizar)
 - [ ] Crear keystore de release y registrar SHA-1 en Google Cloud Console
 - [ ] Publicar en Google Play (ficha, prueba cerrada, producción)
 - [ ] Widget de pantalla de inicio (km restantes refacción crítica)

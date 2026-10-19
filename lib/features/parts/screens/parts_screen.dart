@@ -9,6 +9,8 @@ import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
+import '../../../core/utils/number_parsing.dart';
+import '../../../shared/widgets/require_moto.dart';
 
 class PartsScreen extends ConsumerWidget {
   const PartsScreen({super.key});
@@ -26,7 +28,9 @@ class PartsScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.playlist_add),
             tooltip: 'Cargar refacciones comunes',
-            onPressed: () => _addDefaults(db, moto),
+            onPressed: () {
+              if (ensureActiveMoto(context, moto)) _addDefaults(db, moto);
+            },
           ),
         ],
       ),
@@ -37,7 +41,9 @@ class PartsScreen extends ConsumerWidget {
           final currentKm = moto?.currentKm ?? 0;
 
           if (parts.isEmpty) {
-            return _EmptyState(onAddDefaults: () => _addDefaults(db, moto));
+            return _EmptyState(onAddDefaults: () {
+              if (ensureActiveMoto(context, moto)) _addDefaults(db, moto);
+            });
           }
 
           final sorted = [...parts]..sort((a, b) {
@@ -67,7 +73,10 @@ class PartsScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddPart(context, db, moto?.id, moto?.rimType ?? 'alloy'),
+        onPressed: () {
+          if (!ensureActiveMoto(context, moto)) return;
+          _showAddPart(context, db, moto?.id, moto?.rimType ?? 'alloy');
+        },
         icon: const Icon(Icons.add),
         label: const Text('Nueva refacción'),
       ),
@@ -426,8 +435,8 @@ class _PartCard extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
-              final km = int.tryParse(kmCtrl.text) ?? currentKm;
-              final cost = double.tryParse(costCtrl.text);
+              final km = parseWholeNumber(kmCtrl.text) ?? currentKm;
+              final cost = parseDecimal(costCtrl.text);
               await db.updatePart(part.copyWith(
                 lastChangedKm: km,
                 lastChangedDate: DateTime.now(),
@@ -900,8 +909,8 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                 if (_nameCtrl.text.isEmpty) return;
                 final navigator = Navigator.of(context);
                 final partName = _displayName();
-                final intervalKm = int.tryParse(_intervalCtrl.text) ?? 5000;
-                final lastChangedKm = int.tryParse(_lastKmCtrl.text) ?? 0;
+                final intervalKm = parseWholeNumber(_intervalCtrl.text) ?? 5000;
+                final lastChangedKm = parseWholeNumber(_lastKmCtrl.text) ?? 0;
                 final filterType = _category == 'oil_filter' ? _filterType : null;
                 final brakeType =
                     (_category == 'brake_front' || _category == 'brake_rear')
@@ -1207,9 +1216,9 @@ class _HistoryEntry extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                final km = int.tryParse(kmCtrl.text);
+                final km = parseWholeNumber(kmCtrl.text);
                 if (km == null) return;
-                final cost = double.tryParse(costCtrl.text);
+                final cost = parseDecimal(costCtrl.text);
                 final notes = notesCtrl.text.isEmpty ? null : notesCtrl.text;
                 await db.updatePartHistory(entry.copyWith(
                   km: km,

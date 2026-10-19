@@ -130,19 +130,16 @@ Km restantes = `lastChangedKm + intervalKm − MotoProfile.currentKm`. Alerta si
 - `exportToJson()` serializa todas las tablas (incluye `schemaVersion`); `importFromJson()` **reemplaza** todo, incluidos los ajustes.
 - Respaldo automático tras cada cambio si hay sesión; los errores se ignoran para no bloquear al usuario.
 
-## 5. Migraciones — ⚠️ pendiente crítico
+## 5. Migraciones
 
-Hoy `onUpgrade` **borra y recrea todas las tablas** cuando sube `schemaVersion`. Sirvió en desarrollo, pero en producción cualquier cambio de esquema borraría los datos de los usuarios.
-
-Antes de publicar:
-1. Reemplazar el drop-all por migraciones incrementales (`if (from < 11) { await m.addColumn(...) }`).
-2. Congelar v10 como esquema base del lanzamiento.
-3. Usar `drift_dev schema dump` y pruebas de migración para cada versión nueva.
-4. Revisar que `importFromJson` acepte respaldos de versiones anteriores.
+- **v10 es el primer esquema publicado** (`AppDatabase.firstReleasedSchemaVersion`). Desde ahí ninguna actualización borra datos.
+- `onUpgrade` solo reinicia las tablas si la base viene de un esquema **< 10**, que únicamente existió en builds de desarrollo.
+- Para v11 en adelante se agrega un bloque `if (from < N)` por versión, en orden (p. ej. `m.addColumn(...)`).
+- `importFromJson` rechaza respaldos de un esquema **más nuevo** que la app (`UnsupportedBackupException`) y acepta los anteriores rellenando valores por defecto.
 
 ## 6. Proceso para cambiar el esquema
 
 1. Modificar la tabla en `app_database.dart` y subir `schemaVersion`.
-2. Escribir el paso de migración correspondiente (nunca drop en producción).
+2. Escribir el bloque `if (from < N)` correspondiente en `onUpgrade` (nunca drop).
 3. `dart run build_runner build --delete-conflicting-outputs`
 4. Actualizar este documento y `exportToJson`/`importFromJson` si hay columnas nuevas.

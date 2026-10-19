@@ -9,6 +9,8 @@ import '../../../services/drive_backup_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/active_moto_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
+import '../../../core/utils/number_parsing.dart';
+import '../../../shared/widgets/require_moto.dart';
 
 class MaintenanceScreen extends ConsumerWidget {
   const MaintenanceScreen({super.key});
@@ -47,17 +49,20 @@ class MaintenanceScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: AppTheme.surface,
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-          builder: (_) => _AddMaintenanceSheet(
-              db: db, motoId: moto?.id, currency: currency,
-              engineType: engineType, fuelSystem: fuelSystem,
-              transmissionType: transmissionType, currentKm: currentKm),
-        ),
+        onPressed: () {
+          if (!ensureActiveMoto(context, moto)) return;
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: AppTheme.surface,
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+            builder: (_) => _AddMaintenanceSheet(
+                db: db, motoId: moto?.id, currency: currency,
+                engineType: engineType, fuelSystem: fuelSystem,
+                transmissionType: transmissionType, currentKm: currentKm),
+          );
+        },
         icon: const Icon(Icons.add),
         label: const Text('Agregar servicio'),
       ),
@@ -454,7 +459,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
 
   Future<void> _save() async {
     if (_selectedItems.isEmpty) return;
-    final odometerKm = int.tryParse(_kmCtrl.text) ?? widget.currentKm;
+    final odometerKm = parseWholeNumber(_kmCtrl.text) ?? widget.currentKm;
     if (odometerKm <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Indica el kilometraje del servicio')),
@@ -468,9 +473,9 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
         ? _selectedItems.join(' · ')
         : _descCtrl.text;
 
-    final cost = double.tryParse(_costCtrl.text);
+    final cost = parseDecimal(_costCtrl.text);
     final workshop = _workshopCtrl.text.isEmpty ? null : _workshopCtrl.text;
-    final nextServiceKm = int.tryParse(_nextKmCtrl.text);
+    final nextServiceKm = parseWholeNumber(_nextKmCtrl.text);
     final notes = _notesCtrl.text.isEmpty ? null : _notesCtrl.text;
     final oilType = _hasOilChange ? _oilType : null;
     final oilViscosity = _hasOilChange ? _oilViscosity : null;

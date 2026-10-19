@@ -24,7 +24,7 @@ flowchart LR
 | 0.1 | Login opcional, recordatorios, firma configurable, versión 1.0.0+3 | C | ✅ |
 | 0.2 | Landing: texto corregido, `/privacidad`, analítica, atribución `utm`/`ref`, `vercel.json` | C | ✅ |
 | 0.3 | Documentación del proyecto (`docs/`) | C | ✅ |
-| 0.4 | Aprobar commit y push de app y landing | R | ⬜ |
+| 0.4 | Commit y push de app y landing (rama `launch-prep`) | C | ✅ |
 | 0.5 | Probar en un teléfono real: usar sin cuenta, registrar carga/servicio/refacción, notificación de prueba | R + C | ⬜ |
 
 ## Fase 1 — Migraciones seguras (bloqueante)
@@ -33,7 +33,8 @@ Hoy un cambio de esquema borra los datos de los usuarios. Debe resolverse **ante
 
 | # | Tarea | Resp. | Estado |
 |---|---|---|---|
-| 1.1 | Reemplazar el drop-all de `onUpgrade` por migraciones incrementales; v10 como base | C | ⬜ |
+| 1.1 | Reemplazar el drop-all de `onUpgrade` por migraciones incrementales; v10 como base | C | ✅ |
+| 1.1b | Corregir el diálogo "Respaldo encontrado" que no aparecía al iniciar sesión desde la bienvenida | C | ✅ |
 | 1.2 | Exportar el esquema (`drift_dev schema dump`) y agregar prueba de migración | C | ⬜ |
 | 1.3 | Prueba manual: instalar 1.0.0+3, crear datos, instalar la siguiente versión, verificar que siguen | R + C | ⬜ |
 
