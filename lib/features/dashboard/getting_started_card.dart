@@ -158,10 +158,22 @@ class _StepTile extends StatelessWidget {
       contentPadding: const EdgeInsets.only(right: 8),
       enabled: !step.done,
       onTap: step.done ? null : onTap,
-      leading: Icon(
-        step.done ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: step.done ? AppTheme.success : AppTheme.primary,
-        semanticLabel: step.done ? 'Completado' : 'Pendiente',
+      // Transición tipo "morph" (como morphicons en la landing): el círculo
+      // gira y rebota hasta convertirse en palomita al completar el paso.
+      leading: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 420),
+        switchInCurve: Curves.easeOutBack,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) => RotationTransition(
+          turns: Tween(begin: -0.25, end: 0.0).animate(animation),
+          child: ScaleTransition(scale: animation, child: child),
+        ),
+        child: Icon(
+          step.done ? Icons.check_circle : Icons.radio_button_unchecked,
+          key: ValueKey(step.done),
+          color: step.done ? AppTheme.success : AppTheme.primary,
+          semanticLabel: step.done ? 'Completado' : 'Pendiente',
+        ),
       ),
       title: Text(
         step.title,
