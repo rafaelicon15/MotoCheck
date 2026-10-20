@@ -62,3 +62,13 @@ Salidas:
 Seguir `landing/docs/DISTRIBUTION_RUNBOOK.md`: actualizar versión, fecha, tamaño y SHA-256 en `Home.tsx`, y `VITE_APK_URL` con la URL del APK alojado.
 
 > Un APK firmado con la llave debug **no se puede actualizar** con uno firmado con la llave de release: quien tenga la versión de prueba debe desinstalarla (y respaldar en Drive antes si quiere conservar sus datos).
+
+## 6. Capturas para la landing y Google Play
+
+`lib/demo/main_demo.dart` arranca la app con datos de ejemplo (Bajaj NS200) y no forma parte del APK.
+
+```powershell
+flutter build web -t lib/demo/main_demo.dart
+```
+
+Sirve `build/web` (por ejemplo `python -m http.server --directory build/web`), abre la app a 390×844 y captura Inicio, Combustible y Refacciones. Las de la landing están en `motocheck-landing/client/public/assets/app/`. Para Google Play conviene capturarlas en un teléfono real (mínimo 1080 px de ancho).

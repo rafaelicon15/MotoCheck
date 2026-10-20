@@ -696,6 +696,13 @@ class _EfficiencyChart extends StatelessWidget {
     final data = _kmlData;
     if (data.isEmpty) return const SizedBox();
 
+    final values = data.map((d) => d['kml']!);
+    final lo = values.reduce((a, b) => a < b ? a : b);
+    final hi = values.reduce((a, b) => a > b ? a : b);
+    final chartMinY = (lo - 1).floorToDouble();
+    final chartMaxY = (hi + 1).ceilToDouble();
+    final chartInterval = ((chartMaxY - chartMinY) / 4).ceilToDouble().clamp(1.0, double.infinity);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -714,7 +721,12 @@ class _EfficiencyChart extends StatelessWidget {
           child: SizedBox(
           height: 130,
           child: LineChart(LineChartData(
+            // Rango con margen y en enteros: evita que la curva salga del área
+            // y que la etiqueta del máximo se dibuje encimada.
+            minY: chartMinY,
+            maxY: chartMaxY,
             gridData: FlGridData(
+              horizontalInterval: chartInterval,
               show: true,
               getDrawingHorizontalLine: (_) => FlLine(color: Colors.white10, strokeWidth: 1),
               getDrawingVerticalLine: (_) => FlLine(color: Colors.transparent),
@@ -724,7 +736,10 @@ class _EfficiencyChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 36,
-                  getTitlesWidget: (v, _) => Text(v.toStringAsFixed(0),
+                  interval: chartInterval,
+                  getTitlesWidget: (v, meta) => v == meta.max || v == meta.min
+                      ? const SizedBox.shrink()
+                      : Text(v.toStringAsFixed(0),
                       style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
                 ),
               ),
@@ -737,6 +752,7 @@ class _EfficiencyChart extends StatelessWidget {
               LineChartBarData(
                 spots: data.map((d) => FlSpot(d['index']!, d['kml']!)).toList(),
                 isCurved: true,
+                preventCurveOverShooting: true,
                 color: AppTheme.fuel,
                 barWidth: 2.5,
                 dotData: FlDotData(
