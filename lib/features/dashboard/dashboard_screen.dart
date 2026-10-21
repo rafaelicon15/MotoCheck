@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
@@ -10,6 +11,8 @@ import '../../shared/providers/active_moto_provider.dart';
 import '../../core/utils/number_parsing.dart';
 import 'getting_started_card.dart';
 import '../../shared/widgets/form_error.dart';
+import '../../shared/widgets/async_button.dart';
+import '../../shared/widgets/loading.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -268,7 +271,7 @@ class _MotoSelectorCard extends ConsumerWidget {
                     );
                     if (confirm == true) {
                       await db.deleteMoto(m.id);
-                      await DriveBackupService.backupIfSignedIn(db);
+                      unawaited(DriveBackupService.backupIfSignedIn(db));
                     }
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
@@ -597,7 +600,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
             const SizedBox(height: 12),
 
             FormError(_formError),
-            ElevatedButton(
+            AsyncElevatedButton(
               onPressed: _save,
               child: const Text('Guardar'),
             ),
@@ -641,7 +644,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
         await db.setActiveMoto(newId);
         await db.adoptOrphanRecords(newId);
       }
-      await DriveBackupService.backupIfSignedIn(db);
+      unawaited(DriveBackupService.backupIfSignedIn(db));
     } else {
       await db.updateMoto(moto.copyWith(
         brand: brandCtrl.text,
@@ -662,7 +665,7 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
         rimType: rimType,
         updatedAt: DateTime.now(),
       ));
-      await DriveBackupService.backupIfSignedIn(db);
+      unawaited(DriveBackupService.backupIfSignedIn(db));
     }
     if (mounted) Navigator.pop(context);
   }
@@ -983,6 +986,7 @@ class _LastKmL extends StatelessWidget {
     return StreamBuilder<List<FuelRecord>>(
       stream: db.watchFuelRecords(motoId),
       builder: (context, snap) {
+        if (!snap.hasData) return const Align(alignment: Alignment.centerLeft, child: LoadingValue());
         final records = [...(snap.data ?? <FuelRecord>[])]
           ..sort((a, b) => a.odometerKm.compareTo(b.odometerKm));
 
@@ -1022,6 +1026,7 @@ class _NextService extends StatelessWidget {
     return StreamBuilder(
       stream: db.watchMaintenanceRecords(motoId),
       builder: (context, snap) {
+        if (!snap.hasData) return const Align(alignment: Alignment.centerLeft, child: LoadingValue());
         final records = snap.data ?? [];
         final upcoming = records
             .where((r) =>

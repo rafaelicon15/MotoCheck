@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
@@ -14,6 +15,8 @@ import '../../../core/utils/number_parsing.dart';
 import '../../../shared/widgets/require_moto.dart';
 import '../../../shared/widgets/confirm_delete.dart';
 import '../../../shared/widgets/form_error.dart';
+import '../../../shared/widgets/async_button.dart';
+import '../../../shared/widgets/loading.dart';
 
 // Umbrales de rendimiento realista para motos
 const _kMaxKml = 60.0;
@@ -80,6 +83,7 @@ class _FuelScreenState extends ConsumerState<FuelScreen> {
       body: StreamBuilder<List<FuelRecord>>(
         stream: db.watchFuelRecords(moto?.id),
         builder: (context, snap) {
+          if (!snap.hasData) return const LoadingView();
           final records = snap.data ?? [];
           final availableFilters = _availableFilters(records);
           // Si el filtro activo ya no tiene registros, limpiarlo
@@ -523,7 +527,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
             const SizedBox(height: 20),
 
             FormError(_formError),
-            ElevatedButton(onPressed: _save, child: const Text('Guardar carga')),
+            AsyncElevatedButton(onPressed: _save, child: const Text('Guardar carga')),
             const SizedBox(height: 8),
           ],
         ),
@@ -573,7 +577,7 @@ class _AddFuelSheetState extends State<_AddFuelSheet> {
       ));
     }
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, km);
-    await DriveBackupService.backupIfSignedIn(widget.db);
+    unawaited(DriveBackupService.backupIfSignedIn(widget.db));
 
     if (mounted) Navigator.pop(context);
   }
@@ -992,7 +996,7 @@ class _FuelCard extends StatelessWidget {
             onPressed: () async {
               if (!await confirmDelete(context, 'esta carga')) return;
               await db.deleteFuelRecord(record.id);
-              await DriveBackupService.backupIfSignedIn(db);
+              unawaited(DriveBackupService.backupIfSignedIn(db));
             },
           ),
         ]),

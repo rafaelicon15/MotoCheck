@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
@@ -13,6 +14,8 @@ import '../../../core/utils/number_parsing.dart';
 import '../../../shared/widgets/require_moto.dart';
 import '../../../shared/widgets/confirm_delete.dart';
 import '../../../shared/widgets/form_error.dart';
+import '../../../shared/widgets/async_button.dart';
+import '../../../shared/widgets/loading.dart';
 
 class MaintenanceScreen extends ConsumerWidget {
   const MaintenanceScreen({super.key});
@@ -32,6 +35,7 @@ class MaintenanceScreen extends ConsumerWidget {
       body: StreamBuilder<List<MaintenanceRecord>>(
         stream: db.watchMaintenanceRecords(moto?.id),
         builder: (context, snap) {
+          if (!snap.hasData) return const LoadingView();
           final records = snap.data ?? [];
           if (records.isEmpty) return _EmptyState();
           return ListView.builder(
@@ -367,7 +371,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
             const SizedBox(height: 20),
 
             FormError(_formError),
-            ElevatedButton(
+            AsyncElevatedButton(
               onPressed: _isEmpty ? null : _save,
               child: const Text('Guardar servicio'),
             ),
@@ -526,7 +530,7 @@ class _AddMaintenanceSheetState extends State<_AddMaintenanceSheet> {
       cost: cost,
     );
     await widget.db.updateMotoCurrentKmIfGreater(widget.motoId, odometerKm);
-    await DriveBackupService.backupIfSignedIn(widget.db);
+    unawaited(DriveBackupService.backupIfSignedIn(widget.db));
     if (mounted) Navigator.pop(context);
   }
 }
@@ -742,7 +746,7 @@ class _MaintenanceCard extends StatelessWidget {
               onPressed: () async {
                 if (!await confirmDelete(context, 'este servicio')) return;
                 await db.deleteMaintenance(record.id);
-                await DriveBackupService.backupIfSignedIn(db);
+                unawaited(DriveBackupService.backupIfSignedIn(db));
               },
             ),
           ]),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
@@ -12,6 +13,11 @@ import '../../../shared/providers/settings_provider.dart';
 import '../../../core/utils/number_parsing.dart';
 import '../../../shared/widgets/require_moto.dart';
 import '../../../shared/widgets/confirm_delete.dart';
+import '../../../shared/widgets/async_button.dart';
+import '../../../shared/widgets/form_error.dart';
+import '../../../shared/widgets/loading.dart';
+
+bool _addingDefaults = false;
 
 class PartsScreen extends ConsumerWidget {
   const PartsScreen({super.key});
@@ -38,6 +44,7 @@ class PartsScreen extends ConsumerWidget {
       body: StreamBuilder<List<PartRecord>>(
         stream: db.watchParts(moto?.id),
         builder: (context, snap) {
+          if (!snap.hasData) return const LoadingView();
           final parts = snap.data ?? [];
           final currentKm = moto?.currentKm ?? 0;
 
@@ -85,6 +92,24 @@ class PartsScreen extends ConsumerWidget {
   }
 
   Future<void> _addDefaults(BuildContext context, AppDatabase db, MotoProfileData? moto) async {
+    if (_addingDefaults) return; // evita cargas duplicadas por doble toque
+    _addingDefaults = true;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      duration: Duration(seconds: 30),
+      content: Row(children: [
+        SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+        SizedBox(width: 14),
+        Text('Cargando refacciones…'),
+      ]),
+    ));
+    try {
+      await _insertDefaults(context, db, moto);
+    } finally {
+      _addingDefaults = false;
+    }
+  }
+
+  Future<void> _insertDefaults(BuildContext context, AppDatabase db, MotoProfileData? moto) async {
     // Sin historial conocido, cada pieza empieza a contar desde los km actuales:
     // marcarla como cambiada en el km 0 la mostraría vencida por miles de km.
     final startKm = moto?.currentKm ?? 0;
@@ -205,10 +230,12 @@ class PartsScreen extends ConsumerWidget {
         requiresComboChange: drift.Value(false),
       ));
     }
-    await DriveBackupService.backupIfSignedIn(db);
+    unawaited(DriveBackupService.backupIfSignedIn(db));
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
       duration: const Duration(seconds: 6),
       content: Text(added == 0
           ? 'Ya tenías todas las refacciones comunes'
@@ -418,7 +445,7 @@ class _PartCard extends StatelessWidget {
             onPressed: () async {
               if (!await confirmDelete(context, part.name)) return;
               await db.deletePart(part.id);
-              await DriveBackupService.backupIfSignedIn(db);
+              unawaited(DriveBackupService.backupIfSignedIn(db));
             },
           ),
         ]),
@@ -451,7 +478,7 @@ class _PartCard extends StatelessWidget {
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          ElevatedButton(
+          AsyncElevatedButton(
             onPressed: () async {
               final km = parseWholeNumber(kmCtrl.text) ?? currentKm;
               final cost = parseDecimal(costCtrl.text);
@@ -469,7 +496,7 @@ class _PartCard extends StatelessWidget {
                 cost: drift.Value(cost),
               ));
               await db.updateMotoCurrentKmIfGreater(motoId, km);
-              await DriveBackupService.backupIfSignedIn(db);
+              unawaited(DriveBackupService.backupIfSignedIn(db));
               if (ctx.mounted) {
                 Navigator.pop(ctx);
                 // Si es cadena, ofrecer cambio de piñón/corona
@@ -523,7 +550,7 @@ class _PartCard extends StatelessWidget {
                   changedAt: DateTime.now(),
                 ));
               }
-              await DriveBackupService.backupIfSignedIn(db);
+              unawaited(DriveBackupService.backupIfSignedIn(db));
               if (ctx.mounted) {
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   const SnackBar(content: Text('Transmisión actualizada')),
@@ -557,6 +584,8 @@ class _AddPartSheet extends StatefulWidget {
 }
 
 class _AddPartSheetState extends State<_AddPartSheet> {
+  String? _formError;
+
   final _nameCtrl = TextEditingController();
   final _intervalCtrl = TextEditingController();
   final _lastKmCtrl = TextEditingController();
@@ -922,9 +951,13 @@ class _AddPartSheetState extends State<_AddPartSheet> {
               ]),
             const SizedBox(height: 20),
 
-            ElevatedButton(
+            FormError(_formError),
+            AsyncElevatedButton(
               onPressed: () async {
-                if (_nameCtrl.text.isEmpty) return;
+                if (_nameCtrl.text.trim().isEmpty) {
+                  setState(() => _formError = 'Indica el nombre de la refacción');
+                  return;
+                }
                 final navigator = Navigator.of(context);
                 final partName = _displayName();
                 final intervalKm = parseWholeNumber(_intervalCtrl.text) ?? 5000;
@@ -964,7 +997,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                     requiresComboChange: _category == 'chain',
                   ));
                 }
-                await DriveBackupService.backupIfSignedIn(widget.db);
+                unawaited(DriveBackupService.backupIfSignedIn(widget.db));
                 if (mounted) navigator.pop();
               },
               child: const Text('Guardar'),
@@ -1162,7 +1195,7 @@ class _HistoryEntry extends StatelessWidget {
               onPressed: () async {
                 if (!await confirmDelete(context, 'este cambio del historial')) return;
                 await db.deletePartHistory(entry.id);
-                await DriveBackupService.backupIfSignedIn(db);
+                unawaited(DriveBackupService.backupIfSignedIn(db));
               },
             ),
           ]),
@@ -1235,7 +1268,7 @@ class _HistoryEntry extends StatelessWidget {
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Cancelar'),
             ),
-            ElevatedButton(
+            AsyncElevatedButton(
               onPressed: () async {
                 final km = parseWholeNumber(kmCtrl.text);
                 if (km == null) return;
@@ -1256,7 +1289,7 @@ class _HistoryEntry extends StatelessWidget {
                   ));
                 }
                 await db.updateMotoCurrentKmIfGreater(entry.motoId, km);
-                await DriveBackupService.backupIfSignedIn(db);
+                unawaited(DriveBackupService.backupIfSignedIn(db));
                 if (ctx.mounted) Navigator.pop(ctx);
               },
               child: const Text('Guardar'),

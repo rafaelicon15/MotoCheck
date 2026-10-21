@@ -86,15 +86,32 @@ class DriveBackupService {
     }
   }
 
-  static Future<void> backupIfSignedIn(AppDatabase db) async {
-    final account = googleSignInInstance.currentUser;
-    if (account == null) return;
+  static Future<void>? _running;
+  static bool _pending = false;
 
-    try {
-      await backup(db: db, account: account);
-    } catch (_) {
-      // Auto-backup must never block local data changes.
+  /// Respaldo automático tras un cambio. Se llama sin `await` para no frenar la
+  /// interfaz; si ya hay uno en curso, se agenda uno más (con el estado final)
+  /// en lugar de subir dos a la vez, que podría duplicar el archivo en Drive.
+  static Future<void> backupIfSignedIn(AppDatabase db) {
+    if (googleSignInInstance.currentUser == null) return Future.value();
+    if (_running != null) {
+      _pending = true;
+      return _running!;
     }
+    return _running = _runBackups(db).whenComplete(() => _running = null);
+  }
+
+  static Future<void> _runBackups(AppDatabase db) async {
+    do {
+      _pending = false;
+      final account = googleSignInInstance.currentUser;
+      if (account == null) return;
+      try {
+        await backup(db: db, account: account);
+      } catch (_) {
+        // El respaldo automático nunca debe bloquear los cambios locales.
+      }
+    } while (_pending);
   }
 
   // ── Restaurar ─────────────────────────────────────────────────────────────

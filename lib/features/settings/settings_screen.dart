@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -35,7 +36,7 @@ class SettingsScreen extends ConsumerWidget {
               current: current,
               onSelect: (code) async {
                 await db.setSetting(kCurrencyKey, code);
-                await DriveBackupService.backupIfSignedIn(db);
+                unawaited(DriveBackupService.backupIfSignedIn(db));
               },
             ),
           ),
