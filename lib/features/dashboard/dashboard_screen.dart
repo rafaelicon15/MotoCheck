@@ -13,6 +13,7 @@ import 'getting_started_card.dart';
 import '../../shared/widgets/form_error.dart';
 import '../../shared/widgets/async_button.dart';
 import '../../shared/widgets/loading.dart';
+import '../../shared/widgets/rim_icon.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -122,7 +123,7 @@ class _MotoSelectorCard extends ConsumerWidget {
               ),
               if (activeMoto != null) ...[
                 const SizedBox(height: 6),
-                Wrap(spacing: 6, children: [
+                Wrap(spacing: 6, runSpacing: 6, children: [
                   if (activeMoto!.displacement != null)
                     _MotoBadge(
                       label: '${activeMoto!.displacement}cc',
@@ -134,13 +135,13 @@ class _MotoSelectorCard extends ConsumerWidget {
                   ),
                   if (activeMoto!.engineType == '4T')
                     _MotoBadge(
-                      label: activeMoto!.fuelSystem == 'injection' ? '💉 Inyección' : '🔩 Carburada',
+                      label: activeMoto!.fuelSystem == 'injection' ? 'Inyección' : 'Carburada',
                       color: activeMoto!.fuelSystem == 'injection'
                           ? Colors.deepPurple
                           : Colors.brown,
                     ),
                   _MotoBadge(
-                    label: activeMoto!.coolingType == 'liquid' ? '🌡 Radiador' : '💨 Aire',
+                    label: activeMoto!.coolingType == 'liquid' ? 'Radiador' : 'Aire',
                     color: activeMoto!.coolingType == 'liquid' ? Colors.cyan : Colors.orange,
                   ),
                   if (activeMoto!.engineType == '4T' && activeMoto!.oilFilterType == 'permanent')
@@ -148,9 +149,9 @@ class _MotoSelectorCard extends ConsumerWidget {
                   if (activeMoto!.engineType == '2T' && activeMoto!.twoStrokeOilMethod != null)
                     _MotoBadge(
                       label: activeMoto!.twoStrokeOilMethod == 'autolube'
-                          ? '🛢 Autolube'
+                          ? 'Autolube'
                           : activeMoto!.twoStrokeOilMethod == 'premix'
-                              ? '⛽ Premezclado'
+                              ? 'Premezclado'
                               : 'Sin aceite sep.',
                       color: Colors.purple,
                     ),
@@ -161,10 +162,10 @@ class _MotoSelectorCard extends ConsumerWidget {
                     ),
                   _MotoBadge(
                     label: activeMoto!.rimType == 'spoke'
-                        ? '🔩 Rayos'
+                        ? 'Rayos'
                         : activeMoto!.rimType == 'spoke_double_wall'
-                            ? '🛞 Rayos 2P'
-                            : '⭕ Paleta',
+                            ? 'Rayos doble pestaña'
+                            : 'Paleta',
                     color: Colors.blueGrey,
                   ),
                 ]),
@@ -495,8 +496,8 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
                     const SizedBox(height: 10),
                     _ToggleRow(
                       options: const [
-                        _ToggleOption('carb', '🔩 Carburada', Icons.settings),
-                        _ToggleOption('injection', '💉 Inyección electrónica', Icons.memory),
+                        _ToggleOption('carb', 'Carburada', Icons.tune),
+                        _ToggleOption('injection', 'Inyección electrónica', Icons.memory),
                       ],
                       selected: fuelSystem,
                       onSelect: (v) => setState(() => fuelSystem = v),
@@ -518,8 +519,8 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
                   const SizedBox(height: 10),
                   _ToggleRow(
                     options: const [
-                      _ToggleOption('air', '💨 Por aire', Icons.air),
-                      _ToggleOption('liquid', '🌡 Por líquido (radiador)', Icons.water_drop),
+                      _ToggleOption('air', 'Por aire', Icons.air),
+                      _ToggleOption('liquid', 'Por líquido (radiador)', Icons.water_drop),
                     ],
                     selected: coolingType,
                     onSelect: (v) => setState(() => coolingType = v),
@@ -532,8 +533,8 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
                     const SizedBox(height: 10),
                     _ToggleRow(
                       options: const [
-                        _ToggleOption('replaceable', '📄 Reemplazable', Icons.swap_horiz),
-                        _ToggleOption('permanent', '⚙️ Metálico permanente', Icons.settings),
+                        _ToggleOption('replaceable', 'Reemplazable', Icons.swap_horiz),
+                        _ToggleOption('permanent', 'Metálico permanente', Icons.autorenew),
                       ],
                       selected: oilFilterType,
                       onSelect: (v) => setState(() => oilFilterType = v),
@@ -673,6 +674,12 @@ class _MotoFormSheetState extends State<_MotoFormSheet> {
 
 // ─── Selector de tipo de transmisión ─────────────────────────────────────────
 
+const _transmissionIcons = {
+  'chain': Icons.link,
+  'shaft': Icons.settings,
+  'belt': Icons.sync,
+};
+
 class _TransmissionSelector extends StatelessWidget {
   final String selected;
   final void Function(String) onSelect;
@@ -700,7 +707,11 @@ class _TransmissionSelector extends StatelessWidget {
               ),
             ),
             child: Row(children: [
-              Text(t['emoji']!, style: const TextStyle(fontSize: 20)),
+              Icon(
+                _transmissionIcons[t['value']] ?? Icons.settings,
+                size: 24,
+                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -754,7 +765,10 @@ class _RimTypeSelector extends StatelessWidget {
               ),
             ),
             child: Row(children: [
-              Text(r['emoji'] as String, style: const TextStyle(fontSize: 20)),
+              RimIcon(
+                rimType: r['value'] as String,
+                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -787,11 +801,11 @@ class _TwoStrokeMethodSelector extends StatelessWidget {
   const _TwoStrokeMethodSelector({required this.selected, required this.onSelect});
 
   static const _methods = [
-    ('autolube', '🛢 Inyección / Autolube',
+    ('autolube', 'Inyección / Autolube',
      'Depósito de aceite separado.\nEl sistema lo inyecta automáticamente.'),
-    ('premix', '⛽ Premezclado',
+    ('premix', 'Premezclado',
      'El aceite se mezcla directo en el tanque con la gasolina.'),
-    ('none', '🚫 Sin aceite separado',
+    ('none', 'Sin aceite separado',
      'No usa aceite en el motor\n(ej. scooters 2T sin autolube).'),
   ];
 
@@ -893,14 +907,24 @@ class _ToggleRow extends StatelessWidget {
                   width: isSelected ? 1.5 : 1,
                 ),
               ),
-              child: Text(
-                o.label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-                  fontSize: 12,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(o.icon,
+                      size: 16, color: isSelected ? AppTheme.primary : AppTheme.textSecondary),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      o.label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -917,17 +941,27 @@ class _MotoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Va sobre la tarjeta naranja: texto de color sobre naranja no se lee.
+    // Fondo oscuro translúcido + texto blanco (contraste > 4.5:1) y un punto
+    // con el color de la categoría para no perder la referencia visual.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: Colors.black.withValues(alpha: 0.28),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700),
-      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+        ),
+      ]),
     );
   }
 }

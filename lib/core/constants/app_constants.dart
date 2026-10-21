@@ -57,21 +57,18 @@ class AppConstants {
     {
       'value': 'alloy',
       'label': 'Paleta / Aleación',
-      'emoji': '⭕',
       'desc': 'Rin fundido de aluminio en una pieza. Compatible con tubeless, antipinchazo y cámara.',
       'compatibleTireTypes': ['standard', 'tubeless', 'sealant', 'tube'],
     },
     {
       'value': 'spoke',
       'label': 'Rayos estándar',
-      'emoji': '🔩',
       'desc': 'Los nipples crean agujeros en el aro, imposible sellar tubeless. Solo admite cámara (tripa).',
       'compatibleTireTypes': ['tube'],
     },
     {
       'value': 'spoke_double_wall',
       'label': 'Rayos doble pestaña',
-      'emoji': '🛞',
       'desc': 'Pared interior sella los agujeros de los rayos. Compatible con tubeless y antipinchazo.',
       'compatibleTireTypes': ['standard', 'tubeless', 'sealant', 'tube'],
     },
@@ -93,19 +90,16 @@ class AppConstants {
     {
       'value': 'chain',
       'label': 'Cadena',
-      'emoji': '⛓',
       'desc': 'Transmisión por cadena con piñón y corona. La más común.',
     },
     {
       'value': 'shaft',
       'label': 'Cardan',
-      'emoji': '⚙️',
       'desc': 'Eje cardan sellado. Sin cadena ni piñones. Aceite diferencial cada 6,000 km.',
     },
     {
       'value': 'belt',
       'label': 'Correa / CVT',
-      'emoji': '🔄',
       'desc': 'Automática con variador. Scooters y motos CVT. Sin palanca de clutch.',
     },
   ];
